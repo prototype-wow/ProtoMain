@@ -1,4 +1,4 @@
-<!-- PROTOTYPE · US-Quel'Thalas — Registro de Carries (online, con roles y auditoría) -->
+<!-- PROTOTYPE · US-Quel'Thalas — Registro de Carries (multiusuario, roles, auditoría) -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PROTOTYPE · Registro de Carries</title>
@@ -9,17 +9,14 @@
     --line:#1f2c36; --line-soft:#161f27;
     --blue:#009BDB; --blue-2:#33b6e8; --blue-dim:#0a6e9b;
     --white:#ffffff; --text:#e7eef4; --muted:#8a9caa; --muted-2:#566671;
-    --gold:#f0c14b; --ok:#2fbf71; --warn:#e8a13a; --rose:#e8556b;
+    --gold:#f0c14b; --ok:#2fbf71; --warn:#e8a13a; --rose:#e8556b; --purple:#9b7be8;
     --font-display:'Montserrat',system-ui,sans-serif;
     --font-body:'Inter',system-ui,-apple-system,sans-serif;
     --font-mono:'Space Mono',ui-monospace,Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box} html,body{margin:0}
   body{font-family:var(--font-body); color:var(--text);
-    background:
-      radial-gradient(800px 460px at 88% -12%, rgba(0,155,219,.16), transparent 60%),
-      radial-gradient(620px 460px at -5% 108%, rgba(0,155,219,.07), transparent 55%),
-      var(--bg);
+    background:radial-gradient(800px 460px at 88% -12%, rgba(0,155,219,.16), transparent 60%),radial-gradient(620px 460px at -5% 108%, rgba(0,155,219,.07), transparent 55%),var(--bg);
     min-height:100vh; -webkit-font-smoothing:antialiased; line-height:1.45;}
   .wrap{max-width:1200px; margin:0 auto; padding:20px 18px 70px}
 
@@ -37,6 +34,15 @@
   .live.pulse .dot{animation:pulse .6s ease}
   @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.7)}100%{transform:scale(1)}}
 
+  .userchip{display:flex; align-items:center; gap:9px; border:1px solid var(--line); border-radius:10px; padding:6px 11px; cursor:pointer; background:var(--bg-1); transition:.15s}
+  .userchip:hover{border-color:var(--blue)}
+  .userchip .nm{font-weight:600; font-size:13px}
+  .rbadge{font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:2px 7px; border-radius:20px}
+  .rbadge.basico{color:var(--muted); background:rgba(138,156,170,.12); border:1px solid var(--line)}
+  .rbadge.cargador{color:var(--blue); background:rgba(0,155,219,.12); border:1px solid var(--blue-dim)}
+  .rbadge.officer{color:var(--purple); background:rgba(155,123,232,.13); border:1px solid rgba(155,123,232,.4)}
+  .rbadge.admin{color:var(--gold); background:rgba(240,193,75,.12); border:1px solid rgba(240,193,75,.4)}
+
   .btn{font-family:var(--font-body); font-weight:600; font-size:13px; cursor:pointer; border-radius:9px; padding:9px 15px; border:1px solid var(--line); background:var(--bg-2); color:var(--text); transition:.15s; white-space:nowrap}
   .btn:hover{border-color:var(--blue); background:var(--bg-3)}
   .btn.primary{border-color:transparent; color:#021018; font-weight:700; background:linear-gradient(120deg,#2bb6e8,#009BDB); box-shadow:0 6px 20px -8px rgba(0,155,219,.8)}
@@ -48,11 +54,8 @@
   .iconbtn:hover{border-color:var(--blue); color:var(--blue); background:var(--bg-3)}
   .iconbtn:disabled{opacity:.32; cursor:not-allowed}
   .actions{display:flex; gap:9px; flex-wrap:wrap}
-  .adminpill{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--blue); border:1px solid var(--blue-dim); background:rgba(0,155,219,.1); padding:7px 11px; border-radius:9px; cursor:pointer}
-  .adminpill.off{color:var(--muted-2); border-color:var(--line); background:transparent}
-  .adminpill::before{content:""; width:8px; height:8px; transform:rotate(45deg); background:currentColor; display:inline-block}
 
-  .tabs{display:flex; gap:6px; margin:18px 0 4px; border-bottom:1px solid var(--line-soft); padding-bottom:0}
+  .tabs{display:flex; gap:6px; margin:18px 0 4px; border-bottom:1px solid var(--line-soft); flex-wrap:wrap}
   .tab{font-family:var(--font-display); font-weight:600; font-size:12.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:11px 16px; cursor:pointer; border-bottom:2px solid transparent; transition:.15s; display:flex; align-items:center; gap:8px}
   .tab:hover{color:var(--text)}
   .tab.on{color:var(--white); border-color:var(--blue)}
@@ -74,7 +77,7 @@
   .stat::after{content:""; position:absolute; right:-10px; top:-10px; width:26px; height:26px; transform:rotate(45deg); background:rgba(0,155,219,.08)}
   .stat .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted-2)}
   .stat .v{font-family:var(--font-mono); font-weight:700; font-size:19px; margin-top:4px}
-  .stat .v.gold{color:var(--gold)} .stat .v.blue{color:var(--blue)} .stat .v.ok{color:var(--ok)}
+  .stat .v.gold{color:var(--gold)} .stat .v.blue{color:var(--blue)} .stat .v.ok{color:var(--ok)} .stat .v.warn{color:var(--warn)}
 
   .raids{display:grid; grid-template-columns:1.15fr 1fr; gap:18px; margin-top:14px; align-items:start}
   .panel{border:1px solid var(--line-soft); border-radius:14px; background:var(--bg-1); overflow:hidden}
@@ -98,7 +101,7 @@
   .pip{width:13px; height:13px; transform:rotate(45deg); border:1px solid var(--line); background:var(--bg); transition:.18s}
   .pip.sold{border-color:transparent; background:var(--blue); box-shadow:0 0 8px -1px rgba(0,155,219,.8)}
   .pip.over{background:var(--rose); box-shadow:0 0 8px -1px rgba(232,85,107,.7)}
-  .vstate{font-size:11px; font-weight:700; letter-spacing:.03em; min-width:76px; text-align:right; font-family:var(--font-mono)}
+  .vstate{font-size:11px; font-weight:700; min-width:76px; text-align:right; font-family:var(--font-mono)}
   .vstate.open{color:var(--blue)} .vstate.full{color:var(--muted-2)} .vstate.over{color:var(--rose)}
   .slotin{width:40px; padding:5px 6px; text-align:center; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-family:var(--font-mono); font-size:12px}
   .slotin:focus{outline:none; border-color:var(--blue)}
@@ -115,6 +118,7 @@
   .tag{font-family:var(--font-mono); font-size:10.5px; padding:2px 7px; border-radius:6px; background:var(--bg); border:1px solid var(--line); color:var(--muted)}
   .tag.boss{color:#bfe6f7; border-color:#16384a}
   .tag.dest{color:var(--gold); border-color:#5a4a1e}
+  .tag.by{color:var(--muted); border-color:var(--line)}
   .btag{font-family:var(--font-mono); font-size:11px; color:var(--blue); cursor:pointer; border:1px dashed var(--blue-dim); border-radius:6px; padding:2px 7px; background:rgba(0,155,219,.07)}
   .btag:hover{background:rgba(0,155,219,.16)}
   .badge{font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:20px}
@@ -143,26 +147,47 @@
 
   .audbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:16px}
   .audbar select, .audbar input{padding:8px 11px; border-radius:9px; border:1px solid var(--line); background:var(--bg-1); color:var(--text); font-family:var(--font-body); font-size:13px}
-  .audbar input{min-width:180px}
+  .audbar input{min-width:150px}
+  .audbar input[type=date]{min-width:0}
   .audbar .spacer{flex:1}
-  .audsum{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:14px 0}
+  .audsum{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin:14px 0}
   .tablewrap{overflow:auto; border:1px solid var(--line-soft); border-radius:12px; margin-top:6px}
-  table.aud{width:100%; border-collapse:collapse; font-size:12.5px; min-width:880px}
+  table.aud{width:100%; border-collapse:collapse; font-size:12.5px; min-width:980px}
   table.aud th{text-align:left; font-family:var(--font-display); font-weight:600; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted-2); padding:11px 12px; background:var(--bg-1); border-bottom:1px solid var(--line); position:sticky; top:0}
   table.aud td{padding:10px 12px; border-bottom:1px solid var(--line-soft); vertical-align:top}
   table.aud tr:hover td{background:var(--bg-1)}
   table.aud .g{font-family:var(--font-mono); color:var(--gold); font-weight:700; white-space:nowrap}
   table.aud .mono{font-family:var(--font-mono); color:var(--muted)}
-  .destbox{margin-top:18px; border:1px solid var(--line-soft); border-radius:12px; background:var(--bg-1); padding:14px 16px}
-  .destbox h4{font-family:var(--font-display); font-weight:600; letter-spacing:.1em; text-transform:uppercase; font-size:12px; margin:0 0 10px; color:var(--muted)}
-  .destrow{display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--line-soft); font-size:13px}
+  .sectitle{font-family:var(--font-display); font-weight:600; letter-spacing:.1em; text-transform:uppercase; font-size:12px; margin:24px 0 10px; color:var(--muted); display:flex; align-items:center; gap:9px}
+  .sectitle::before{content:""; width:9px; height:9px; transform:rotate(45deg); background:var(--blue)}
+  .destbox{border:1px solid var(--line-soft); border-radius:12px; background:var(--bg-1); padding:6px 16px}
+  .destrow{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line-soft); font-size:13px}
   .destrow:last-child{border:0}
   .destrow .g{font-family:var(--font-mono); color:var(--gold); font-weight:700}
+  .logrow{display:flex; gap:10px; align-items:baseline; padding:8px 12px; border-bottom:1px solid var(--line-soft); font-size:12.5px}
+  .logrow:last-child{border:0}
+  .logrow .lt{font-family:var(--font-mono); font-size:11px; color:var(--muted-2); white-space:nowrap; min-width:118px}
+  .logrow .la{font-weight:600; color:var(--blue)}
+  .logrow .lx{color:var(--muted)}
+  .logrow.del .la{color:var(--rose)}
+
+  .utable{width:100%; border-collapse:collapse; font-size:13px}
+  .utable th{text-align:left; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted-2); padding:10px 12px; border-bottom:1px solid var(--line)}
+  .utable td{padding:10px 12px; border-bottom:1px solid var(--line-soft); vertical-align:middle}
+  .utable select{padding:6px 9px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-size:12px}
+  .toggle{display:flex; align-items:center; gap:12px; border:1px solid var(--line-soft); border-radius:12px; background:var(--bg-1); padding:14px 16px; margin-top:8px}
+  .toggle .lab{flex:1}
+  .toggle .lab b{display:block; font-size:14px}
+  .toggle .lab span{font-size:12px; color:var(--muted)}
+  .sw{width:48px; height:27px; border-radius:20px; background:var(--bg-3); border:1px solid var(--line); position:relative; cursor:pointer; transition:.2s; flex:none}
+  .sw::after{content:""; position:absolute; top:2px; left:2px; width:21px; height:21px; border-radius:50%; background:var(--muted); transition:.2s}
+  .sw.on{background:rgba(0,155,219,.25); border-color:var(--blue)}
+  .sw.on::after{left:23px; background:var(--blue)}
 
   .scrim{position:fixed; inset:0; background:rgba(3,5,8,.74); backdrop-filter:blur(4px); display:none; place-items:center; padding:18px; z-index:50}
   .scrim.on{display:grid}
   .modal{width:100%; max-width:520px; max-height:92vh; overflow:auto; border:1px solid var(--line); border-radius:16px; background:var(--bg-1); box-shadow:0 30px 80px -20px rgba(0,0,0,.85)}
-  .modal.sm{max-width:380px}
+  .modal.sm{max-width:400px}
   .modal h3{font-family:var(--font-display); font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:15px; margin:0; padding:18px 20px 14px; border-bottom:1px solid var(--line-soft)}
   .mbody{padding:16px 20px}
   .field{margin-bottom:14px}
@@ -180,46 +205,68 @@
   .bosspick .full{font-size:10px; color:var(--rose); font-family:var(--font-mono)}
   .linkbtn{background:none; border:none; color:var(--blue); font-family:var(--font-body); font-size:12px; cursor:pointer; padding:0; text-decoration:underline}
   .mfoot{display:flex; gap:10px; justify-content:flex-end; padding:14px 20px 18px; border-top:1px solid var(--line-soft)}
+  .menu{position:absolute; z-index:55; min-width:200px; border:1px solid var(--line); border-radius:12px; background:var(--bg-1); box-shadow:0 20px 50px -16px rgba(0,0,0,.8); overflow:hidden; display:none}
+  .menu.on{display:block}
+  .menu .mi{padding:11px 15px; font-size:13px; cursor:pointer; border-bottom:1px solid var(--line-soft)}
+  .menu .mi:last-child{border:0}
+  .menu .mi:hover{background:var(--bg-2); color:var(--blue)}
+  .menu .mi.head{cursor:default; color:var(--muted-2); font-size:11px; text-transform:uppercase; letter-spacing:.08em}
+  .menu .mi.head:hover{background:none; color:var(--muted-2)}
   .hint{font-size:12px; color:var(--muted); margin:-4px 0 14px}
+  .err{color:var(--rose); font-size:12.5px; margin-top:8px; min-height:16px}
 
   .toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--bg-3); border:1px solid var(--blue); color:var(--text); padding:11px 18px; border-radius:10px; font-size:13px; opacity:0; transition:.25s; z-index:60; pointer-events:none}
   .toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
   footer.foot{margin-top:26px; padding-top:16px; border-top:1px solid var(--line-soft); display:flex; gap:14px; flex-wrap:wrap; justify-content:space-between; align-items:center; color:var(--muted-2); font-size:12px}
 
+  /* login screen */
+  #login{position:fixed; inset:0; z-index:80; display:none; place-items:center; padding:20px;
+    background:radial-gradient(700px 500px at 50% -10%, rgba(0,155,219,.18), transparent 60%), var(--bg)}
+  #login.on{display:grid}
+  .loginbox{width:100%; max-width:380px; text-align:center}
+  .loginbox img{width:72px; height:72px; margin:0 auto 14px; display:block; filter:drop-shadow(0 4px 14px rgba(0,155,219,.45))}
+  .loginbox h1{font-family:var(--font-display); font-weight:700; letter-spacing:.34em; text-transform:uppercase; font-size:21px; margin:0}
+  .loginbox p{color:var(--muted); font-size:11px; letter-spacing:.22em; text-transform:uppercase; margin:6px 0 26px}
+  .loginbox .card{border:1px solid var(--line); border-radius:16px; background:var(--bg-1); padding:22px; text-align:left}
+  .loginbox .field{margin-bottom:13px}
+
   .setup{max-width:680px; margin:40px auto; border:1px solid var(--line); border-radius:16px; background:var(--bg-1); padding:28px 30px}
   .setup h2{font-family:var(--font-display); font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:17px; margin:0 0 6px}
   .setup p{color:var(--muted); font-size:13.5px}
-  .setup ol{color:var(--text); font-size:13.5px; line-height:1.7; padding-left:20px}
   .setup code{font-family:var(--font-mono); background:var(--bg); border:1px solid var(--line); padding:1px 6px; border-radius:5px; color:var(--blue); font-size:12px}
 
-  @media(max-width:860px){
-    .summary{grid-template-columns:repeat(2,1fr)}
-    .raids{grid-template-columns:1fr}
-    .brand .txt h1{letter-spacing:.2em}
-  }
+  @media(max-width:860px){ .summary{grid-template-columns:repeat(2,1fr)} .raids{grid-template-columns:1fr} .brand .txt h1{letter-spacing:.2em} }
 </style>
 
-<div class="wrap" id="app">
+<!-- LOGIN -->
+<div id="login">
+  <div class="loginbox">
+    <img src="data:image/png;base64,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" alt="PROTOTYPE">
+    <h1>Prototype</h1>
+    <p>US-Quel'Thalas</p>
+    <div class="card">
+      <div class="field"><label>Usuario</label><input type="text" id="lg_user" placeholder="Usuario" autocomplete="username"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="lg_pass" placeholder="••••" autocomplete="current-password"></div>
+      <button class="btn primary" id="lg_btn" style="width:100%">Entrar</button>
+      <div class="err" id="lg_err"></div>
+      <div id="lg_guest" style="text-align:center; margin-top:6px; display:none"><button class="linkbtn" id="lg_guestbtn">Entrar como invitado (solo ver)</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
   <header class="top">
     <div class="brand">
       <img src="data:image/png;base64,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" alt="PROTOTYPE">
-      <div class="txt">
-        <h1>Prototype</h1>
-        <p><b>US-Quel'Thalas</b> · Registro de Carries</p>
-      </div>
+      <div class="txt"><h1>Prototype</h1><p><b>US-Quel'Thalas</b> · Registro de Carries</p></div>
     </div>
     <div class="hright">
       <span class="live" id="live"><span class="dot"></span><span id="liveTxt">conectando…</span></span>
-      <span class="adminpill off" id="adminBtn">Modo lectura</span>
+      <div id="userArea"></div>
     </div>
   </header>
 
-  <div class="tabs" id="tabs">
-    <div class="tab on" data-view="semana"><span class="dia"></span>Semana</div>
-    <div class="tab" data-view="calendario"><span class="dia"></span>Calendario</div>
-    <div class="tab" data-view="auditoria"><span class="dia"></span>Auditoría</div>
-  </div>
-
+  <div class="tabs" id="tabs"></div>
   <div class="banner" id="banner"></div>
   <div id="content"><div class="empty" style="padding:60px">Cargando…</div></div>
 
@@ -227,11 +274,11 @@
     <span id="footnote">Datos compartidos en vivo · se sincroniza solo.</span>
     <div class="actions">
       <button class="btn ghost sm" id="copyVacAll">Copiar vacantes</button>
-      <button class="btn ghost sm" id="exportBtn">Respaldo JSON</button>
     </div>
   </footer>
 </div>
 
+<!-- sale modal -->
 <div class="scrim" id="scrim">
   <div class="modal">
     <h3 id="modalTitle">Registrar venta</h3>
@@ -241,13 +288,10 @@
         <div class="field"><label>Comprador (personaje)</label><input type="text" id="f_buyer" placeholder="Nombre del char"></div>
         <div class="field"><label>BattleTag / contacto</label><input type="text" id="f_btag" placeholder="Nombre#1234"></div>
       </div>
-      <div class="field"><label>Bosses que compra<button class="linkbtn" id="pickAll" type="button" style="float:right">Clear completo</button></label>
-        <div class="bosspick" id="f_bosses"></div></div>
+      <div class="field"><label>Bosses que compra<button class="linkbtn" id="pickAll" type="button" style="float:right">Clear completo</button></label><div class="bosspick" id="f_bosses"></div></div>
       <div class="row2">
         <div class="field"><label>Gold (acepta 1.5m, 500k, 750000)</label><input type="text" id="f_gold" placeholder="0"></div>
-        <div class="field"><label>Estado</label><select id="f_status">
-          <option value="reservado">Reservado</option><option value="senado">Señado</option><option value="pagado">Pagado</option>
-        </select></div>
+        <div class="field"><label>Estado</label><select id="f_status"></select></div>
       </div>
       <div class="field"><label>Destino del oro / cobrado por</label><input type="text" id="f_goldto" placeholder="Banco de la guild, char que cobró, split…"></div>
       <div class="field"><label>Notas (opcional)</label><textarea id="f_notes" placeholder="Acordado split, paga al terminar, etc."></textarea></div>
@@ -256,17 +300,16 @@
   </div>
 </div>
 
-<div class="scrim" id="scrimPin">
+<!-- generic small modal (password / new user) -->
+<div class="scrim" id="scrim2">
   <div class="modal sm">
-    <h3>Acceso admin</h3>
-    <div class="mbody">
-      <p class="hint">Ingresá el PIN de administrador para poder crear semanas y editar cupos.</p>
-      <div class="field"><label>PIN</label><input type="password" id="pinInput" placeholder="••••"></div>
-    </div>
-    <div class="mfoot"><button class="btn ghost" id="cancelPin">Cancelar</button><button class="btn primary" id="okPin">Entrar</button></div>
+    <h3 id="m2title">—</h3>
+    <div class="mbody" id="m2body"></div>
+    <div class="mfoot"><button class="btn ghost" id="m2cancel">Cancelar</button><button class="btn primary" id="m2ok">Guardar</button></div>
   </div>
 </div>
 
+<div class="menu" id="userMenu"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -274,98 +317,163 @@
    CONFIGURACIÓN
    ============================================================ */
 const SUPABASE_URL = "https://hjatxlvqytgkizcaopce.supabase.co";
-const SUPABASE_KEY = "sb_publishable_jgKmy1j1js3YiGsPlcervQ_TyaJx86P";   // sb_publishable_...  (o anon key vieja eyJ...)
-const ADMIN_PIN    = "4943";     // ponete un PIN; solo vos lo sabés
+const SUPABASE_KEY = "sb_publishable_jgKmy1j1js3YiGsPlcervQ_TyaJx86P";
+const FIRST_ADMIN  = { username:"Admin", pass:"4943", role:"admin" }; // se crea solo la 1ª vez
+const SALT = "protoCarries::v2";
 /* ============================================================ */
 
 const RAIDS = {
-  voidspire: { name:"The Voidspire", sub:"Voidstorm · 6 bosses", cls:"voidspire",
+  voidspire:{ name:"The Voidspire", sub:"Voidstorm · 6 bosses", cls:"voidspire",
     bosses:["Imperator Averzian","Vorasius","Fallen-King Salhadaar","Vaelgor & Ezzorak","Lightblinded Vanguard","Crown of the Cosmos"] },
-  chimaerus: { name:"Chimaerus", sub:"The Dreamrift · Harandar", cls:"chimaerus",
+  chimaerus:{ name:"Chimaerus", sub:"The Dreamrift · Harandar", cls:"chimaerus",
     bosses:["Chimaerus, the Undreamt God"] }
 };
 const RAID_KEYS = Object.keys(RAIDS);
 const DEFAULT_SLOTS = 4;
+const ROLE_LABEL = { basico:"Básico", cargador:"Cargador", officer:"Officer", admin:"Admin" };
+const STATUS_LABEL = { reservado:"Reservado", senado:"Señado", pagado:"Pagado" };
 
-let state = { weeks:[], current:null };
-let view = 'semana';
-let editingId = null, lastSig = "", creating = false;
-let audFilter = { raid:'all', status:'all', q:'' };
+/* capacidades por rol */
+const CAP = {
+  basico:  { viewAudit:false, addSale:false, editAny:false, editOwn:false, delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageUsers:false },
+  cargador:{ viewAudit:false, addSale:true,  editAny:false, editOwn:true,  delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageUsers:false },
+  officer: { viewAudit:true,  addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageUsers:false },
+  admin:   { viewAudit:true,  addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageUsers:true }
+};
 
-const isAdmin = ()=> localStorage.getItem('pt_admin')==='1';
-function setAdmin(on){ if(on) localStorage.setItem('pt_admin','1'); else localStorage.removeItem('pt_admin'); renderAdminBtn(); render(); }
-function renderAdminBtn(){ const b=document.getElementById('adminBtn'); if(isAdmin()){ b.className='adminpill'; b.textContent='Admin'; } else{ b.className='adminpill off'; b.textContent='Modo lectura'; } }
+let state={ weeks:[], current:null };
+let users=[], settings={ require_login:false }, auditLog=[];
+let session = JSON.parse(localStorage.getItem('pt_session')||'null');
+let view='semana', editingId=null, lastSig="", creating=false, forceLogin=false;
+let audFilter={ raid:'all', status:'all', q:'', period:'all', from:'', to:'' };
 
-const configured = ()=> !SUPABASE_URL.includes('TU-PROYECTO') && !SUPABASE_KEY.includes('TU-PUBLISHABLE') && !SUPABASE_KEY.includes('TU-ANON');
+const role = ()=> session ? session.role : 'basico';
+const cap = (k)=> CAP[role()][k];
+function canEditSale(s){ if(cap('editAny')) return true; if(cap('editOwn') && session && s.created_by===session.username && s.status!=='pagado') return true; return false; }
+const me = ()=> session ? session.username : 'invitado';
+
+/* ---------- Supabase ---------- */
+const configured = ()=> !SUPABASE_URL.includes('TU-PROYECTO') && !SUPABASE_KEY.includes('TU-');
 const H = ()=>{ const h={ apikey:SUPABASE_KEY, 'Content-Type':'application/json' }; if(SUPABASE_KEY.startsWith('eyJ')) h.Authorization='Bearer '+SUPABASE_KEY; return h; };
-async function sb(path, opts={}){ const r = await fetch(SUPABASE_URL+'/rest/v1/'+path, { ...opts, headers:{...H(), ...(opts.headers||{})} }); if(!r.ok){ throw new Error(r.status+' '+(await r.text())); } return r.status===204 ? null : r.json(); }
-const sbSelect = (t)=> sb(t+'?select=*');
-const sbInsert = (t,row)=> sb(t, {method:'POST', headers:{Prefer:'return=representation'}, body:JSON.stringify(row)});
-const sbUpdate = (t,id,patch)=> sb(t+'?id=eq.'+encodeURIComponent(id), {method:'PATCH', body:JSON.stringify(patch)});
-const sbDelete = (t,id)=> sb(t+'?id=eq.'+encodeURIComponent(id), {method:'DELETE'});
+async function sb(path, opts={}){ const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{ ...opts, headers:{...H(),...(opts.headers||{})} }); if(!r.ok) throw new Error(r.status+' '+(await r.text())); return r.status===204?null:r.json(); }
+const sbSel=(t)=> sb(t+'?select=*');
+const sbIns=(t,row)=> sb(t,{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(row)});
+const sbUpd=(t,id,patch)=> sb(t+'?id=eq.'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify(patch)});
+const sbDel=(t,id)=> sb(t+'?id=eq.'+encodeURIComponent(id),{method:'DELETE'});
 
-function setLive(cls, txt){ const el=document.getElementById('live'); el.className='live '+cls; document.getElementById('liveTxt').textContent=txt; if(cls==='ok'){ el.classList.add('pulse'); setTimeout(()=>el.classList.remove('pulse'),600);} }
-function showError(msg){ const b=document.getElementById('banner'); b.classList.add('on'); b.innerHTML=msg; }
-function clearError(){ document.getElementById('banner').classList.remove('on'); }
-
-const uid = ()=> (Date.now().toString(36)+Math.random().toString(36).slice(2,7));
-function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* ---------- util ---------- */
+const uid=()=> (Date.now().toString(36)+Math.random().toString(36).slice(2,7));
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtDate(d){ const dt=new Date(d); return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0'); }
+function fmtDateTime(d){ const dt=new Date(d); return fmtDate(d)+'/'+dt.getFullYear()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'); }
 function fmtGold(n){ return new Intl.NumberFormat('es-AR').format(Math.round(n||0))+'g'; }
 function fmtGoldShort(n){ n=Math.round(n||0); if(n>=1e6) return (n/1e6).toFixed(n%1e6?1:0).replace('.',',')+'M g'; if(n>=1e3) return Math.round(n/1e3)+'k g'; return n+' g'; }
-function parseGold(str){ if(str==null) return 0; str=String(str).trim().toLowerCase().replace(/\s/g,'').replace(/g$/,''); if(!str) return 0;
-  let m=1; if(str.endsWith('m')){m=1e6;str=str.slice(0,-1);} else if(str.endsWith('k')){m=1e3;str=str.slice(0,-1);}
-  if((str.match(/\./g)||[]).length>1) str=str.replace(/\./g,''); str=str.replace(',', '.'); const n=parseFloat(str); return isNaN(n)?0:Math.round(n*m); }
+function parseGold(str){ if(str==null) return 0; str=String(str).trim().toLowerCase().replace(/\s/g,'').replace(/g$/,''); if(!str) return 0; let m=1; if(str.endsWith('m')){m=1e6;str=str.slice(0,-1);} else if(str.endsWith('k')){m=1e3;str=str.slice(0,-1);} if((str.match(/\./g)||[]).length>1) str=str.replace(/\./g,''); str=str.replace(',','.'); const n=parseFloat(str); return isNaN(n)?0:Math.round(n*m); }
 function blankSlots(){ const s={}; RAID_KEYS.forEach(k=>{ s[k]={}; RAIDS[k].bosses.forEach(b=> s[k][b]=DEFAULT_SLOTS); }); return s; }
 function curWeek(){ return state.weeks.find(w=>w.id===state.current); }
-function soldFor(week, raidKey, boss){ return week.sales.filter(s=>s.raid===raidKey && (s.bosses||[]).includes(boss)).length; }
-function canRefresh(){ return !document.getElementById('scrim').classList.contains('on') && !document.getElementById('scrimPin').classList.contains('on') && !(document.activeElement && document.activeElement.tagName && (document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='SELECT'||document.activeElement.tagName==='TEXTAREA')); }
+function soldFor(w,k,b){ return w.sales.filter(s=>s.raid===k && (s.bosses||[]).includes(b)).length; }
+async function hashPass(pw){ const data=new TextEncoder().encode(SALT+'::'+pw); const buf=await crypto.subtle.digest('SHA-256',data); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
+function setLive(cls,txt){ const el=document.getElementById('live'); el.className='live '+cls; document.getElementById('liveTxt').textContent=txt; if(cls==='ok'){ el.classList.add('pulse'); setTimeout(()=>el.classList.remove('pulse'),600);} }
+function showError(m){ const b=document.getElementById('banner'); b.classList.add('on'); b.innerHTML=m; }
+function clearError(){ document.getElementById('banner').classList.remove('on'); }
+let toastT; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),1900); }
+
+/* ---------- fetch ---------- */
 async function fetchAll(){
-  const [weeks, sales] = await Promise.all([ sbSelect('weeks'), sbSelect('sales') ]);
-  weeks.sort((a,b)=> (a.date||'').localeCompare(b.date||'') || (a.created_at||'').localeCompare(b.created_at||''));
+  const [weeks,sales,us,st,al]=await Promise.all([ sbSel('weeks'),sbSel('sales'),sbSel('users'),sbSel('app_settings'),sbSel('audit_log') ]);
+  weeks.sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.created_at||'').localeCompare(b.created_at||''));
   weeks.forEach(w=>{ w.slots=w.slots||blankSlots(); w.sales=sales.filter(s=>s.week_id===w.id); });
-  state.weeks=weeks;
-  if(!state.current || !state.weeks.find(w=>w.id===state.current)) state.current = state.weeks.length ? state.weeks[state.weeks.length-1].id : null;
+  state.weeks=weeks; users=us||[]; settings=(st&&st[0])||{require_login:false}; auditLog=(al||[]).sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+  if(!state.current||!state.weeks.find(w=>w.id===state.current)) state.current=state.weeks.length?state.weeks[state.weeks.length-1].id:null;
 }
-function dataSig(){ return JSON.stringify(state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales])); }
+function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, auditLog.length]); }
 async function refresh(toastOnChange){
   try{ await fetchAll(); clearError(); setLive('ok','en vivo');
+    if(session){ const u=users.find(x=>x.username===session.username); if(!u){ doLogout(true); return; } if(u.role!==session.role){ session.role=u.role; localStorage.setItem('pt_session',JSON.stringify(session)); } }
     const sig=dataSig(); if(sig!==lastSig){ lastSig=sig; render(); if(toastOnChange) toast('Actualizado'); }
-  }catch(e){ setLive('err','sin conexión'); showError('No se pudo conectar. Revisá <code>SUPABASE_URL</code> / <code>SUPABASE_KEY</code> y que corriste el SQL. <code>'+esc(String(e.message).slice(0,140))+'</code>'); }
+  }catch(e){ setLive('err','sin conexión'); showError('No se pudo conectar. ¿Corriste el SQL nuevo (tablas <code>users</code>, <code>app_settings</code>, <code>audit_log</code>)? <code>'+esc(String(e.message).slice(0,150))+'</code>'); }
 }
 async function ensureFirstWeek(){
-  if(state.weeks.length || creating) return; creating=true;
+  if(state.weeks.length||creating) return; creating=true;
   const w={ id:uid(), label:"Lockout "+fmtDate(new Date()), date:new Date().toISOString().slice(0,10), slots:blankSlots() };
-  try{ await sbInsert('weeks', w); await fetchAll(); state.current=w.id; }catch(e){} creating=false;
+  try{ await sbIns('weeks',w); await fetchAll(); state.current=w.id; }catch(e){} creating=false;
+}
+async function seedAdmin(){
+  if(users.length) return;
+  try{ const h=await hashPass(FIRST_ADMIN.pass); await sbIns('users',{ id:uid(), username:FIRST_ADMIN.username, pass_hash:h, role:FIRST_ADMIN.role }); await fetchAll(); }catch(e){}
+}
+async function logAction(action, entity, entity_id, detail){
+  try{ await sbIns('audit_log',{ id:uid(), actor:me(), action, entity, entity_id, detail:detail||null }); }catch(e){}
 }
 
-let toastT; function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),1900); }
+/* ---------- auth ---------- */
+async function doLogin(){
+  const u=document.getElementById('lg_user').value.trim(); const p=document.getElementById('lg_pass').value;
+  const err=document.getElementById('lg_err'); err.textContent='';
+  if(!u||!p){ err.textContent='Completá usuario y contraseña.'; return; }
+  try{
+    const found=users.find(x=>x.username.toLowerCase()===u.toLowerCase());
+    if(!found){ err.textContent='Usuario o contraseña incorrectos.'; return; }
+    const h=await hashPass(p);
+    if(h!==found.pass_hash){ err.textContent='Usuario o contraseña incorrectos.'; return; }
+    session={ id:found.id, username:found.username, role:found.role };
+    localStorage.setItem('pt_session',JSON.stringify(session));
+    forceLogin=false; document.getElementById('lg_pass').value='';
+    logAction('login','session',found.id,null);
+    gate();
+  }catch(e){ err.textContent='Error al validar (¿estás en la página https?).'; }
+}
+function doLogout(silent){ session=null; localStorage.removeItem('pt_session'); if(!silent) toast('Sesión cerrada'); view='semana'; gate(); }
 
+/* ---------- gate: decide login vs app ---------- */
+function gate(){
+  const needLogin = (settings.require_login && !session) || forceLogin;
+  document.getElementById('login').classList.toggle('on', needLogin);
+  document.getElementById('app').style.display = needLogin ? 'none' : '';
+  document.getElementById('lg_guest').style.display = (forceLogin && !settings.require_login) ? '' : 'none';
+  if(!needLogin) render();
+}
+
+/* ============================================================ RENDER ============================================================ */
+function visibleTabs(){ const t=[['semana','Semana'],['calendario','Calendario']]; if(cap('viewAudit')) t.push(['auditoria','Auditoría']); if(cap('manageUsers')) t.push(['usuarios','Usuarios']); return t; }
+function renderUserArea(){
+  const a=document.getElementById('userArea');
+  if(session){ a.innerHTML=`<div class="userchip" id="uchip"><span class="nm">${esc(session.username)}</span><span class="rbadge ${role()}">${ROLE_LABEL[role()]}</span></div>`;
+    document.getElementById('uchip').onclick=openUserMenu;
+  } else { a.innerHTML=`<button class="btn sm" id="loginOpen">Iniciar sesión</button>`; document.getElementById('loginOpen').onclick=()=>{ forceLogin=true; gate(); }; }
+}
+function renderTabs(){
+  const tabs=document.getElementById('tabs'); const vis=visibleTabs();
+  if(!vis.find(t=>t[0]===view)) view=vis[0][0];
+  tabs.innerHTML=vis.map(([v,l])=>`<div class="tab ${v===view?'on':''}" data-view="${v}"><span class="dia"></span>${l}</div>`).join('');
+  tabs.querySelectorAll('.tab').forEach(t=> t.onclick=()=>{ view=t.dataset.view; render(); });
+}
 function render(){
-  document.querySelectorAll('.tab').forEach(t=> t.classList.toggle('on', t.dataset.view===view));
+  renderUserArea(); renderTabs();
   document.getElementById('copyVacAll').style.display = view==='semana' ? '' : 'none';
-  if(view==='semana') renderSemana(); else if(view==='calendario') renderCalendario(); else renderAuditoria();
+  if(view==='semana') renderSemana();
+  else if(view==='calendario') renderCalendario();
+  else if(view==='auditoria') renderAuditoria();
+  else if(view==='usuarios') renderUsuarios();
 }
 
+/* ---------- SEMANA ---------- */
 function renderSemana(){
   const c=document.getElementById('content');
-  if(!state.current){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin semanas todavía</b>'+(isAdmin()?'Creá la primera con “+ Semana”.':'Esperá a que el admin cree la primera semana.')+'</div>'+(isAdmin()?'<div style="text-align:center"><button class="btn primary" onclick="addWeek()">+ Semana</button></div>':''); return; }
+  if(!state.current){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin semanas todavía</b>'+(cap('manageWeek')?'Creá la primera con “+ Semana”.':'Esperá a que un officer/admin cree la primera semana.')+'</div>'; return; }
   const w=curWeek(); const idx=state.weeks.findIndex(x=>x.id===state.current);
   const totalGold=w.sales.reduce((a,s)=>a+(s.gold||0),0);
   const paidGold=w.sales.filter(s=>s.status==='pagado').reduce((a,s)=>a+(s.gold||0),0);
   let openSlots=0; RAID_KEYS.forEach(k=>RAIDS[k].bosses.forEach(b=>{ openSlots+=Math.max(0,((w.slots[k]||{})[b]??DEFAULT_SLOTS)-soldFor(w,k,b)); }));
-  let html=`<div class="wbar">
-    <div class="weeknav">
+  let html=`<div class="wbar"><div class="weeknav">
       <button class="iconbtn" id="prevW" ${idx<=0?'disabled':''}>‹</button>
       <div class="wk"><div class="lbl">${esc(w.label)}</div><div class="dt">reset ${fmtDate(w.date)}</div></div>
       <button class="iconbtn" id="nextW" ${idx>=state.weeks.length-1?'disabled':''}>›</button>
-    </div>
-    <div class="actions">
-      ${isAdmin()?`<button class="btn ghost sm" id="renameW">✎ Semana</button><button class="btn ghost sm danger" id="delW">🗑</button><button class="btn ghost" id="newW">+ Semana</button>`:``}
-      <button class="btn primary" id="openSale">+ Venta</button>
-    </div>
-  </div>
+    </div><div class="actions">
+      ${cap('manageWeek')?`<button class="btn ghost sm" id="renameW">✎ Semana</button><button class="btn ghost sm danger" id="delW">🗑</button><button class="btn ghost" id="newW">+ Semana</button>`:``}
+      ${cap('addSale')?`<button class="btn primary" id="openSale">+ Venta</button>`:``}
+    </div></div>
   <div class="summary">
     <div class="stat"><div class="k">Gold de la semana</div><div class="v gold">${fmtGold(totalGold)}</div></div>
     <div class="stat"><div class="k">Ya cobrado</div><div class="v ok">${fmtGold(paidGold)}</div></div>
@@ -376,22 +484,15 @@ function renderSemana(){
   c.innerHTML=html;
   document.getElementById('prevW').onclick=()=>{ if(idx>0){ state.current=state.weeks[idx-1].id; render(); } };
   document.getElementById('nextW').onclick=()=>{ if(idx<state.weeks.length-1){ state.current=state.weeks[idx+1].id; render(); } };
-  document.getElementById('openSale').onclick=()=>openSale(null);
-  if(isAdmin()){
-    document.getElementById('newW').onclick=addWeek;
-    document.getElementById('renameW').onclick=renameWeek;
-    document.getElementById('delW').onclick=deleteWeek;
-    document.querySelectorAll('.slotin').forEach(inp=> inp.onchange=async()=>{
-      const v=Math.max(0,parseInt(inp.value)||0); const wk=curWeek();
-      wk.slots[inp.dataset.raid]=wk.slots[inp.dataset.raid]||{}; wk.slots[inp.dataset.raid][inp.dataset.boss]=v; renderSemana();
-      try{ await sbUpdate('weeks', wk.id, { slots:wk.slots }); lastSig=dataSig(); setLive('ok','en vivo'); }catch(e){ setLive('err','error'); }
-    });
+  if(cap('addSale')) document.getElementById('openSale').onclick=()=>openSale(null);
+  if(cap('manageWeek')){ document.getElementById('newW').onclick=addWeek; document.getElementById('renameW').onclick=renameWeek; document.getElementById('delW').onclick=deleteWeek;
+    document.querySelectorAll('.slotin').forEach(inp=> inp.onchange=async()=>{ const v=Math.max(0,parseInt(inp.value)||0); const wk=curWeek(); wk.slots[inp.dataset.raid]=wk.slots[inp.dataset.raid]||{}; wk.slots[inp.dataset.raid][inp.dataset.boss]=v; renderSemana();
+      try{ await sbUpd('weeks',wk.id,{slots:wk.slots}); logAction('editar_cupos','week',wk.id,{raid:inp.dataset.raid,boss:inp.dataset.boss,cupos:v}); lastSig=dataSig(); setLive('ok','en vivo'); }catch(e){ setLive('err','error'); } });
   }
   document.querySelectorAll('.btag').forEach(b=> b.onclick=()=>{ copyText(b.dataset.copy); toast('Copiado: '+b.dataset.copy); });
   document.querySelectorAll('.miniop.edit').forEach(b=> b.onclick=()=>openSale(b.dataset.id));
   document.querySelectorAll('.miniop.del').forEach(b=> b.onclick=()=>delSale(b.dataset.id));
 }
-
 function renderRaid(k,w){
   const R=RAIDS[k]; const raidGold=w.sales.filter(s=>s.raid===k).reduce((a,s)=>a+(s.gold||0),0);
   let bossRows='';
@@ -400,46 +501,34 @@ function renderRaid(k,w){
     let pips=''; const shown=Math.max(total,sold);
     for(let i=0;i<shown;i++){ const cls=i<sold?(i<total?'sold':'over'):''; pips+=`<span class="pip ${cls}"></span>`; }
     let st,scls; if(vac>0){st=vac+' vacante'+(vac>1?'s':'');scls='open';} else if(vac===0){st='completo';scls='full';} else{st='+'+(-vac)+' extra';scls='over';}
-    const slotCell = isAdmin()
-      ? `<input class="slotin" type="number" min="0" value="${total}" data-raid="${k}" data-boss="${esc(b)}"><div class="slothint">cupos</div>`
-      : `<div class="slotstat">${total}</div><div class="slothint">cupos</div>`;
-    bossRows+=`<div class="boss"><div class="bn"><div class="nm">${esc(b)}</div><div class="meta">${sold}/${total} vendidas</div></div>
-      <div class="pips">${pips}</div><div class="vstate ${scls}">${st}</div><div>${slotCell}</div></div>`;
+    const slotCell = cap('editSlots') ? `<input class="slotin" type="number" min="0" value="${total}" data-raid="${k}" data-boss="${esc(b)}"><div class="slothint">cupos</div>` : `<div class="slotstat">${total}</div><div class="slothint">cupos</div>`;
+    bossRows+=`<div class="boss"><div class="bn"><div class="nm">${esc(b)}</div><div class="meta">${sold}/${total} vendidas</div></div><div class="pips">${pips}</div><div class="vstate ${scls}">${st}</div><div>${slotCell}</div></div>`;
   });
   const sales=w.sales.filter(s=>s.raid===k);
-  let saleHtml = !sales.length ? `<div class="empty"><b>Sin ventas todavía</b>Tocá “+ Venta” para anotar un comprador.</div>`
+  let saleHtml = !sales.length ? `<div class="empty"><b>Sin ventas todavía</b>${cap('addSale')?'Tocá “+ Venta” para anotar un comprador.':'Sin registros.'}</div>`
     : '<div class="salelist">'+sales.map(s=>{
       const bossTags=(s.bosses||[]).length===R.bosses.length?'<span class="tag boss">CLEAR COMPLETO</span>':(s.bosses||[]).map(b=>`<span class="tag boss">${esc(b)}</span>`).join('');
-      const stLabel={reservado:'Reservado',senado:'Señado',pagado:'Pagado'}[s.status]||s.status;
+      const ops = (canEditSale(s)||cap('delSale')) ? `<span class="ops">${canEditSale(s)?`<span class="miniop edit" data-id="${s.id}">editar</span>`:''}${cap('delSale')?`<span class="miniop del" data-id="${s.id}">borrar</span>`:''}</span>` : '';
       return `<div class="sale"><div class="r1"><span class="buyer">${esc(s.buyer)||'(sin nombre)'}</span><span class="price">${fmtGold(s.gold)}</span></div>
-        <div class="r2"><span class="badge ${s.status}">${stLabel}</span>
+        <div class="r2"><span class="badge ${s.status}">${STATUS_LABEL[s.status]||s.status}</span>
           ${s.btag?`<span class="btag" data-copy="${esc(s.btag)}">${esc(s.btag)}</span>`:''}
           ${bossTags}${s.gold_to?`<span class="tag dest">→ ${esc(s.gold_to)}</span>`:''}
-          <span class="ops"><span class="miniop edit" data-id="${s.id}">editar</span><span class="miniop del" data-id="${s.id}">borrar</span></span></div>
+          ${s.created_by?`<span class="tag by">cargó: ${esc(s.created_by)}</span>`:''}${ops}</div>
         ${s.notes?`<div class="note">${esc(s.notes)}</div>`:''}</div>`;
     }).join('')+'</div>';
-  return `<section class="panel ${R.cls}"><div class="phead"><h2><span class="dia"></span>${esc(R.name)}</h2><div class="sub">${esc(R.sub)}</div>
-    <div class="rtot"><b>${fmtGoldShort(raidGold)}</b><span>esta semana</span></div></div>
-    <div class="pbody">${bossRows}<div class="divider"></div>${saleHtml}</div></section>`;
+  return `<section class="panel ${R.cls}"><div class="phead"><h2><span class="dia"></span>${esc(R.name)}</h2><div class="sub">${esc(R.sub)}</div><div class="rtot"><b>${fmtGoldShort(raidGold)}</b><span>esta semana</span></div></div><div class="pbody">${bossRows}<div class="divider"></div>${saleHtml}</div></section>`;
 }
 
+/* ---------- CALENDARIO ---------- */
 function renderCalendario(){
   const c=document.getElementById('content');
   if(!state.weeks.length){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin semanas todavía</b></div>'; return; }
   const cards=[...state.weeks].reverse().map(w=>{
-    const total=w.sales.reduce((a,s)=>a+(s.gold||0),0);
-    const paid=w.sales.filter(s=>s.status==='pagado').reduce((a,s)=>a+(s.gold||0),0);
+    const total=w.sales.reduce((a,s)=>a+(s.gold||0),0); const paid=w.sales.filter(s=>s.status==='pagado').reduce((a,s)=>a+(s.gold||0),0);
     let slots=0,sold=0; RAID_KEYS.forEach(k=>RAIDS[k].bosses.forEach(b=>{ slots+=(w.slots[k]||{})[b]??DEFAULT_SLOTS; sold+=soldFor(w,k,b); }));
-    return `<div class="wcard ${w.id===state.current?'cur':''}" data-id="${w.id}">
-      <div class="wl">${esc(w.label)}</div><div class="wd">reset ${fmtDate(w.date)}</div>
-      <div class="wm">
-        <div>Gold<b class="gold">${fmtGoldShort(total)}</b></div>
-        <div>Cobrado<b>${fmtGoldShort(paid)}</b></div>
-        <div>Ventas<b>${w.sales.length}</b></div>
-        <div>Cupos<b class="blue">${sold}/${slots}</b></div>
-      </div>
-      ${isAdmin()?`<div class="adminrow"><button class="btn ghost sm" data-act="open" data-id="${w.id}">Abrir</button><button class="btn ghost sm danger" data-act="del" data-id="${w.id}">Borrar</button></div>`:''}
-    </div>`;
+    return `<div class="wcard ${w.id===state.current?'cur':''}" data-id="${w.id}"><div class="wl">${esc(w.label)}</div><div class="wd">reset ${fmtDate(w.date)}</div>
+      <div class="wm"><div>Gold<b class="gold">${fmtGoldShort(total)}</b></div><div>Cobrado<b>${fmtGoldShort(paid)}</b></div><div>Ventas<b>${w.sales.length}</b></div><div>Cupos<b class="blue">${sold}/${slots}</b></div></div>
+      ${cap('manageWeek')?`<div class="adminrow"><button class="btn ghost sm" data-act="open" data-id="${w.id}">Abrir</button><button class="btn ghost sm danger" data-act="del" data-id="${w.id}">Borrar</button></div>`:''}</div>`;
   }).join('');
   c.innerHTML=`<div class="calgrid">${cards}</div>`;
   document.querySelectorAll('.wcard').forEach(card=> card.onclick=(e)=>{ if(e.target.dataset.act) return; state.current=card.dataset.id; view='semana'; render(); });
@@ -447,168 +536,191 @@ function renderCalendario(){
   document.querySelectorAll('[data-act="del"]').forEach(b=> b.onclick=()=> deleteWeekById(b.dataset.id));
 }
 
+/* ---------- AUDITORÍA ---------- */
 function allSales(){ const out=[]; [...state.weeks].reverse().forEach(w=> w.sales.forEach(s=> out.push({...s, weekLabel:w.label, weekDate:w.date}))); return out; }
+function periodMatch(dateStr){
+  if(audFilter.period==='all') return true;
+  const d=new Date(dateStr); const now=new Date();
+  if(audFilter.period==='thisweek'){ const wk=curWeek(); return wk && dateStr && dateStr.slice(0,10)===String(wk.date).slice(0,10); }
+  if(audFilter.period==='thismonth') return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+  if(audFilter.period==='range'){ if(audFilter.from && dateStr.slice(0,10)<audFilter.from) return false; if(audFilter.to && dateStr.slice(0,10)>audFilter.to) return false; return true; }
+  return true;
+}
 function filteredAudit(){ return allSales().filter(s=>{
   if(audFilter.raid!=='all' && s.raid!==audFilter.raid) return false;
   if(audFilter.status!=='all' && s.status!==audFilter.status) return false;
-  if(audFilter.q){ const q=audFilter.q.toLowerCase(); if(!((s.buyer||'').toLowerCase().includes(q)||(s.btag||'').toLowerCase().includes(q)||(s.gold_to||'').toLowerCase().includes(q))) return false; }
+  if(!periodMatch(s.weekDate)) return false;
+  if(audFilter.q){ const q=audFilter.q.toLowerCase(); if(!((s.buyer||'').toLowerCase().includes(q)||(s.btag||'').toLowerCase().includes(q)||(s.gold_to||'').toLowerCase().includes(q)||(s.created_by||'').toLowerCase().includes(q))) return false; }
   return true;
 });}
+const ACTION_LABEL={ crear_venta:'cargó venta', editar_venta:'editó venta', borrar_venta:'borró venta', crear_semana:'creó semana', borrar_semana:'borró semana', renombrar_semana:'editó semana', editar_cupos:'cambió cupos', crear_usuario:'creó usuario', cambiar_rol:'cambió rol', borrar_usuario:'borró usuario', cambiar_pass:'cambió contraseña', cambiar_acceso:'cambió acceso', login:'inició sesión' };
 function renderAuditoria(){
   const c=document.getElementById('content'); const rows=filteredAudit();
   const total=rows.reduce((a,s)=>a+(s.gold||0),0);
   const paid=rows.filter(s=>s.status==='pagado').reduce((a,s)=>a+(s.gold||0),0); const pend=total-paid;
+  const kills=rows.reduce((a,s)=>a+((s.bosses||[]).length),0);
   const byDest={}; rows.forEach(s=>{ const d=(s.gold_to||'— sin destino —'); byDest[d]=(byDest[d]||0)+(s.gold||0); });
-  const destRows=Object.entries(byDest).sort((a,b)=>b[1]-a[1]).map(([d,g])=>`<div class="destrow"><span>${esc(d)}</span><span class="g">${fmtGold(g)}</span></div>`).join('') || '<div class="destrow"><span>—</span></div>';
+  const destRows=Object.entries(byDest).sort((a,b)=>b[1]-a[1]).map(([d,g])=>`<div class="destrow"><span>${esc(d)}</span><span class="g">${fmtGold(g)}</span></div>`).join('')||'<div class="destrow"><span>—</span></div>';
+  const log=auditLog.filter(l=> periodMatch(l.ts)).slice(0,60);
   c.innerHTML=`
    <div class="audbar">
+     <select id="fa_period"><option value="all">Todo el historial</option><option value="thisweek" ${audFilter.period==='thisweek'?'selected':''}>Semana seleccionada</option><option value="thismonth" ${audFilter.period==='thismonth'?'selected':''}>Mes actual</option><option value="range" ${audFilter.period==='range'?'selected':''}>Personalizado</option></select>
+     ${audFilter.period==='range'?`<input type="date" id="fa_from" value="${audFilter.from}"><input type="date" id="fa_to" value="${audFilter.to}">`:''}
      <select id="fa_raid"><option value="all">Todas las raids</option>${RAID_KEYS.map(k=>`<option value="${k}" ${audFilter.raid===k?'selected':''}>${esc(RAIDS[k].name)}</option>`).join('')}</select>
-     <select id="fa_status"><option value="all">Todos los estados</option><option value="reservado" ${audFilter.status==='reservado'?'selected':''}>Reservado</option><option value="senado" ${audFilter.status==='senado'?'selected':''}>Señado</option><option value="pagado" ${audFilter.status==='pagado'?'selected':''}>Pagado</option></select>
-     <input id="fa_q" placeholder="Buscar comprador, btag o destino…" value="${esc(audFilter.q)}">
-     <span class="spacer"></span>
-     <button class="btn ghost sm" id="exportCsv">Exportar CSV</button>
+     <select id="fa_status"><option value="all">Todos los estados</option>${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${audFilter.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}</select>
+     <input id="fa_q" placeholder="Buscar comprador, btag, cargador…" value="${esc(audFilter.q)}">
+     <span class="spacer"></span><button class="btn ghost sm" id="exportCsv">Exportar CSV</button>
    </div>
    <div class="audsum">
      <div class="stat"><div class="k">Total vendido</div><div class="v gold">${fmtGold(total)}</div></div>
      <div class="stat"><div class="k">Cobrado</div><div class="v ok">${fmtGold(paid)}</div></div>
-     <div class="stat"><div class="k">Pendiente de cobro</div><div class="v" style="color:var(--warn)">${fmtGold(pend)}</div></div>
-     <div class="stat"><div class="k">Carries (ventas)</div><div class="v">${rows.length}</div></div>
+     <div class="stat"><div class="k">Pendiente</div><div class="v warn">${fmtGold(pend)}</div></div>
+     <div class="stat"><div class="k">Ventas</div><div class="v">${rows.length}</div></div>
+     <div class="stat"><div class="k">Bosses vendidos (kills)</div><div class="v blue">${kills}</div></div>
    </div>
-   <div class="tablewrap"><table class="aud"><thead><tr>
-     <th>Semana</th><th>Raid</th><th>Bosses</th><th>Comprador</th><th>BattleTag</th><th>Gold</th><th>Estado</th><th>Destino del oro</th>
-   </tr></thead><tbody>
+   <div class="sectitle">Ventas en el período</div>
+   <div class="tablewrap"><table class="aud"><thead><tr><th>Semana</th><th>Raid</th><th>Bosses</th><th>Comprador</th><th>Gold</th><th>Estado</th><th>Destino</th><th>Cargó</th><th>Últ. edición</th></tr></thead><tbody>
    ${rows.length? rows.map(s=>{
       const bosses=(s.bosses||[]).length===RAIDS[s.raid].bosses.length?'Clear completo':(s.bosses||[]).join(', ');
-      const stLabel={reservado:'Reservado',senado:'Señado',pagado:'Pagado'}[s.status]||s.status;
-      return `<tr><td>${esc(s.weekLabel)}<div class="mono" style="font-size:10px">${fmtDate(s.weekDate)}</div></td>
-        <td>${esc(RAIDS[s.raid].name)}</td><td>${esc(bosses)}</td><td>${esc(s.buyer)||'—'}</td>
-        <td class="mono">${esc(s.btag)||'—'}</td><td class="g">${fmtGold(s.gold)}</td>
-        <td><span class="badge ${s.status}">${stLabel}</span></td><td>${esc(s.gold_to)||'<span class="mono">—</span>'}</td></tr>`;
-   }).join('') : `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted-2)">Sin resultados con estos filtros.</td></tr>`}
+      const upd=s.updated_by?`${esc(s.updated_by)} · ${s.updated_at?fmtDateTime(s.updated_at):''}`:'—';
+      return `<tr><td>${esc(s.weekLabel)}<div class="mono" style="font-size:10px">${fmtDate(s.weekDate)}</div></td><td>${esc(RAIDS[s.raid].name)}</td><td>${esc(bosses)}</td><td>${esc(s.buyer)||'—'}</td><td class="g">${fmtGold(s.gold)}</td><td><span class="badge ${s.status}">${STATUS_LABEL[s.status]||s.status}</span></td><td>${esc(s.gold_to)||'<span class="mono">—</span>'}</td><td class="mono">${esc(s.created_by)||'—'}</td><td class="mono">${upd}</td></tr>`;
+   }).join('') : `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted-2)">Sin resultados.</td></tr>`}
    </tbody></table></div>
-   <div class="destbox"><h4>◆ A dónde fue el oro</h4>${destRows}</div>`;
-  document.getElementById('fa_raid').onchange=e=>{ audFilter.raid=e.target.value; renderAuditoria(); };
-  document.getElementById('fa_status').onchange=e=>{ audFilter.status=e.target.value; renderAuditoria(); };
-  document.getElementById('fa_q').oninput=e=>{ audFilter.q=e.target.value; renderAuditoria(); };
-  document.getElementById('exportCsv').onclick=exportAuditCSV;
+   <div class="sectitle">A dónde fue el oro</div><div class="destbox">${destRows}</div>
+   <div class="sectitle">Actividad (quién hizo qué)</div>
+   <div class="destbox">${log.length? log.map(l=>`<div class="logrow ${l.action==='borrar_venta'||l.action==='borrar_semana'||l.action==='borrar_usuario'?'del':''}"><span class="lt">${fmtDateTime(l.ts)}</span><span class="la">${esc(l.actor||'?')}</span><span class="lx">${ACTION_LABEL[l.action]||l.action}${l.detail&&l.detail.buyer?' · '+esc(l.detail.buyer):''}${l.detail&&l.detail.label?' · '+esc(l.detail.label):''}${l.detail&&l.detail.target?' · '+esc(l.detail.target):''}${l.detail&&l.detail.gold?' · '+fmtGold(l.detail.gold):''}</span></div>`).join('') : '<div class="empty">Sin actividad en el período.</div>'}</div>`;
+  const setP=id=>document.getElementById(id);
+  setP('fa_period').onchange=e=>{ audFilter.period=e.target.value; renderAuditoria(); };
+  if(setP('fa_from')) setP('fa_from').onchange=e=>{ audFilter.from=e.target.value; renderAuditoria(); };
+  if(setP('fa_to')) setP('fa_to').onchange=e=>{ audFilter.to=e.target.value; renderAuditoria(); };
+  setP('fa_raid').onchange=e=>{ audFilter.raid=e.target.value; renderAuditoria(); };
+  setP('fa_status').onchange=e=>{ audFilter.status=e.target.value; renderAuditoria(); };
+  setP('fa_q').oninput=e=>{ audFilter.q=e.target.value; renderAuditoria(); };
+  setP('exportCsv').onclick=exportAuditCSV;
 }
 function exportAuditCSV(){
-  const rows=[['Semana','Fecha','Raid','Bosses','Comprador','BattleTag','Gold','Estado','DestinoDelOro','Notas']];
-  filteredAudit().forEach(s=> rows.push([s.weekLabel,s.weekDate,RAIDS[s.raid].name,(s.bosses||[]).join(' | '),s.buyer||'',s.btag||'',s.gold||0,s.status,s.gold_to||'',s.notes||'']));
-  const csv=rows.map(r=> r.map(c=> '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
-  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='auditoria-carries.csv'; a.click(); URL.revokeObjectURL(a.href); toast('CSV exportado');
+  const rows=[['Semana','Fecha','Raid','Bosses','Comprador','BattleTag','Gold','Estado','Destino','Cargó','UltimaEdicionPor','UltimaEdicionFecha','Notas']];
+  filteredAudit().forEach(s=> rows.push([s.weekLabel,s.weekDate,RAIDS[s.raid].name,(s.bosses||[]).join(' | '),s.buyer||'',s.btag||'',s.gold||0,s.status,s.gold_to||'',s.created_by||'',s.updated_by||'',s.updated_at||'',s.notes||'']));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='auditoria-carries.csv'; a.click(); URL.revokeObjectURL(a.href); toast('CSV exportado');
 }
 
-async function addWeek(){
-  if(!isAdmin()) return;
-  const last=state.weeks[state.weeks.length-1]; const base=last?new Date(last.date):new Date(); base.setDate(base.getDate()+7);
-  const w={ id:uid(), label:"Lockout "+fmtDate(base), date:base.toISOString().slice(0,10), slots: last? JSON.parse(JSON.stringify(last.slots)) : blankSlots() };
-  try{ await sbInsert('weeks', w); await refresh(); state.current=w.id; view='semana'; render(); toast('Nueva semana creada'); }catch(e){ toast('No se pudo crear'); }
+/* ---------- USUARIOS (admin) ---------- */
+function renderUsuarios(){
+  const c=document.getElementById('content');
+  const rows=users.map(u=>`<tr><td><b>${esc(u.username)}</b></td>
+    <td><select data-uid="${u.id}" class="rolesel" ${u.username===session.username?'disabled':''}>${Object.keys(ROLE_LABEL).map(r=>`<option value="${r}" ${u.role===r?'selected':''}>${ROLE_LABEL[r]}</option>`).join('')}</select></td>
+    <td class="mono" style="color:var(--muted-2)">${u.created_at?fmtDate(u.created_at):''}</td>
+    <td style="text-align:right">${u.username===session.username?'<span class="mono" style="color:var(--muted-2)">vos</span>':`<button class="btn ghost sm" data-pwid="${u.id}">Reset pass</button> <button class="btn ghost sm danger" data-delid="${u.id}">Borrar</button>`}</td></tr>`).join('');
+  c.innerHTML=`<div class="wbar"><div></div><div class="actions"><button class="btn primary" id="newUser">+ Usuario</button></div></div>
+    <div class="tablewrap"><table class="utable"><thead><tr><th>Usuario</th><th>Rol</th><th>Creado</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="sectitle">Acceso a la página</div>
+    <div class="toggle"><div class="lab"><b>Requerir inicio de sesión</b><span>Si está activado, nadie ve nada sin loguearse. Si está apagado, cualquiera con el link entra como invitado (solo ver Semana y Calendario) y puede loguearse para más permisos.</span></div><div class="sw ${settings.require_login?'on':''}" id="swLogin"></div></div>
+    <p class="hint" style="margin-top:14px">Nota de seguridad: este control de usuarios es práctico para la guild, pero no es seguridad de nivel bancario. Las contraseñas van cifradas, pero alguien técnico con el link podría saltear los permisos vía la base. Para candado duro de verdad hace falta Supabase Auth.</p>`;
+  document.getElementById('newUser').onclick=openNewUser;
+  document.getElementById('swLogin').onclick=async()=>{ const nv=!settings.require_login; try{ await sbUpd('app_settings',1,{require_login:nv}); settings.require_login=nv; logAction('cambiar_acceso','settings','1',{target:nv?'login requerido':'público'}); renderUsuarios(); toast('Acceso actualizado'); }catch(e){ toast('No se pudo'); } };
+  document.querySelectorAll('.rolesel').forEach(sel=> sel.onchange=async()=>{ const u=users.find(x=>x.id===sel.dataset.uid); try{ await sbUpd('users',u.id,{role:sel.value}); logAction('cambiar_rol','user',u.id,{target:u.username+' → '+ROLE_LABEL[sel.value]}); await refresh(); toast('Rol actualizado'); }catch(e){ toast('No se pudo'); } });
+  document.querySelectorAll('[data-delid]').forEach(b=> b.onclick=async()=>{ const u=users.find(x=>x.id===b.dataset.delid); if(!confirm('¿Borrar al usuario "'+u.username+'"?')) return; try{ await sbDel('users',u.id); logAction('borrar_usuario','user',u.id,{target:u.username}); await refresh(); toast('Usuario borrado'); }catch(e){ toast('No se pudo'); } });
+  document.querySelectorAll('[data-pwid]').forEach(b=> b.onclick=()=> openResetPass(b.dataset.pwid));
 }
-async function renameWeek(){
-  if(!isAdmin()) return; const w=curWeek(); if(!w) return;
-  const nl=prompt('Nombre de la semana:', w.label); if(nl===null) return;
-  const nd=prompt('Fecha de reset (AAAA-MM-DD):', w.date)||w.date;
-  try{ await sbUpdate('weeks', w.id, { label:nl.trim()||w.label, date:nd }); await refresh(); render(); toast('Semana actualizada'); }catch(e){ toast('No se pudo'); }
-}
+
+/* ---------- weeks ---------- */
+async function addWeek(){ if(!cap('manageWeek')) return; const last=state.weeks[state.weeks.length-1]; const base=last?new Date(last.date):new Date(); base.setDate(base.getDate()+7);
+  const w={ id:uid(), label:"Lockout "+fmtDate(base), date:base.toISOString().slice(0,10), slots: last?JSON.parse(JSON.stringify(last.slots)):blankSlots() };
+  try{ await sbIns('weeks',w); logAction('crear_semana','week',w.id,{label:w.label}); await refresh(); state.current=w.id; view='semana'; render(); toast('Nueva semana creada'); }catch(e){ toast('No se pudo crear'); } }
+async function renameWeek(){ if(!cap('manageWeek')) return; const w=curWeek(); if(!w) return; const nl=prompt('Nombre de la semana:',w.label); if(nl===null) return; const nd=prompt('Fecha de reset (AAAA-MM-DD):',w.date)||w.date;
+  try{ await sbUpd('weeks',w.id,{label:nl.trim()||w.label,date:nd}); logAction('renombrar_semana','week',w.id,{label:nl.trim()||w.label}); await refresh(); render(); toast('Semana actualizada'); }catch(e){ toast('No se pudo'); } }
 function deleteWeek(){ const w=curWeek(); if(w) deleteWeekById(w.id); }
-async function deleteWeekById(id){
-  if(!isAdmin()) return; const w=state.weeks.find(x=>x.id===id); if(!w) return;
-  if(!confirm('¿Borrar "'+w.label+'" y todas sus ventas? No se puede deshacer.')) return;
-  try{ await sbDelete('weeks', id); await refresh(); render(); toast('Semana borrada'); }catch(e){ toast('No se pudo borrar'); }
-}
+async function deleteWeekById(id){ if(!cap('manageWeek')) return; const w=state.weeks.find(x=>x.id===id); if(!w) return; if(!confirm('¿Borrar "'+w.label+'" y todas sus ventas?')) return;
+  try{ await sbDel('weeks',id); logAction('borrar_semana','week',id,{label:w.label}); await refresh(); render(); toast('Semana borrada'); }catch(e){ toast('No se pudo borrar'); } }
 
-function buildBossPicker(raidKey, selected){
-  const w=curWeek(); const box=document.getElementById('f_bosses');
-  box.innerHTML=RAIDS[raidKey].bosses.map(b=>{
-    const total=(w.slots[raidKey]||{})[b]??DEFAULT_SLOTS; let sold=soldFor(w,raidKey,b);
-    if(editingId){ const ex=w.sales.find(s=>s.id===editingId); if(ex&&ex.raid===raidKey&&(ex.bosses||[]).includes(b)) sold-=1; }
-    const left=total-sold; const full=left<=0; const checked=selected.includes(b);
-    return `<div class="pkrow"><label class="cb ${checked?'has':''}"><input type="checkbox" value="${esc(b)}" ${checked?'checked':''}><span>${esc(b)}</span></label>${full?`<span class="full">lleno</span>`:`<span class="full" style="color:var(--muted-2)">${left} libre${left>1?'s':''}</span>`}</div>`;
-  }).join('');
-  box.querySelectorAll('input[type=checkbox]').forEach(cb=> cb.onchange=()=> cb.closest('label').classList.toggle('has', cb.checked));
-}
-function openSale(id){
-  if(!state.current){ toast('Primero tiene que existir una semana'); return; }
-  editingId=id; const w=curWeek(); const sel=document.getElementById('f_raid');
-  sel.innerHTML=RAID_KEYS.map(k=>`<option value="${k}">${esc(RAIDS[k].name)}</option>`).join('');
+/* ---------- sale modal ---------- */
+function statusOptions(){ const allowed = cap('setPaid') ? ['reservado','senado','pagado'] : ['reservado','senado']; return allowed; }
+function buildBossPicker(raidKey,selected){ const w=curWeek(); const box=document.getElementById('f_bosses');
+  box.innerHTML=RAIDS[raidKey].bosses.map(b=>{ const total=(w.slots[raidKey]||{})[b]??DEFAULT_SLOTS; let sold=soldFor(w,raidKey,b); if(editingId){ const ex=w.sales.find(s=>s.id===editingId); if(ex&&ex.raid===raidKey&&(ex.bosses||[]).includes(b)) sold-=1; } const left=total-sold; const full=left<=0; const checked=selected.includes(b);
+    return `<div class="pkrow"><label class="cb ${checked?'has':''}"><input type="checkbox" value="${esc(b)}" ${checked?'checked':''}><span>${esc(b)}</span></label>${full?`<span class="full">lleno</span>`:`<span class="full" style="color:var(--muted-2)">${left} libre${left>1?'s':''}</span>`}</div>`; }).join('');
+  box.querySelectorAll('input[type=checkbox]').forEach(cb=> cb.onchange=()=> cb.closest('label').classList.toggle('has',cb.checked)); }
+function openSale(id){ if(!state.current){ toast('Primero tiene que existir una semana'); return; }
+  editingId=id; const w=curWeek(); const sel=document.getElementById('f_raid'); sel.innerHTML=RAID_KEYS.map(k=>`<option value="${k}">${esc(RAIDS[k].name)}</option>`).join('');
+  const opts=statusOptions(); document.getElementById('f_status').innerHTML=opts.map(s=>`<option value="${s}">${STATUS_LABEL[s]}</option>`).join('');
   let data={ raid:RAID_KEYS[0], buyer:'', btag:'', bosses:[], gold:0, status:'reservado', gold_to:'', notes:'' };
   if(id){ const ex=w.sales.find(s=>s.id===id); if(ex) data={...ex}; }
   document.getElementById('modalTitle').textContent=id?'Editar venta':'Registrar venta';
-  sel.value=data.raid;
-  document.getElementById('f_buyer').value=data.buyer||'';
-  document.getElementById('f_btag').value=data.btag||'';
-  document.getElementById('f_gold').value=data.gold?data.gold:'';
-  document.getElementById('f_status').value=data.status||'reservado';
-  document.getElementById('f_goldto').value=data.gold_to||'';
-  document.getElementById('f_notes').value=data.notes||'';
-  buildBossPicker(data.raid, data.bosses||[]);
-  sel.onchange=()=> buildBossPicker(sel.value, []);
-  document.getElementById('scrim').classList.add('on');
-  setTimeout(()=>document.getElementById('f_buyer').focus(),50);
-}
+  sel.value=data.raid; document.getElementById('f_buyer').value=data.buyer||''; document.getElementById('f_btag').value=data.btag||'';
+  document.getElementById('f_gold').value=data.gold?data.gold:''; document.getElementById('f_status').value=opts.includes(data.status)?data.status:opts[0];
+  document.getElementById('f_goldto').value=data.gold_to||''; document.getElementById('f_notes').value=data.notes||'';
+  buildBossPicker(data.raid,data.bosses||[]); sel.onchange=()=> buildBossPicker(sel.value,[]);
+  document.getElementById('scrim').classList.add('on'); setTimeout(()=>document.getElementById('f_buyer').focus(),50); }
 function closeSale(){ document.getElementById('scrim').classList.remove('on'); editingId=null; }
-async function saveSaleFn(){
-  const w=curWeek(); const raid=document.getElementById('f_raid').value;
-  const bosses=[...document.querySelectorAll('#f_bosses input:checked')].map(c=>c.value);
-  if(!bosses.length){ toast('Elegí al menos un boss'); return; }
-  const rec={ id: editingId||uid(), week_id:w.id, raid,
-    buyer:document.getElementById('f_buyer').value.trim(), btag:document.getElementById('f_btag').value.trim(),
-    bosses, gold:parseGold(document.getElementById('f_gold').value), status:document.getElementById('f_status').value,
-    gold_to:document.getElementById('f_goldto').value.trim(), notes:document.getElementById('f_notes').value.trim() };
-  try{ if(editingId) await sbUpdate('sales', editingId, rec); else await sbInsert('sales', rec);
+async function saveSaleFn(){ const w=curWeek(); const raid=document.getElementById('f_raid').value; const bosses=[...document.querySelectorAll('#f_bosses input:checked')].map(c=>c.value); if(!bosses.length){ toast('Elegí al menos un boss'); return; }
+  const now=new Date().toISOString();
+  const base={ week_id:w.id, raid, buyer:document.getElementById('f_buyer').value.trim(), btag:document.getElementById('f_btag').value.trim(), bosses, gold:parseGold(document.getElementById('f_gold').value), status:document.getElementById('f_status').value, gold_to:document.getElementById('f_goldto').value.trim(), notes:document.getElementById('f_notes').value.trim() };
+  try{ if(editingId){ const patch={...base, updated_by:me(), updated_at:now}; await sbUpd('sales',editingId,patch); logAction('editar_venta','sale',editingId,{buyer:base.buyer,gold:base.gold}); }
+    else{ const rec={ id:uid(), ...base, created_by:me(), updated_by:null, updated_at:null }; await sbIns('sales',rec); logAction('crear_venta','sale',rec.id,{buyer:base.buyer,gold:base.gold}); }
     closeSale(); await refresh(); toast(editingId?'Venta actualizada':'Venta registrada');
-  }catch(e){ toast('No se pudo guardar (¿falta la columna gold_to?)'); setLive('err','error'); }
-}
-async function delSale(id){ try{ await sbDelete('sales', id); await refresh(); toast('Venta eliminada'); }catch(e){ toast('No se pudo borrar'); } }
+  }catch(e){ toast('No se pudo guardar (¿faltan columnas nuevas?)'); setLive('err','error'); } }
+async function delSale(id){ const w=curWeek(); const s=w&&w.sales.find(x=>x.id===id); if(!cap('delSale')) return; if(s&&!confirm('¿Borrar la venta de "'+(s.buyer||'?')+'"?')) return;
+  try{ await sbDel('sales',id); logAction('borrar_venta','sale',id,{buyer:s?s.buyer:'',gold:s?s.gold:0}); await refresh(); toast('Venta eliminada'); }catch(e){ toast('No se pudo borrar'); } }
 
+/* ---------- generic small modal ---------- */
+function openM2(title, bodyHtml, onOk){ document.getElementById('m2title').textContent=title; document.getElementById('m2body').innerHTML=bodyHtml; document.getElementById('scrim2').classList.add('on');
+  document.getElementById('m2ok').onclick=async()=>{ const ok=await onOk(); if(ok!==false){ document.getElementById('scrim2').classList.remove('on'); } };
+  setTimeout(()=>{ const f=document.querySelector('#m2body input'); if(f) f.focus(); },50); }
+function closeM2(){ document.getElementById('scrim2').classList.remove('on'); }
+function openChangePass(){ openM2('Cambiar mi contraseña',
+  `<div class="field"><label>Contraseña actual</label><input type="password" id="cp_old"></div><div class="field"><label>Nueva contraseña</label><input type="password" id="cp_new"></div><div class="field"><label>Repetir nueva</label><input type="password" id="cp_new2"></div><div class="err" id="cp_err"></div>`,
+  async()=>{ const o=document.getElementById('cp_old').value,n=document.getElementById('cp_new').value,n2=document.getElementById('cp_new2').value; const err=document.getElementById('cp_err'); err.textContent='';
+    if(!n||n.length<3){ err.textContent='La nueva debe tener al menos 3 caracteres.'; return false; } if(n!==n2){ err.textContent='No coinciden.'; return false; }
+    const u=users.find(x=>x.id===session.id); const oh=await hashPass(o); if(!u||oh!==u.pass_hash){ err.textContent='La contraseña actual es incorrecta.'; return false; }
+    try{ const nh=await hashPass(n); await sbUpd('users',u.id,{pass_hash:nh}); logAction('cambiar_pass','user',u.id,{target:'propia'}); toast('Contraseña cambiada'); }catch(e){ err.textContent='No se pudo guardar.'; return false; } }); }
+function openResetPass(uidv){ const u=users.find(x=>x.id===uidv); openM2('Reset contraseña · '+u.username,
+  `<p class="hint">Le ponés una contraseña nueva a <b>${esc(u.username)}</b>. Después que la cambie por una suya.</p><div class="field"><label>Nueva contraseña</label><input type="password" id="rp_new"></div><div class="err" id="rp_err"></div>`,
+  async()=>{ const n=document.getElementById('rp_new').value; const err=document.getElementById('rp_err'); if(!n||n.length<3){ err.textContent='Mínimo 3 caracteres.'; return false; } try{ const nh=await hashPass(n); await sbUpd('users',u.id,{pass_hash:nh}); logAction('cambiar_pass','user',u.id,{target:u.username}); toast('Contraseña reseteada'); }catch(e){ err.textContent='No se pudo.'; return false; } }); }
+function openNewUser(){ openM2('Nuevo usuario',
+  `<div class="field"><label>Usuario</label><input type="text" id="nu_user"></div><div class="field"><label>Contraseña</label><input type="password" id="nu_pass"></div><div class="field"><label>Rol</label><select id="nu_role">${Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join('')}</select></div><div class="err" id="nu_err"></div>`,
+  async()=>{ const un=document.getElementById('nu_user').value.trim(), pw=document.getElementById('nu_pass').value, rl=document.getElementById('nu_role').value; const err=document.getElementById('nu_err'); err.textContent='';
+    if(!un||!pw){ err.textContent='Completá usuario y contraseña.'; return false; } if(users.find(x=>x.username.toLowerCase()===un.toLowerCase())){ err.textContent='Ese usuario ya existe.'; return false; }
+    try{ const h=await hashPass(pw); await sbIns('users',{ id:uid(), username:un, pass_hash:h, role:rl }); logAction('crear_usuario','user',un,{target:un+' ('+ROLE_LABEL[rl]+')'}); await refresh(); toast('Usuario creado'); }catch(e){ err.textContent='No se pudo crear.'; return false; } }); }
+
+/* ---------- user menu ---------- */
+function openUserMenu(e){ const m=document.getElementById('userMenu'); const r=document.getElementById('uchip').getBoundingClientRect();
+  m.innerHTML=`<div class="mi head">${esc(session.username)} · ${ROLE_LABEL[role()]}</div><div class="mi" id="mi_pass">Cambiar mi contraseña</div><div class="mi" id="mi_out">Cerrar sesión</div>`;
+  m.style.top=(r.bottom+8+window.scrollY)+'px'; m.style.left=Math.max(12,(r.right-200))+'px'; m.classList.add('on');
+  document.getElementById('mi_pass').onclick=()=>{ m.classList.remove('on'); openChangePass(); };
+  document.getElementById('mi_out').onclick=()=>{ m.classList.remove('on'); doLogout(); };
+  e.stopPropagation(); }
+document.addEventListener('click',e=>{ const m=document.getElementById('userMenu'); if(m.classList.contains('on') && !e.target.closest('#userMenu') && !e.target.closest('#uchip')) m.classList.remove('on'); });
+
+/* ---------- copy ---------- */
 function copyText(t){ if(navigator.clipboard){ navigator.clipboard.writeText(t).catch(()=>fallbackCopy(t)); } else fallbackCopy(t); }
 function fallbackCopy(t){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); }
-function copyVacancies(){
-  const w=curWeek(); if(!w){ toast('No hay semana activa'); return; }
-  let lines=[`WTS Carries Míticos — ${w.label}  ·  PROTOTYPE (US-Quel'Thalas)`];
-  RAID_KEYS.forEach(k=>{ const open=RAIDS[k].bosses.map(b=>{ const v=((w.slots[k]||{})[b]??DEFAULT_SLOTS)-soldFor(w,k,b); return v>0?`${b} (${v})`:null; }).filter(Boolean);
-    if(open.length) lines.push(`\n${RAIDS[k].name}: `+open.join(' · ')); });
-  if(lines.length===1) lines.push('\nSin vacantes abiertas — todo vendido.');
-  copyText(lines.join('')); toast('Vacantes copiadas');
-}
-function exportBackup(){ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='carry-tracker-respaldo.json'; a.click(); URL.revokeObjectURL(a.href); toast('Respaldo descargado'); }
+function copyVacancies(){ const w=curWeek(); if(!w){ toast('No hay semana activa'); return; } let lines=[`WTS Carries Míticos — ${w.label}  ·  PROTOTYPE (US-Quel'Thalas)`];
+  RAID_KEYS.forEach(k=>{ const open=RAIDS[k].bosses.map(b=>{ const v=((w.slots[k]||{})[b]??DEFAULT_SLOTS)-soldFor(w,k,b); return v>0?`${b} (${v})`:null; }).filter(Boolean); if(open.length) lines.push(`\n${RAIDS[k].name}: `+open.join(' · ')); });
+  if(lines.length===1) lines.push('\nSin vacantes abiertas — todo vendido.'); copyText(lines.join('')); toast('Vacantes copiadas'); }
 
-document.querySelectorAll('.tab').forEach(t=> t.onclick=()=>{ view=t.dataset.view; render(); });
+/* ---------- wire ---------- */
 document.getElementById('saveSale').onclick=saveSaleFn;
 document.getElementById('cancelSale').onclick=closeSale;
-document.getElementById('scrim').onclick=(e)=>{ if(e.target.id==='scrim') closeSale(); };
+document.getElementById('scrim').onclick=e=>{ if(e.target.id==='scrim') closeSale(); };
 document.getElementById('pickAll').onclick=()=>{ document.querySelectorAll('#f_bosses input[type=checkbox]').forEach(cb=>{ cb.checked=true; cb.closest('label').classList.add('has'); }); };
+document.getElementById('m2cancel').onclick=closeM2;
+document.getElementById('scrim2').onclick=e=>{ if(e.target.id==='scrim2') closeM2(); };
 document.getElementById('copyVacAll').onclick=copyVacancies;
-document.getElementById('exportBtn').onclick=exportBackup;
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSale(); document.getElementById('scrimPin').classList.remove('on'); } });
+document.getElementById('lg_btn').onclick=doLogin;
+document.getElementById('lg_pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('lg_user').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('lg_pass').focus(); });
+document.getElementById('lg_guestbtn').onclick=()=>{ forceLogin=false; gate(); };
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSale(); closeM2(); } });
 
-document.getElementById('adminBtn').onclick=()=>{
-  if(isAdmin()){ if(confirm('¿Salir del modo admin?')) setAdmin(false); }
-  else{ document.getElementById('scrimPin').classList.add('on'); setTimeout(()=>document.getElementById('pinInput').focus(),50); }
-};
-document.getElementById('cancelPin').onclick=()=> document.getElementById('scrimPin').classList.remove('on');
-document.getElementById('scrimPin').onclick=(e)=>{ if(e.target.id==='scrimPin') e.currentTarget.classList.remove('on'); };
-function tryPin(){ const v=document.getElementById('pinInput').value; if(v===ADMIN_PIN){ document.getElementById('scrimPin').classList.remove('on'); document.getElementById('pinInput').value=''; setAdmin(true); toast('Modo admin activado'); } else toast('PIN incorrecto'); }
-document.getElementById('okPin').onclick=tryPin;
-document.getElementById('pinInput').addEventListener('keydown',e=>{ if(e.key==='Enter') tryPin(); });
-
-function showSetup(){
-  document.getElementById('content').innerHTML=`<div class="setup"><h2>Falta conectar la base de datos</h2>
-    <p>Configurá Supabase una sola vez para compartir datos en vivo:</p>
-    <ol><li>Creá un proyecto en <code>supabase.com</code>.</li>
-    <li>En <b>SQL Editor</b> pegá el SQL que te pasó Claude (crea las tablas).</li>
-    <li>En <b>Connect</b> copiá <code>Project URL</code> y <code>Publishable key</code>.</li>
-    <li>Pegalos arriba del archivo en <code>SUPABASE_URL</code> y <code>SUPABASE_KEY</code>, y poné tu <code>ADMIN_PIN</code>.</li>
-    <li>Guardá y subilo a tu hosting.</li></ol></div>`;
-  setLive('err','sin configurar');
-}
+/* ---------- boot ---------- */
+function showSetup(){ document.getElementById('app').style.display=''; document.getElementById('content').innerHTML=`<div class="setup"><h2>Falta conectar la base</h2><p>Pegá tu <code>SUPABASE_URL</code> y <code>SUPABASE_KEY</code> arriba del archivo, y corré el SQL nuevo (tablas users, app_settings, audit_log).</p></div>`; setLive('err','sin configurar'); }
 async function boot(){
-  renderAdminBtn();
   if(!configured()){ showSetup(); return; }
-  await refresh(); await ensureFirstWeek(); render(); lastSig=dataSig();
-  setInterval(()=>{ if(canRefresh()) refresh(true); }, 4000);
+  try{ await fetchAll(); }catch(e){ document.getElementById('app').style.display=''; setLive('err','sin conexión'); showError('No se pudo conectar / faltan las tablas nuevas. Corré el SQL de la guía v2. <code>'+esc(String(e.message).slice(0,150))+'</code>'); return; }
+  await seedAdmin(); await ensureFirstWeek(); await fetchAll();
+  if(session){ const u=users.find(x=>x.username===session.username); if(!u){ session=null; localStorage.removeItem('pt_session'); } else session.role=u.role; }
+  lastSig=dataSig(); gate();
+  setInterval(()=>{ const busy=document.getElementById('scrim').classList.contains('on')||document.getElementById('scrim2').classList.contains('on')||document.getElementById('login').classList.contains('on')||(document.activeElement&&['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)); if(!busy) refresh(true); },4000);
 }
 boot();
 </script>
