@@ -351,6 +351,7 @@ const role = ()=> session ? session.role : 'basico';
 const cap = (k)=> CAP[role()][k];
 function canEditSale(s){ if(cap('editAny')) return true; if(cap('editOwn') && session && s.created_by===session.username && s.status!=='pagado') return true; return false; }
 const me = ()=> session ? session.username : 'invitado';
+function isActorAdmin(username){ const u=users.find(x=>x.username===username); return !!(u && u.role==='admin'); }
 
 /* ---------- Supabase ---------- */
 const configured = ()=> !SUPABASE_URL.includes('TU-PROYECTO') && !SUPABASE_KEY.includes('TU-');
@@ -384,7 +385,7 @@ async function fetchAll(){
   const [weeks,sales,us,st,al]=await Promise.all([ sbSel('weeks'),sbSel('sales'),sbSel('users'),sbSel('app_settings'),sbSel('audit_log') ]);
   weeks.sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.created_at||'').localeCompare(b.created_at||''));
   weeks.forEach(w=>{ w.slots=w.slots||blankSlots(); w.sales=sales.filter(s=>s.week_id===w.id); });
-  state.weeks=weeks; users=us||[]; settings=(st&&st[0])||{require_login:false}; auditLog=(al||[]).sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+  state.weeks=weeks; users=us||[]; settings=Object.assign({require_login:false,show_admin_activity:false},(st&&st[0])||{}); auditLog=(al||[]).sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
   if(!state.current||!state.weeks.find(w=>w.id===state.current)) state.current=state.weeks.length?state.weeks[state.weeks.length-1].id:null;
 }
 function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, auditLog.length]); }
@@ -561,7 +562,9 @@ function renderAuditoria(){
   const kills=rows.reduce((a,s)=>a+((s.bosses||[]).length),0);
   const byDest={}; rows.forEach(s=>{ const d=(s.gold_to||'— sin destino —'); byDest[d]=(byDest[d]||0)+(s.gold||0); });
   const destRows=Object.entries(byDest).sort((a,b)=>b[1]-a[1]).map(([d,g])=>`<div class="destrow"><span>${esc(d)}</span><span class="g">${fmtGold(g)}</span></div>`).join('')||'<div class="destrow"><span>—</span></div>';
-  const log=auditLog.filter(l=> periodMatch(l.ts)).slice(0,60);
+  const viewerIsAdmin = role()==='admin';
+  const showAdminActs = !!settings.show_admin_activity;
+  const log=auditLog.filter(l=> periodMatch(l.ts)).filter(l=> (viewerIsAdmin||showAdminActs) ? true : !isActorAdmin(l.actor)).slice(0,60);
   c.innerHTML=`
    <div class="audbar">
      <select id="fa_period"><option value="all">Todo el historial</option><option value="thisweek" ${audFilter.period==='thisweek'?'selected':''}>Semana seleccionada</option><option value="thismonth" ${audFilter.period==='thismonth'?'selected':''}>Mes actual</option><option value="range" ${audFilter.period==='range'?'selected':''}>Personalizado</option></select>
@@ -616,9 +619,11 @@ function renderUsuarios(){
     <div class="tablewrap"><table class="utable"><thead><tr><th>Usuario</th><th>Rol</th><th>Creado</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="sectitle">Acceso a la página</div>
     <div class="toggle"><div class="lab"><b>Requerir inicio de sesión</b><span>Si está activado, nadie ve nada sin loguearse. Si está apagado, cualquiera con el link entra como invitado (solo ver Semana y Calendario) y puede loguearse para más permisos.</span></div><div class="sw ${settings.require_login?'on':''}" id="swLogin"></div></div>
+    <div class="toggle"><div class="lab"><b>Mostrar actividad de admins a todos</b><span>Por defecto, las acciones hechas por un Admin solo las ven otros Admin en la Auditoría. Activá esto si querés que los Officers también vean la actividad de los admins.</span></div><div class="sw ${settings.show_admin_activity?'on':''}" id="swAdminAct"></div></div>
     <p class="hint" style="margin-top:14px">Nota de seguridad: este control de usuarios es práctico para la guild, pero no es seguridad de nivel bancario. Las contraseñas van cifradas, pero alguien técnico con el link podría saltear los permisos vía la base. Para candado duro de verdad hace falta Supabase Auth.</p>`;
   document.getElementById('newUser').onclick=openNewUser;
   document.getElementById('swLogin').onclick=async()=>{ const nv=!settings.require_login; try{ await sbUpd('app_settings',1,{require_login:nv}); settings.require_login=nv; logAction('cambiar_acceso','settings','1',{target:nv?'login requerido':'público'}); renderUsuarios(); toast('Acceso actualizado'); }catch(e){ toast('No se pudo'); } };
+  document.getElementById('swAdminAct').onclick=async()=>{ const nv=!settings.show_admin_activity; try{ await sbUpd('app_settings',1,{show_admin_activity:nv}); settings.show_admin_activity=nv; logAction('cambiar_acceso','settings','1',{target:nv?'actividad admin visible a todos':'actividad admin solo admins'}); renderUsuarios(); toast('Visibilidad actualizada'); }catch(e){ toast('No se pudo (¿falta la columna show_admin_activity?)'); } };
   document.querySelectorAll('.rolesel').forEach(sel=> sel.onchange=async()=>{ const u=users.find(x=>x.id===sel.dataset.uid); try{ await sbUpd('users',u.id,{role:sel.value}); logAction('cambiar_rol','user',u.id,{target:u.username+' → '+ROLE_LABEL[sel.value]}); await refresh(); toast('Rol actualizado'); }catch(e){ toast('No se pudo'); } });
   document.querySelectorAll('[data-delid]').forEach(b=> b.onclick=async()=>{ const u=users.find(x=>x.id===b.dataset.delid); if(!confirm('¿Borrar al usuario "'+u.username+'"?')) return; try{ await sbDel('users',u.id); logAction('borrar_usuario','user',u.id,{target:u.username}); await refresh(); toast('Usuario borrado'); }catch(e){ toast('No se pudo'); } });
   document.querySelectorAll('[data-pwid]').forEach(b=> b.onclick=()=> openResetPass(b.dataset.pwid));
