@@ -18,7 +18,7 @@
   body{font-family:var(--font-body); color:var(--text);
     background:radial-gradient(800px 460px at 88% -12%, rgba(0,155,219,.16), transparent 60%),radial-gradient(620px 460px at -5% 108%, rgba(0,155,219,.07), transparent 55%),var(--bg);
     min-height:100vh; -webkit-font-smoothing:antialiased; line-height:1.45;}
-  .wrap{max-width:1200px; margin:0 auto; padding:20px 18px 70px}
+  .wrap{max-width:1680px; margin:0 auto; padding:20px clamp(12px,3vw,34px) 70px}
 
   header.top{display:flex; flex-wrap:wrap; gap:14px 20px; align-items:center; justify-content:space-between; padding-bottom:16px; border-bottom:1px solid var(--line-soft)}
   .brand{display:flex; align-items:center; gap:14px}
@@ -42,6 +42,18 @@
   .rbadge.cargador{color:var(--blue); background:rgba(0,155,219,.12); border:1px solid var(--blue-dim)}
   .rbadge.officer{color:var(--purple); background:rgba(155,123,232,.13); border:1px solid rgba(155,123,232,.4)}
   .rbadge.admin{color:var(--gold); background:rgba(240,193,75,.12); border:1px solid rgba(240,193,75,.4)}
+
+  /* class / role glyphs — viven en el mismo motivo de diamante que .pip/.dia */
+  .rolebadge{width:21px; height:21px; flex:none; display:inline-flex; align-items:center; justify-content:center; transform:rotate(45deg); border-radius:5px; border:1px solid var(--cc,var(--line)); background:linear-gradient(160deg,color-mix(in srgb,var(--cc,var(--muted)) 16%,var(--bg-2)),var(--bg-2)); box-shadow:0 0 7px -3px var(--cc,transparent); position:relative}
+  .rolebadge svg{width:12px; height:12px; transform:rotate(-45deg); color:var(--cc,var(--muted)); overflow:visible}
+  .classbadge{width:22px; height:22px; flex:none; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; border:2px solid var(--cc,var(--line)); box-shadow:0 0 6px -2px var(--cc,transparent); overflow:hidden; background:var(--bg-2)}
+  .classbadge img{width:100%; height:100%; object-fit:cover; display:block}
+  .rolebadge.role-tank{--cc:var(--blue)}
+  .rolebadge.role-healer{--cc:var(--ok)}
+  .rolebadge.role-ranged,.rolebadge.role-melee{--cc:var(--rose)}
+  .classrow{display:inline-flex; align-items:center; gap:9px}
+  .classname{color:var(--cc,var(--text)); font-weight:600}
+  td.classcell{border-left:3px solid var(--cc,transparent)}
 
   .btn{font-family:var(--font-body); font-weight:600; font-size:13px; cursor:pointer; border-radius:9px; padding:9px 15px; border:1px solid var(--line); background:var(--bg-2); color:var(--text); transition:.15s; white-space:nowrap}
   .btn:hover{border-color:var(--blue); background:var(--bg-3)}
@@ -81,7 +93,7 @@
   .qadd:hover{border-color:var(--blue); background:var(--bg-3); transform:scale(1.06)}
   .tag.run{color:#9fe3c0; border-color:#1d4a37}
 
-  .summary{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:16px 0 8px}
+  .summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:16px 0 8px}
   .stat{border:1px solid var(--line-soft); border-radius:12px; padding:13px 15px; background:var(--bg-1); position:relative; overflow:hidden}
   .stat::after{content:""; position:absolute; right:-10px; top:-10px; width:26px; height:26px; transform:rotate(45deg); background:rgba(0,155,219,.08)}
   .stat .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted-2)}
@@ -244,8 +256,25 @@
   .setup p{color:var(--muted); font-size:13.5px}
   .setup code{font-family:var(--font-mono); background:var(--bg); border:1px solid var(--line); padding:1px 6px; border-radius:5px; color:var(--blue); font-size:12px}
 
-  @media(max-width:860px){ .summary{grid-template-columns:repeat(2,1fr)} .raids{grid-template-columns:1fr} .brand .txt h1{letter-spacing:.2em} }
+  /* filas de ranking del Resumen (flex): nombre se trunca, el número nunca se corta */
+  .rankrow{display:flex; align-items:center; gap:9px; padding:8px 2px; border-bottom:1px solid var(--line-soft); font-size:13px}
+  .rankrow:last-child{border-bottom:0}
+  .rankrow .rk{flex:none; width:20px; text-align:right; color:var(--muted-2); font-family:var(--font-mono); font-size:11.5px}
+  .rankrow .nm{flex:1; min-width:0; display:flex; align-items:center; gap:8px}
+  .rankrow .nm .classname{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; font-weight:600}
+  .rankrow .vl{flex:none; white-space:nowrap; text-align:right; font-family:var(--font-mono); padding-left:6px}
+
+  @media(max-width:860px){ .brand .txt h1{letter-spacing:.2em} .wrap{padding-left:10px; padding-right:10px} .tab{padding:9px 11px; font-size:11.5px} }
+  @media(max-width:560px){ header.top{gap:8px} .brand img{width:40px; height:40px} .brand .txt h1{font-size:16px; letter-spacing:.14em} .audbar{gap:7px} .audbar select,.audbar input{font-size:12px; padding:7px 9px} }
 </style>
+
+<!-- Sprite de iconos: clases (diseños originales, no assets de Blizzard) + roles -->
+<svg style="display:none" aria-hidden="true"><defs>
+  <symbol id="ri-tank" viewBox="0 0 24 24"><path d="M12 3 L19 6 V12 C19 16.5 16 19.5 12 21 C8 19.5 5 16.5 5 12 V6 Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></symbol>
+  <symbol id="ri-healer" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M12 8 V16 M8 12 H16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="ri-dps" viewBox="0 0 24 24"><path d="M5 5 L19 19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M19 5 L5 19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="ri-ranged" viewBox="0 0 24 24"><path d="M6 3 C10 8 10 16 6 21" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M6 3 L6 21" stroke="currentColor" stroke-width="1" stroke-dasharray="1.5 2"/><path d="M4 12 H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 9 L19 12 L16 15" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</defs></svg>
 
 <!-- LOGIN -->
 <div id="login">
@@ -346,6 +375,26 @@ const RAID_KEYS = Object.keys(RAIDS);
 const DEFAULT_SLOTS = 4;
 const ROLE_LABEL = { basico:"Básico", cargador:"Cargador", officer:"Officer", admin:"Admin" };
 const STATUS_LABEL = { reservado:"Reservado", senado:"Señado", pagado:"Pagado" };
+const CHAR_ROLE_LABEL = { tank:"Tank", healer:"Healer", ranged:"Ranged", melee:"Melee" };
+const CLASS_ARMOR = { Mage:"Cloth", Priest:"Cloth", Warlock:"Cloth", Rogue:"Leather", Druid:"Leather", Monk:"Leather", "Demon Hunter":"Leather", Hunter:"Mail", Shaman:"Mail", Evoker:"Mail", Warrior:"Plate", Paladin:"Plate", "Death Knight":"Plate" };
+/* colores canonicos de clase de WoW (convencion estandar en toda herramienta de guild) */
+const CLASS_COLOR = { Warrior:"#C79C6E", Paladin:"#F58CBA", Hunter:"#AAD372", Rogue:"#FFF468", Priest:"#F0F0F0", "Death Knight":"#C41E3A", Shaman:"#0070DD", Mage:"#3FC7EB", Warlock:"#8788EE", Monk:"#00FF98", Druid:"#FF7C0A", "Demon Hunter":"#A330C9", Evoker:"#33937F" };
+/* ícono de clase real, vía Warcraft Wiki (warcraft.wiki.gg) — hotlink, no assets propios en el repo */
+const CLASS_ICON_SLUG = { Warrior:"warrior", Paladin:"paladin", Hunter:"hunter", Rogue:"rogue", Priest:"priest", "Death Knight":"deathknight", Shaman:"shaman", Mage:"mage", Warlock:"warlock", Monk:"monk", Druid:"druid", "Demon Hunter":"demon_hunter", Evoker:"evoker" };
+const ROLE_ICON_ID = { tank:"ri-tank", healer:"ri-healer", ranged:"ri-ranged", melee:"ri-dps" };
+function classBadge(cls){ const color=CLASS_COLOR[cls]; const slug=CLASS_ICON_SLUG[cls]; if(!slug) return ''; return `<span class="classbadge" style="--cc:${color}" title="${esc(cls)}"><img src="https://warcraft.wiki.gg/images/ClassIcon_${slug}.png" alt="${esc(cls)}"></span>`; }
+function roleBadge(role){ const id=ROLE_ICON_ID[role]||'ri-dps'; return `<span class="rolebadge role-${esc(role)}" title="${esc(CHAR_ROLE_LABEL[role]||role)}"><svg viewBox="0 0 24 24"><use href="#${id}"></use></svg></span>`; }
+function classTag(cls){ return `<span class="classrow">${classBadge(cls)}<span class="classname" style="--cc:${CLASS_COLOR[cls]||''}">${esc(cls)}</span></span>`; }
+function roleTag(role){ return `<span class="classrow">${roleBadge(role)}<span>${esc(CHAR_ROLE_LABEL[role]||role)}</span></span>`; }
+/* slots que habitualmente llevan encantamiento (aproximado, puede variar por parche) */
+const ENCHANTABLE_SLOTS = ["HEAD","SHOULDER","BACK","CHEST","WRIST","LEGS","FEET","FINGER_1","FINGER_2","MAIN_HAND","OFF_HAND"];
+/* slots donde puede caer la pieza de tier (set de clase) */
+const TIER_SLOTS = ["HEAD","SHOULDER","CHEST","HANDS","LEGS"];
+const GEAR_SLOT_ORDER = [["HEAD","Cabeza"],["NECK","Cuello"],["SHOULDER","Hombros"],["BACK","Espalda"],["CHEST","Pecho"],["WRIST","Muñecas"],["HANDS","Manos"],["WAIST","Cintura"],["LEGS","Piernas"],["FEET","Pies"],["FINGER_1","Anillo 1"],["FINGER_2","Anillo 2"],["TRINKET_1","Abalorio 1"],["TRINKET_2","Abalorio 2"],["MAIN_HAND","Main hand"],["OFF_HAND","Off hand"]];
+const SECONDARY_STATS = [["CRIT_RATING","Crit"],["HASTE_RATING","Haste"],["MASTERY_RATING","Mast"],["VERSATILITY","Vers"]];
+const DIFF_RANK = { MYTHIC:4, HEROIC:3, NORMAL:2, LFR:1, RAID_FINDER:1 };
+const DIFF_LETTER = { MYTHIC:"M", HEROIC:"H", NORMAL:"N", LFR:"L", RAID_FINDER:"L" };
+const DIFF_COLOR = { MYTHIC:"var(--purple)", HEROIC:"var(--blue)", NORMAL:"var(--ok)", LFR:"var(--muted)", RAID_FINDER:"var(--muted)" };
 
 /* capacidades por rol */
 const CAP = {
@@ -357,6 +406,8 @@ const CAP = {
 
 let state={ weeks:[], current:null };
 let users=[], settings={ require_login:false }, auditLog=[];
+let characters=[], characterProgress=[], realms=[];
+let progView='general', progSearch='', progClass='all', progRole='all', progSort={col:'ilvl',dir:-1};
 let session = JSON.parse(localStorage.getItem('pt_session')||'null');
 let view='semana', editingId=null, lastSig="", creating=false, forceLogin=false;
 let audFilter={ raid:'all', status:'all', q:'', period:'all', from:'', to:'' };
@@ -406,8 +457,9 @@ async function fetchAll(){
   weeks.forEach(w=>{ w.slots=w.slots||blankSlots(); w.sales=sales.filter(s=>s.week_id===w.id); });
   state.weeks=weeks; users=us||[]; settings=Object.assign({require_login:false,show_admin_activity:false},(st&&st[0])||{}); auditLog=(al||[]).sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
   if(!state.current||!state.weeks.find(w=>w.id===state.current)) state.current=state.weeks.length?state.weeks[state.weeks.length-1].id:null;
+  try{ const [ch,cp,rm]=await Promise.all([ sbSel('characters'), sbSel('character_progress'), sbSel('wow_realms') ]); characters=ch||[]; characterProgress=cp||[]; realms=rm||[]; }catch(e){ characters=[]; characterProgress=[]; realms=[]; }
 }
-function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, auditLog.length]); }
+function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok])]); }
 async function refresh(toastOnChange){
   try{ await fetchAll(); clearError(); setLive('ok','en vivo');
     if(session){ const u=users.find(x=>x.username===session.username); if(!u){ doLogout(true); return; } if(u.role!==session.role){ session.role=u.role; localStorage.setItem('pt_session',JSON.stringify(session)); } }
@@ -457,7 +509,47 @@ function gate(){
 }
 
 /* ============================================================ RENDER ============================================================ */
-function visibleTabs(){ const t=[['semana','Semana'],['calendario','Calendario']]; if(cap('viewAudit')) t.push(['auditoria','Auditoría']); if(cap('manageUsers')) t.push(['usuarios','Usuarios']); return t; }
+function visibleTabs(){ const t=[['semana','Semana'],['calendario','Calendario']]; if(cap('viewAudit')){ t.push(['progreso','Progreso'],['resumen','Resumen'],['roster','Roster'],['auditoria','Auditoría']); } if(cap('manageUsers')) t.push(['usuarios','Usuarios']); return t; }
+
+/* ---------- calculo: Great Vault, encantamientos, gemas ---------- */
+function vaultMplusSlots(bestRuns){ const n=(bestRuns||[]).length; if(n>=8) return 3; if(n>=4) return 2; if(n>=1) return 1; return 0; }
+function vaultRaidSlots(killedThisWeek){
+  const seen=new Set();
+  Object.entries(killedThisWeek||{}).forEach(([inst,diffs])=>{ Object.values(diffs).forEach(bosses=> bosses.forEach(b=> seen.add(inst+'::'+b))); });
+  const n=seen.size; if(n>=6) return 3; if(n>=4) return 2; if(n>=2) return 1; return 0;
+}
+function gearGaps(gear){
+  let missingEnchant=0, missingGem=0, socketedGem=0;
+  (gear||[]).forEach(item=>{
+    const slot=item.slot && item.slot.type;
+    if(slot && ENCHANTABLE_SLOTS.includes(slot) && !(item.enchantments && item.enchantments.length)) missingEnchant++;
+    (item.sockets||[]).forEach(s=>{ if(s.item) socketedGem++; else missingGem++; });
+  });
+  return { missingEnchant, missingGem, socketedGem };
+}
+function gearBySlot(gear){ const m={}; (gear||[]).forEach(it=>{ if(it.slot&&it.slot.type) m[it.slot.type]=it; }); return m; }
+function itemIlvl(it){ return it && it.ilvl ? it.ilvl.value : (it&&it.level?it.level.value:null); }
+/* piezas de tier: por cada slot de tier, la pieza equipada trae un set.item_set */
+function tierInfo(gear){ const bySlot=gearBySlot(gear); let count=0; const slots={}; TIER_SLOTS.forEach(s=>{ const it=bySlot[s]; const isTier=!!(it&&it.set&&it.set.item_set); slots[s]= isTier ? itemIlvl(it) : null; if(isTier) count++; }); return { count, slots }; }
+/* distribución de stats secundarios (% del total), sumando todo el equipo */
+function statDist(gear){ const sums={}; let tot=0; (gear||[]).forEach(it=>(it.stats||[]).forEach(s=>{ const t=s.type&&s.type.type; if(SECONDARY_STATS.find(x=>x[0]===t)){ sums[t]=(sums[t]||0)+(s.value||0); tot+=s.value||0; } })); const pct={}; SECONDARY_STATS.forEach(([k])=>{ pct[k]= tot? Math.round((sums[k]||0)/tot*100):0; }); return pct; }
+/* grilla de encantamientos: por slot encantable, true=tiene, false=falta, null=slot vacío */
+function enchantGrid(gear){ const bySlot=gearBySlot(gear); const g={}; ENCHANTABLE_SLOTS.forEach(s=>{ const it=bySlot[s]; g[s]= it ? !!(it.enchantments&&it.enchantments.length) : null; }); return g; }
+/* opciones de bóveda por slot: M+ = nivel de key (1ª/4ª/8ª más alta); raid = dificultad del 2º/4º/6º jefe */
+function vaultMplusDetail(bestRuns){ const runs=[...(bestRuns||[])].map(r=>r.keystone_level||0).sort((a,b)=>b-a); return [runs[0]??null, runs[3]??null, runs[7]??null]; }
+function vaultRaidDetail(killed){ const diffs=[]; Object.values(killed||{}).forEach(byDiff=> Object.entries(byDiff).forEach(([d,bosses])=> bosses.forEach(()=> diffs.push(d)))); diffs.sort((a,b)=>(DIFF_RANK[b]||0)-(DIFF_RANK[a]||0)); return [diffs[1]||null, diffs[3]||null, diffs[5]||null]; }
+function charStats(ch){
+  const p=characterProgress.find(x=>x.character_id===ch.id)||{};
+  const killed=(p.raid_progress&&p.raid_progress._killed_this_week)||{};
+  const gaps=gearGaps(p.gear);
+  return { ch, p, killed,
+    mplusRuns:(p.mythic_best_runs||[]).length,
+    vaultM:vaultMplusSlots(p.mythic_best_runs),
+    vaultR:vaultRaidSlots(killed),
+    tier:tierInfo(p.gear),
+    ...gaps
+  };
+}
 function renderUserArea(){
   const a=document.getElementById('userArea');
   if(session){ a.innerHTML=`<div class="userchip" id="uchip"><span class="nm">${esc(session.username)}</span><span class="rbadge ${role()}">${ROLE_LABEL[role()]}</span></div>`;
@@ -475,8 +567,292 @@ function render(){
   document.getElementById('copyVacAll').style.display = view==='semana' ? '' : 'none';
   if(view==='semana') renderSemana();
   else if(view==='calendario') renderCalendario();
+  else if(view==='progreso') renderProgreso();
+  else if(view==='resumen') renderResumen();
+  else if(view==='roster') renderRosterComp();
   else if(view==='auditoria') renderAuditoria();
   else if(view==='usuarios') renderUsuarios();
+}
+
+/* ---------- PROGRESO (equipo / M+ / raid, vía Battle.net) ---------- */
+const PROG_VIEWS = [['general','General'],['gear','Equipo por slot'],['tier','Piezas de tier'],['enchants','Encantamientos'],['gems','Gemas'],['stats','Distribución de stats'],['vault','Bóveda']];
+function renderProgreso(){
+  const c=document.getElementById('content');
+  const isAdmin=cap('manageUsers');
+  if(!characters.length){
+    c.innerHTML='<div class="empty" style="padding:60px"><b>Sin datos todavía</b>Corré la sincronización (supabase/functions/sync-characters) para traer equipo, Mythic+ y progreso de raid desde Battle.net.'
+      +(isAdmin?' O agregá el primer personaje del roster con el botón de abajo.':'')+'</div>';
+    if(isAdmin){ c.innerHTML+=`<div class="actions" style="margin-top:10px"><button class="btn primary" id="newChar">+ Personaje</button></div>`; document.getElementById('newChar').onclick=openNewChar; }
+    return;
+  }
+  const usedClasses=[...new Set(characters.filter(ch=>ch.class).map(ch=>ch.class))].sort();
+  c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Progreso del roster</div>${isAdmin?'<div class="actions"><button class="btn primary" id="newChar">+ Personaje</button></div>':''}</div>
+    <div class="audbar">
+      <select id="prog_view">${PROG_VIEWS.map(([v,l])=>`<option value="${v}" ${progView===v?'selected':''}>${l}</option>`).join('')}</select>
+      <input type="text" id="prog_search" placeholder="Buscar por nombre, clase o rol…" value="${esc(progSearch)}" autocomplete="off">
+      <select id="prog_class"><option value="all">Todas las clases</option>${usedClasses.map(cl=>`<option value="${esc(cl)}" ${progClass===cl?'selected':''}>${esc(cl)}</option>`).join('')}</select>
+      <select id="prog_role"><option value="all">Todos los roles</option>${Object.entries(CHAR_ROLE_LABEL).map(([r,l])=>`<option value="${r}" ${progRole===r?'selected':''}>${l}</option>`).join('')}</select>
+      <span class="spacer"></span>
+      <span class="live" id="prog_count"></span>
+    </div>
+    <div id="prog_table"></div>`;
+  if(isAdmin) document.getElementById('newChar').onclick=openNewChar;
+  const vsel=document.getElementById('prog_view'); vsel.onchange=()=>{ progView=vsel.value; renderProgTable(); };
+  const search=document.getElementById('prog_search'); search.oninput=()=>{ progSearch=search.value; renderProgTable(); };
+  const csel=document.getElementById('prog_class'); csel.onchange=()=>{ progClass=csel.value; renderProgTable(); };
+  const rsel=document.getElementById('prog_role'); rsel.onchange=()=>{ progRole=rsel.value; renderProgTable(); };
+  renderProgTable();
+}
+function progFilteredRows(){
+  const isAdmin=cap('manageUsers');
+  const q=progSearch.trim().toLowerCase();
+  return characters.filter(ch=>isAdmin||ch.active!==false)
+    .filter(ch=> progClass==='all' || ch.class===progClass)
+    .filter(ch=> progRole==='all' || ch.role===progRole)
+    .filter(ch=>{ if(!q) return true; const hay=[ch.name, ch.class||'', CHAR_ROLE_LABEL[ch.role]||ch.role].join(' ').toLowerCase(); return hay.includes(q); })
+    .map(ch=>charStats(ch));
+}
+function sortRows(rows, valueFn){ const d=progSort.dir; return [...rows].sort((a,b)=>{ const va=valueFn(a)??-Infinity, vb=valueFn(b)??-Infinity; if(va<vb) return -d; if(va>vb) return d; return 0; }); }
+function nameCell(r){ return `<td class="classcell" style="--cc:${CLASS_COLOR[r.ch.class]||''}"><span class="classrow">${classBadge(r.ch.class)}<b style="color:var(--cc)">${esc(r.ch.name)}</b></span></td>`; }
+function renderProgTable(){
+  const wrap=document.getElementById('prog_table'); if(!wrap) return;
+  const isAdmin=cap('manageUsers');
+  let rows=progFilteredRows();
+  const cnt=document.getElementById('prog_count'); if(cnt) cnt.textContent=rows.length+' de '+characters.filter(ch=>isAdmin||ch.active!==false).length;
+  if(!rows.length){ wrap.innerHTML='<div class="empty" style="padding:40px">Ningún personaje coincide con el filtro.</div>'; return; }
+  if(progView==='gear') return void(wrap.innerHTML=progGearView(rows));
+  if(progView==='tier') return void(wrap.innerHTML=progTierView(rows));
+  if(progView==='enchants') return void(wrap.innerHTML=progEnchantView(rows));
+  if(progView==='gems') return void(wrap.innerHTML=progGemView(rows));
+  if(progView==='stats') return void(wrap.innerHTML=progStatView(rows));
+  if(progView==='vault') return void(wrap.innerHTML=progVaultView(rows));
+  wrap.innerHTML=progGeneralView(rows, isAdmin);
+  if(isAdmin){
+    wrap.querySelectorAll('[data-editid]').forEach(b=> b.onclick=()=>openEditChar(b.dataset.editid));
+    wrap.querySelectorAll('[data-toggleid]').forEach(b=> b.onclick=()=>toggleCharActive(b.dataset.toggleid));
+  }
+}
+function sortHead(label, col, valueFn){ const on=progSort.col===col; const arrow=on?(progSort.dir<0?' ▾':' ▴'):''; return `<th class="sorth" data-col="${col}" style="cursor:pointer; white-space:nowrap">${label}${arrow}</th>`; }
+function wireSort(wrap, cols){ wrap.querySelectorAll('.sorth').forEach(th=> th.onclick=()=>{ const col=th.dataset.col; if(progSort.col===col) progSort.dir*=-1; else progSort={col,dir:-1}; renderProgTable(); }); }
+function progGeneralView(rows, isAdmin){
+  const valById={ name:r=>r.ch.name, ilvl:r=>r.p.equipped_ilvl, mrating:r=>r.p.mythic_rating, mweek:r=>r.mplusRuns, vaultm:r=>r.vaultM, vaultr:r=>r.vaultR, gaps:r=>r.missingEnchant+r.missingGem };
+  rows=sortRows(rows, valById[progSort.col]||valById.ilvl);
+  let html=`<div class="tablewrap"><table class="utable"><thead><tr>
+    ${sortHead('Personaje','name')}<th>Clase</th><th>Rol</th>${sortHead('ilvl','ilvl')}${sortHead('M+ Rating','mrating')}${sortHead('M+ semana','mweek')}${sortHead('Vault M+','vaultm')}${sortHead('Vault Raid','vaultr')}${sortHead('Encant./Gemas','gaps')}<th>Sync</th>${isAdmin?'<th></th>':''}
+  </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const stale=!r.p.updated_at, failed=r.p.synced_ok===false, inactive=r.ch.active===false;
+    const syncCell = inactive ? '<span class="badge reservado">inactivo</span>' : stale ? '<span class="badge reservado">sin sync</span>' : failed ? `<span class="badge reservado" title="${esc(r.p.last_error||'')}">error</span>` : fmtDateTime(r.p.updated_at);
+    const gapsWarn=(r.missingEnchant+r.missingGem)>0;
+    html+=`<tr style="${inactive?'opacity:.5':''}">${nameCell(r)}<td>${classTag(r.ch.class)}</td><td>${roleTag(r.ch.role)}</td>
+      <td class="mono">${r.p.equipped_ilvl?Number(r.p.equipped_ilvl).toFixed(1):'—'}</td>
+      <td class="mono">${r.p.mythic_rating?Math.round(r.p.mythic_rating):'—'}</td>
+      <td class="mono">${r.mplusRuns}</td>
+      <td class="mono" title="Slots por M+ (1/4/8 corridas)">${r.vaultM}/3</td>
+      <td class="mono" title="Slots por raid (2/4/6 jefes)">${r.vaultR}/3</td>
+      <td class="mono" style="${gapsWarn?'color:var(--warn)':''}">${r.missingEnchant} / ${r.missingGem}</td>
+      <td>${syncCell}</td>
+      ${isAdmin?`<td style="white-space:nowrap"><span class="miniop edit" data-editid="${r.ch.id}">Editar</span> <span class="miniop ${inactive?'':'del'}" data-toggleid="${r.ch.id}">${inactive?'Reactivar':'Dar de baja'}</span></td>`:''}
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  setTimeout(()=>wireSort(document.getElementById('prog_table')),0);
+  return html;
+}
+function progGearView(rows){
+  rows=sortRows(rows, r=>r.p.equipped_ilvl);
+  let html=`<div class="tablewrap"><table class="utable"><thead><tr><th>Personaje</th><th class="mono">ilvl</th>${GEAR_SLOT_ORDER.map(([,l])=>`<th style="font-size:9.5px">${l}</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach(r=>{ const bySlot=gearBySlot(r.p.gear);
+    html+=`<tr>${nameCell(r)}<td class="mono" style="color:var(--gold)">${r.p.equipped_ilvl?Number(r.p.equipped_ilvl).toFixed(0):'—'}</td>`;
+    GEAR_SLOT_ORDER.forEach(([s])=>{ const it=bySlot[s]; const v=itemIlvl(it); html+=`<td class="mono" title="${it?esc(it.name||''):''}">${v||'<span style="color:var(--muted-2)">—</span>'}</td>`; });
+    html+='</tr>';
+  });
+  return html+'</tbody></table></div>';
+}
+function progTierView(rows){
+  rows=sortRows(rows, r=>r.tier.count);
+  let html=`<div class="tablewrap"><table class="utable"><thead><tr><th>Personaje</th><th>Set</th>${TIER_SLOTS.map(s=>`<th>${({HEAD:'Cabeza',SHOULDER:'Hombros',CHEST:'Pecho',HANDS:'Manos',LEGS:'Piernas'})[s]}</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach(r=>{ const t=r.tier;
+    html+=`<tr>${nameCell(r)}<td><b class="mono" style="color:${t.count>=4?'var(--ok)':t.count>=2?'var(--warn)':'var(--muted)'}">${t.count} / 5</b></td>`;
+    TIER_SLOTS.forEach(s=>{ const v=t.slots[s]; html+=`<td class="mono">${v?`<span style="color:var(--blue)">${v}</span>`:'<span style="color:var(--muted-2)">·</span>'}</td>`; });
+    html+='</tr>';
+  });
+  return html+'</tbody></table></div>';
+}
+function progEnchantView(rows){
+  rows=sortRows(rows, r=>-r.missingEnchant);
+  let html=`<div class="tablewrap"><table class="utable"><thead><tr><th>Personaje</th><th class="mono">Faltan</th>${ENCHANTABLE_SLOTS.map(s=>`<th style="font-size:9.5px">${({HEAD:'Cab',SHOULDER:'Hom',BACK:'Esp',CHEST:'Pec',WRIST:'Muñ',LEGS:'Pie',FEET:'Pies',FINGER_1:'An1',FINGER_2:'An2',MAIN_HAND:'MH',OFF_HAND:'OH'})[s]}</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach(r=>{ const g=enchantGrid(r.p.gear);
+    html+=`<tr>${nameCell(r)}<td class="mono" style="${r.missingEnchant?'color:var(--warn)':'color:var(--muted-2)'}">${r.missingEnchant}</td>`;
+    ENCHANTABLE_SLOTS.forEach(s=>{ const v=g[s]; html+=`<td>${v===true?'<span style="color:var(--ok)">✓</span>':v===false?'<span style="color:var(--rose)">✕</span>':'<span style="color:var(--muted-2)">·</span>'}</td>`; });
+    html+='</tr>';
+  });
+  return html+'</tbody></table></div>';
+}
+function progGemView(rows){
+  rows=sortRows(rows, r=>-r.missingGem);
+  let html=`<div class="tablewrap"><table class="utable"><thead><tr><th>Personaje</th><th class="mono">Gemas puestas</th><th class="mono">Sockets vacíos</th></tr></thead><tbody>`;
+  rows.forEach(r=>{ html+=`<tr>${nameCell(r)}<td class="mono" style="color:var(--ok)">${r.socketedGem}</td><td class="mono" style="${r.missingGem?'color:var(--warn)':'color:var(--muted-2)'}">${r.missingGem}</td></tr>`; });
+  return html+'</tbody></table></div>';
+}
+function progStatView(rows){
+  rows=sortRows(rows, r=>r.p.equipped_ilvl);
+  let html=`<div class="tablewrap"><table class="utable"><thead><tr><th>Personaje</th>${SECONDARY_STATS.map(([,l])=>`<th class="mono">${l} %</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach(r=>{ const d=statDist(r.p.gear);
+    html+=`<tr>${nameCell(r)}`;
+    SECONDARY_STATS.forEach(([k])=>{ const v=d[k]; html+=`<td class="mono">${v?v+'%':'<span style="color:var(--muted-2)">—</span>'}</td>`; });
+    html+='</tr>';
+  });
+  return html+'</tbody></table></div>';
+}
+function progVaultView(rows){
+  rows=sortRows(rows, r=>r.vaultM+r.vaultR);
+  const diffTag=d=> d?`<span class="mono" style="color:${DIFF_COLOR[d]||'var(--muted)'}">${DIFF_LETTER[d]||d}</span>`:'<span style="color:var(--muted-2)">·</span>';
+  const keyTag=k=> (k||k===0)?`<span class="mono" style="color:var(--blue)">+${k}</span>`:'<span style="color:var(--muted-2)">·</span>';
+  let html=`<div class="tablewrap"><table class="utable"><thead><tr><th rowspan="2">Personaje</th><th colspan="3" style="text-align:center; border-bottom:1px solid var(--line)">Mazmorra (nivel de key)</th><th colspan="3" style="text-align:center; border-bottom:1px solid var(--line)">Raid (dificultad)</th></tr>
+    <tr><th class="mono">1</th><th class="mono">2</th><th class="mono">3</th><th class="mono">1</th><th class="mono">2</th><th class="mono">3</th></tr></thead><tbody>`;
+  rows.forEach(r=>{ const m=vaultMplusDetail(r.p.mythic_best_runs), rd=vaultRaidDetail(r.killed);
+    html+=`<tr>${nameCell(r)}<td>${keyTag(m[0])}</td><td>${keyTag(m[1])}</td><td>${keyTag(m[2])}</td><td>${diffTag(rd[0])}</td><td>${diffTag(rd[1])}</td><td>${diffTag(rd[2])}</td></tr>`;
+  });
+  return html+'</tbody></table></div><p class="hint" style="margin-top:10px">Mazmorra: nivel de la 1ª, 4ª y 8ª key más alta de la semana. Raid: dificultad del 2º, 4º y 6º jefe. El ítem que da cada slot depende del nivel/dificultad (M=Mítico, H=Héroico, N=Normal).</p>';
+}
+
+/* ---------- RESUMEN (stat boxes + rankings) ---------- */
+function rankTable(title, rows, valueFn, fmtFn){
+  const sorted=[...rows].sort((a,b)=>(valueFn(b)??-Infinity)-(valueFn(a)??-Infinity));
+  const body=sorted.map((r,i)=>`<div class="rankrow"><span class="rk">${i+1}</span><span class="nm">${classBadge(r.ch.class)}<span class="classname" style="color:${CLASS_COLOR[r.ch.class]||'var(--text)'}">${esc(r.ch.name)}</span></span><span class="vl">${fmtFn(r)}</span></div>`).join('');
+  return `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(title)}</h2></div>
+    <div class="pbody">${body||'<div class="empty">Sin datos</div>'}</div></div>`;
+}
+function renderResumen(){
+  const c=document.getElementById('content');
+  const active=characters.filter(ch=>ch.active!==false);
+  if(!active.length){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin datos todavía</b>Sincronizá el roster primero (pestaña Progreso).</div>'; return; }
+  const rows=active.map(ch=>charStats(ch));
+  const totalMembers=active.length;
+  const totalWeeklyDungeons=rows.reduce((a,r)=>a+r.mplusRuns,0);
+  const totalMissingGear=rows.reduce((a,r)=>a+r.missingEnchant+r.missingGem,0);
+  const totalVaultSlots=rows.reduce((a,r)=>a+r.vaultM+r.vaultR,0);
+  const missingVault=totalMembers*6-totalVaultSlots;
+  const tierColor=n=> n>=4?'var(--ok)':n>=2?'var(--gold)':'var(--muted)';
+  const html=`<div class="sectitle">Resumen de la guild · esta semana</div>
+    <div class="summary" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+      <div class="stat"><div class="k">Miembros</div><div class="v blue">${totalMembers}</div></div>
+      <div class="stat"><div class="k">Mazmorras M+ esta semana</div><div class="v">${totalWeeklyDungeons}</div></div>
+      <div class="stat"><div class="k">Encant./gemas faltantes</div><div class="v warn">${totalMissingGear}</div></div>
+      <div class="stat"><div class="k">Opciones de bóveda faltantes</div><div class="v ${missingVault>0?'warn':'ok'}">${missingVault}</div></div>
+    </div>
+    <div class="raids" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); margin-top:18px; align-items:start">
+      ${rankTable('Item Level', rows, r=>r.p.equipped_ilvl, r=>r.p.equipped_ilvl?`<b style="color:var(--gold)">${Number(r.p.equipped_ilvl).toFixed(2)}</b>`:'—')}
+      ${rankTable('Piezas de tier', rows, r=>r.tier.count, r=>`<b style="color:${tierColor(r.tier.count)}">${r.tier.count}/5</b>`)}
+      ${rankTable('Mazmorras M+ hechas', rows, r=>r.mplusRuns, r=>r.mplusRuns)}
+      ${rankTable('Opciones de bóveda', rows, r=>r.vaultM+r.vaultR, r=>`${r.vaultM+r.vaultR}<span style="color:var(--muted-2)">/6</span>`)}
+      ${rankTable('Mythic+ Rating', rows, r=>r.p.mythic_rating, r=>r.p.mythic_rating?`<b style="color:var(--blue)">${Math.round(r.p.mythic_rating)}</b>`:'—')}
+    </div>`;
+  c.innerHTML=html;
+}
+
+/* ---------- ROSTER (composición por rol / clase / armadura) ---------- */
+function renderRosterComp(){
+  const c=document.getElementById('content');
+  const active=characters.filter(ch=>ch.active!==false);
+  if(!active.length){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin personajes todavía</b></div>'; return; }
+  const byRole={ tank:[], healer:[], ranged:[], melee:[] };
+  active.forEach(ch=> (byRole[ch.role]||(byRole[ch.role]=[])).push(ch));
+  const classCounts={}; active.forEach(ch=> classCounts[ch.class]=(classCounts[ch.class]||0)+1);
+  const armorCounts={ Cloth:0, Leather:0, Mail:0, Plate:0 };
+  active.forEach(ch=>{ const a=CLASS_ARMOR[ch.class]; if(a) armorCounts[a]++; });
+  const roleCol=(key,label)=>`<div class="panel"><div class="phead"><h2>${roleBadge(key)}${label} (${(byRole[key]||[]).length})</h2></div>
+    <div class="pbody">${(byRole[key]||[]).map(ch=>`<div class="boss"><div class="bn classrow">${classBadge(ch.class)}<div><div class="nm" style="color:${CLASS_COLOR[ch.class]||''}">${esc(ch.name)}</div><div class="meta">${esc(ch.class)}</div></div></div></div>`).join('')||'<div class="empty">—</div>'}</div></div>`;
+  const html=`<div class="sectitle">Composición del roster</div>
+    <div class="raids" style="grid-template-columns:repeat(4,1fr)">
+      ${roleCol('tank','Tanks')}
+      ${roleCol('healer','Healers')}
+      ${roleCol('ranged','Ranged')}
+      ${roleCol('melee','Melee')}
+    </div>
+    <div class="raids" style="grid-template-columns:1fr 1fr; margin-top:18px">
+      <div class="panel"><div class="phead"><h2><span class="dia"></span>Clases</h2></div>
+        <div class="pbody">${Object.entries(classCounts).sort((a,b)=>b[1]-a[1]).map(([cl,n])=>`<div class="destrow">${classTag(cl)}<span class="g">${n}</span></div>`).join('')}</div></div>
+      <div class="panel"><div class="phead"><h2><span class="dia"></span>Tipos de armadura</h2></div>
+        <div class="pbody">${Object.entries(armorCounts).map(([a,n])=>`<div class="destrow"><span>${a}</span><span class="g">${n}</span></div>`).join('')}
+        <div class="destrow"><span><b>Total</b></span><span class="g">${active.length}</span></div></div></div>
+    </div>`;
+  c.innerHTML=html;
+}
+function realmLabel(region,slug){
+  if(!region||!slug) return '';
+  const r=realms.find(x=>x.region===region && x.slug===slug);
+  return region.toUpperCase()+'-'+(r?r.name:slug);
+}
+function charFormFields(ch){
+  const realmDisp = ch ? realmLabel(ch.region,ch.realm_slug) : '';
+  return `<div class="field"><label>Nombre del personaje</label><input type="text" id="ch_name" value="${ch?esc(ch.name):''}"></div>
+    <div class="field" style="position:relative">
+      <label>Servidor</label>
+      <input type="text" id="ch_realm_search" placeholder="Escribí para buscar (ej. quel)" autocomplete="off" value="${esc(realmDisp)}">
+      <input type="hidden" id="ch_realm_slug" value="${ch?esc(ch.realm_slug||''):''}">
+      <input type="hidden" id="ch_realm_region" value="${ch?esc(ch.region||''):''}">
+      <div class="menu" id="ch_realm_list" style="position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:220px; overflow:auto"></div>
+    </div>
+    <div class="field"><label>Rol</label><select id="ch_role">${Object.keys(CHAR_ROLE_LABEL).map(r=>`<option value="${r}" ${ch&&ch.role===r?'selected':''}>${CHAR_ROLE_LABEL[r]}</option>`).join('')}</select></div>
+    <p class="hint">La clase (${ch?esc(ch.class||'todavía sin sincronizar'):'se completa sola'}) sale de Battle.net en la próxima sincronización — no hace falta elegirla acá.</p>
+    <div class="err" id="ch_err"></div>`;
+}
+function wireRealmPicker(){
+  const inp=document.getElementById('ch_realm_search');
+  const list=document.getElementById('ch_realm_list');
+  const hSlug=document.getElementById('ch_realm_slug');
+  const hRegion=document.getElementById('ch_realm_region');
+  function renderList(){
+    const q=inp.value.trim().toLowerCase();
+    if(q.length<2){ list.classList.remove('on'); list.innerHTML=''; return; }
+    const matches=realms.filter(r=> r.name.toLowerCase().includes(q) || r.slug.includes(q)).slice(0,12);
+    if(!matches.length){ list.innerHTML='<div class="mi head">Sin resultados</div>'; list.classList.add('on'); return; }
+    list.innerHTML=matches.map(r=>`<div class="mi" data-region="${r.region}" data-slug="${esc(r.slug)}">${r.region.toUpperCase()}-${esc(r.name)}</div>`).join('');
+    list.classList.add('on');
+    list.querySelectorAll('.mi[data-slug]').forEach(mi=> mi.onclick=()=>{
+      hSlug.value=mi.dataset.slug; hRegion.value=mi.dataset.region; inp.value=mi.textContent;
+      list.classList.remove('on'); list.innerHTML='';
+    });
+  }
+  inp.oninput=()=>{ hSlug.value=''; hRegion.value=''; renderList(); };
+  inp.onfocus=()=>{ if(inp.value.trim().length>=2) renderList(); };
+  document.addEventListener('click', function outside(e){ if(!e.target.closest('#ch_realm_search') && !e.target.closest('#ch_realm_list')) list.classList.remove('on'); });
+}
+function openNewChar(){
+  openM2('Nuevo personaje', charFormFields(null), async()=>{
+    const name=document.getElementById('ch_name').value.trim();
+    const slug=document.getElementById('ch_realm_slug').value, region=document.getElementById('ch_realm_region').value;
+    const rl=document.getElementById('ch_role').value;
+    const err=document.getElementById('ch_err'); err.textContent='';
+    if(!name){ err.textContent='Poné el nombre del personaje.'; return false; }
+    if(!slug||!region){ err.textContent='Elegí un servidor de la lista (no vale escribirlo libre).'; return false; }
+    if(characters.find(x=>x.name.toLowerCase()===name.toLowerCase() && x.realm_slug===slug)){ err.textContent='Ya existe ese personaje en ese realm.'; return false; }
+    try{ await sbIns('characters',{ name, role:rl, realm_slug:slug, region, active:true }); logAction('crear_personaje','character',name,{target:name}); await refresh(); toast('Personaje agregado — la clase llega en la próxima sincronización'); }
+    catch(e){ err.textContent='No se pudo crear.'; return false; }
+  });
+  wireRealmPicker();
+}
+function openEditChar(idv){
+  const ch=characters.find(x=>x.id===idv); if(!ch) return;
+  openM2('Editar · '+ch.name, charFormFields(ch), async()=>{
+    const name=document.getElementById('ch_name').value.trim();
+    const slug=document.getElementById('ch_realm_slug').value||ch.realm_slug, region=document.getElementById('ch_realm_region').value||ch.region;
+    const rl=document.getElementById('ch_role').value;
+    const err=document.getElementById('ch_err'); err.textContent='';
+    if(!name){ err.textContent='Poné el nombre del personaje.'; return false; }
+    try{ await sbUpd('characters',ch.id,{ name, role:rl, realm_slug:slug, region }); logAction('editar_personaje','character',ch.id,{target:name}); await refresh(); toast('Personaje actualizado'); }
+    catch(e){ err.textContent='No se pudo guardar.'; return false; }
+  });
+  wireRealmPicker();
+}
+async function toggleCharActive(idv){
+  const ch=characters.find(x=>x.id===idv); if(!ch) return;
+  const nv=!(ch.active!==false);
+  if(!confirm((nv?'¿Reactivar':'¿Dar de baja')+' a "'+ch.name+'"?')) return;
+  try{ await sbUpd('characters',ch.id,{active:nv}); logAction(nv?'reactivar_personaje':'dar_baja_personaje','character',ch.id,{target:ch.name}); await refresh(); toast(nv?'Reactivado':'Dado de baja'); }
+  catch(e){ toast('No se pudo'); }
 }
 
 /* ---------- SEMANA ---------- */
