@@ -301,4 +301,4 @@ Log de colaboración entre sesiones (Claude Code / Codex / otras). Mantener conc
 
 - Pedido: Nicolas pidio subir el trabajo a GitHub y pregunto si GitHub permite tener mas de un sitio web publicado.
 - Acciones: antes de commitear se redacto del `COLLAB.md` el Client Secret de Battle.net que habia quedado documentado en texto literal; se verifico con `rg` que no quedara ese valor. Se corrieron los tests locales relevantes (`protocarries-raid-config`, `protocarries-summary`, `protocarries-roster-ui`, `protocarries-single-view`, `sync-characters-extra`, `inspect-wow-spells`) y parseo JS del `<script>` embebido.
-- Handoff: se prepara commit y push a `origin/main`. Si el push falla por autenticacion/red, correr desde esta carpeta `git push origin main`.
+- Resultado: se integro el commit remoto `9bb2d67` sin forzar, se resolvio el conflicto de `index.html` conservando la version local completa, y se subio `main` a GitHub con el commit `d7700e5`.
