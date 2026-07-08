@@ -1,0 +1,24 @@
+-- Corrige realm_slug real por personaje (la guild tiene gente de varios realms)
+update characters set realm_slug='quelthalas' where name='Akanthør';
+update characters set realm_slug='quelthalas' where name='Alainx';
+update characters set realm_slug='ragnaros' where name='Cïskul';
+update characters set realm_slug='quelthalas' where name='Deideideidei';
+update characters set realm_slug='stormrage' where name='Denisse';
+update characters set realm_slug='quelthalas' where name='Doñatotá';
+update characters set realm_slug='sargeras' where name='Exxé';
+update characters set realm_slug='quelthalas' where name='Foxwmulder';
+update characters set realm_slug='ragnaros' where name='Gambihitz';
+update characters set realm_slug='quelthalas' where name='Jarvo';
+update characters set realm_slug='ragnaros' where name='Jîm';
+update characters set realm_slug='quelthalas' where name='Khansos';
+update characters set realm_slug='ragnaros' where name='Koisand';
+update characters set realm_slug='ragnaros' where name='Mecrö';
+update characters set realm_slug='quelthalas' where name='Melox';
+update characters set realm_slug='sargeras' where name='Merengw';
+update characters set realm_slug='ragnaros' where name='Montréfe';
+update characters set realm_slug='quelthalas' where name='Nëitiri';
+update characters set realm_slug='sargeras' where name='Sukidruid';
+update characters set realm_slug='ragnaros' where name='Tidecaller';
+update characters set realm_slug='quelthalas' where name='Tokkï';
+update characters set realm_slug='ragnaros' where name='Viriviri';
+update characters set realm_slug='quelthalas' where name='Xduri';
