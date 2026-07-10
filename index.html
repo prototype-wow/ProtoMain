@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-W1+7cebAUGPcWjarNwH4hYRvjPm3Hgi6o4KTeFDzIpc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-b5fjWi+SyVkeuk5JEzaQR2xHhFKIR7s2Z5/gjRzY1Ok='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -678,7 +678,7 @@ function isActorAdmin(username){ const u=users.find(x=>x.username===username); r
 /* ---------- Supabase Edge gateway ---------- */
 const configured = ()=> !SUPABASE_URL.includes('TU-PROYECTO') && !SUPABASE_KEY.includes('TU-');
 const edgeHeaders = (withSession=false)=>{
-  const headers={ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json' };
+  const headers={ apikey:SUPABASE_KEY, 'Content-Type':'application/json' };
   if(withSession && session&&session.token) headers['x-pt-token']=session.token;
   return headers;
 };
