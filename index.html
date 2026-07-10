@@ -1,6 +1,9 @@
 <!-- PROTOTYPE · US-Quel'Thalas — Registro de Carries (multiusuario, roles, auditoría) -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-W1+7cebAUGPcWjarNwH4hYRvjPm3Hgi6o4KTeFDzIpc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -388,6 +391,83 @@
   .singleLinks a{display:block; padding:8px 10px; border:1px solid var(--line); border-radius:8px; color:var(--blue-2); text-decoration:none; font-size:12.5px; text-align:center; background:var(--bg)}
   .singleLinks a:hover{border-color:var(--blue); background:var(--bg-2)}
   .singleEmpty{color:var(--muted-2); font-size:12.5px; padding:8px 2px}
+  .rioHead{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+  .rioTabs{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:10px}
+  .rioTab{display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--muted); font-family:var(--font-body); font-weight:800; font-size:12px; cursor:pointer}
+  .rioTab.on{border-color:var(--blue); color:var(--text); background:rgba(0,155,219,.1)}
+  .rioScore{font-family:var(--font-mono); color:var(--purple); font-weight:800}
+  .rioDungeon{display:flex; align-items:center; gap:8px; min-width:0; color:var(--text); font-weight:750}
+  .rioDungeon img{width:22px; height:22px; border-radius:5px; border:1px solid var(--line); background:var(--bg-3); flex:0 0 auto}
+  .rioDungeon span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .rioDungeon a{color:var(--text); text-decoration:none}
+  .rioDungeon a:hover{color:var(--blue-2); text-decoration:underline}
+  .rioLevel{font-family:var(--font-mono); color:var(--gold); white-space:nowrap}
+  .rioMeta{margin-top:8px; color:var(--muted-2); font-size:11.5px}
+
+  .recruitBoard{display:grid; grid-template-columns:minmax(300px,.82fr) minmax(0,1.6fr); gap:16px; align-items:start}
+  .recruitTools{display:flex; gap:8px; flex-wrap:wrap; padding:12px 14px; border-bottom:1px solid var(--line-soft)}
+  .recruitTools input,.recruitTools select{min-width:130px; flex:1; padding:8px 10px; border-radius:9px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:12.5px}
+  .recruitRows{padding:8px}
+  .recruitRow{display:grid; grid-template-columns:32px minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px; border:1px solid transparent; border-radius:10px; cursor:pointer}
+  .recruitRow:hover,.recruitRow.on{background:var(--bg-2); border-color:var(--line)}
+  .recruitRow.on{border-color:var(--blue)}
+  .recruitAvatar{width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--bg-3); overflow:hidden; display:grid; place-items:center}
+  .recruitAvatar img{width:100%; height:100%; object-fit:cover}
+  .recruitName{min-width:0}
+  .recruitName b{display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13.5px; color:var(--cc,var(--text))}
+  .recruitName span{display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted-2); font-size:11px; margin-top:1px}
+  .recruitMeta{text-align:right; display:grid; gap:4px; justify-items:end}
+  .recruitStatus{font-family:var(--font-mono); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; padding:3px 7px; border-radius:999px; border:1px solid currentColor}
+  .recruitStatus.new{color:var(--blue)}
+  .recruitStatus.reviewing{color:var(--gold)}
+  .recruitStatus.accepted{color:var(--ok)}
+  .recruitStatus.declined{color:var(--rose)}
+  .recruitStatus.archived{color:var(--muted-2)}
+  .recruitAge{font-family:var(--font-mono); color:var(--muted-2); font-size:10.5px}
+  .recruitDetail .singleTop{grid-template-columns:minmax(0,1fr)}
+  .recruitDetail .singleHero{min-height:82px}
+  .recruitActions{display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end; padding:0 0 12px}
+  .recruitGrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px}
+  .recruitFull{margin-top:16px}
+  .recruitFull .singleGrid{grid-template-columns:minmax(320px,1fr) minmax(280px,.9fr) minmax(260px,.8fr)}
+  .recruitNote{white-space:pre-wrap; color:var(--muted); line-height:1.45}
+  .recruitMatch{display:inline-flex; align-items:center; gap:7px; color:var(--ok); font-family:var(--font-mono); font-size:11px}
+  @media(max-width:1180px){ .recruitBoard{grid-template-columns:1fr} .recruitFull .singleGrid{grid-template-columns:1fr 1fr} }
+  @media(max-width:760px){ .recruitGrid,.recruitFull .singleGrid{grid-template-columns:1fr} .recruitActions{justify-content:flex-start} }
+  .wclPanel{margin-bottom:0}
+  .wclHead{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 14px; border-bottom:1px solid var(--line-soft); background:linear-gradient(90deg,rgba(155,123,232,.16),transparent)}
+  .wclHead h2{margin:0; font-family:var(--font-display); font-size:13px; letter-spacing:.12em; text-transform:uppercase}
+  .wclControls{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  .wclControls select{max-width:158px; padding:7px 9px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-family:var(--font-body); font-weight:700; font-size:12px}
+  .wclKpis{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; padding:11px 14px 2px}
+  .wclKpi{border:1px solid var(--line-soft); border-radius:8px; background:var(--bg); padding:7px 8px; min-width:0}
+  .wclKpi span{display:block; color:var(--muted-2); font-size:8.8px; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .wclKpi b{display:block; margin-top:1px; font-family:var(--font-mono); font-size:14px; color:var(--blue); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .wclKpi b.green{color:var(--ok)} .wclKpi b.gold{color:var(--gold)} .wclKpi b.purple{color:var(--purple)}
+  .wclTable{width:100%; border-collapse:collapse; font-size:11.5px; min-width:0; table-layout:auto}
+  .wclTable th{background:var(--bg-2); border-bottom:1px solid var(--line); color:var(--muted-2); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; padding:8px 8px; text-align:right}
+  .wclTable th:first-child,.wclTable td:first-child{text-align:left}
+  .wclTable td{border-bottom:1px solid var(--line-soft); padding:7px 8px; text-align:right; font-family:var(--font-mono)}
+  .wclTable .boss{display:flex; align-items:center; gap:8px; padding:0; border-radius:0; font-family:var(--font-body); font-weight:700; color:var(--blue-2)}
+  .wclTable .bossIcon{width:22px; height:22px; border:1px solid var(--line); border-radius:4px; background:var(--bg-3); display:inline-grid; place-items:center; font-size:11px; color:var(--muted)}
+  .wclScore{font-weight:700}.wclScore.legendary{color:#e5cc80}.wclScore.pink{color:#e268a8}.wclScore.orange{color:#ff8000}.wclScore.purple{color:#a335ee}.wclScore.blue{color:#0070ff}.wclScore.green{color:#1eff00}.wclScore.gray{color:#666}
+  .wclAmount{color:#b8ff48}.wclRank{color:#b764ff}.wclMeta{padding:0 14px 12px; color:var(--muted-2); font-size:11.5px}
+  .progPanel .pbody{padding:7px 12px 12px}
+  .progSection{border-top:1px solid var(--line-soft); margin-top:6px}
+  .progSection:first-child{border-top:0; margin-top:0}
+  .progSecHead{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; min-height:18px; padding:6px 0 0; font-family:var(--font-mono); font-size:10px; line-height:1; letter-spacing:.08em; text-transform:uppercase}
+  .progSecHead b{color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .progSecHead span{color:var(--muted)}
+  .progTable{width:100%; border-collapse:collapse; table-layout:fixed; font-size:11.5px}
+  .progTable col:first-child{width:auto}.progTable col:nth-child(2){width:78px}.progTable col:nth-child(3){width:78px}
+  .progTable th{padding:0 5px 4px; text-align:right; color:var(--muted-2); font-family:var(--font-mono); font-size:8.5px; line-height:1.05; letter-spacing:.08em; text-transform:uppercase; border-bottom:1px solid var(--line-soft)}
+  .progTable th:first-child{text-align:left}
+  .progTable td{padding:5px 5px; border-bottom:1px solid var(--line-soft); vertical-align:middle}
+  .progTable tr:last-child td{border-bottom:0}
+  .progBoss{font-size:11.5px; font-weight:700; color:var(--text); line-height:1.15; overflow-wrap:anywhere}
+  .progDiff,.progKills{font-family:var(--font-mono); font-size:14px; line-height:1; font-weight:900; text-align:right}
+  .prog-m{color:#a335ee}.prog-h{color:#0070ff}.prog-n{color:#1eff00}.prog-l{color:#fff}.prog-none{color:#666}
+  @media(max-width:720px){ .wclKpis{grid-template-columns:1fr 1fr} .wclControls select{max-width:100%} }
   @media(max-width:1180px){ .singleGrid{grid-template-columns:1fr 1fr} .singleGrid>.singleStack:first-child{grid-column:1/-1} }
   @media(max-width:720px){ .singleTop,.singleGrid{grid-template-columns:1fr} .singleHero{align-items:flex-start; flex-direction:column} .singleHeroStats{justify-content:flex-start} .singleHeroStats .mini{text-align:left} }
   @media(max-width:1100px){
@@ -500,10 +580,10 @@
 /* ============================================================
    CONFIGURACIÓN
    ============================================================ */
+/* Estos dos valores identifican el backend público y son visibles por diseño en cualquier web.
+   No son credenciales privilegiadas. Los secretos reales viven solo en Supabase Edge Functions. */
 const SUPABASE_URL = "https://hjatxlvqytgkizcaopce.supabase.co";
 const SUPABASE_KEY = "sb_publishable_jgKmy1j1js3YiGsPlcervQ_TyaJx86P";
-const FIRST_ADMIN  = { username:"Admin", pass:"4943", role:"admin" }; // se crea solo la 1ª vez
-const SALT = "protoCarries::v2";
 /* ============================================================ */
 
 const RAIDS = {
@@ -573,18 +653,19 @@ function tierScore(t){ let sc=0; TIER_SLOTS.forEach(s=>{ const c=t.slots[s]; if(
 
 /* capacidades por rol */
 const CAP = {
-  basico:  { viewAudit:false, addSale:false, editAny:false, editOwn:false, delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageUsers:false },
-  cargador:{ viewAudit:false, addSale:true,  editAny:false, editOwn:true,  delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageUsers:false },
-  officer: { viewAudit:true,  addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageUsers:false },
-  admin:   { viewAudit:true,  addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageUsers:true }
+  basico:  { viewAudit:false, addSale:false, editAny:false, editOwn:false, delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageUsers:false, manageRecruits:false },
+  cargador:{ viewAudit:false, addSale:true,  editAny:false, editOwn:true,  delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageUsers:false, manageRecruits:false },
+  officer: { viewAudit:true,  addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageUsers:false, manageRecruits:true },
+  admin:   { viewAudit:true,  addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageUsers:true,  manageRecruits:true }
 };
 
 let state={ weeks:[], current:null };
 let users=[], settings={ require_login:false }, auditLog=[];
-let characters=[], characterProgress=[], realms=[], trackedAbilities=[];
+let characters=[], characterProgress=[], realms=[], trackedAbilities=[], wclRankings=[], wclZones=[], raiderProfiles=[];
+let recruits=[], recruitFilter={q:"",status:"open"}, recruitLoadError='', recruitPanelOpenId=''; let selectedRecruitId="";
 let progView='general', progSearch='', progClass='all', progRole='all', progSort={col:'ilvl',dir:-1};
-let singleCharId='';
-let session = JSON.parse(localStorage.getItem('pt_session')||'null');
+let singleCharId='', singleWclZone='46', singleWclMetric='dps', singleWclDifficulty='5', singleRioSpec='';
+let session = JSON.parse(sessionStorage.getItem('pt_secure_session')||'null');
 let view='semana', editingId=null, lastSig="", creating=false, forceLogin=false;
 let audFilter={ raid:'all', status:'all', q:'', period:'all', from:'', to:'' };
 
@@ -594,21 +675,43 @@ function canEditSale(s){ if(cap('editAny')) return true; if(cap('editOwn') && se
 const me = ()=> session ? session.username : 'invitado';
 function isActorAdmin(username){ const u=users.find(x=>x.username===username); return !!(u && u.role==='admin'); }
 
-/* ---------- Supabase ---------- */
+/* ---------- Supabase Edge gateway ---------- */
 const configured = ()=> !SUPABASE_URL.includes('TU-PROYECTO') && !SUPABASE_KEY.includes('TU-');
-const H = ()=>{ const h={ apikey:SUPABASE_KEY, 'Content-Type':'application/json' }; if(SUPABASE_KEY.startsWith('eyJ')) h.Authorization='Bearer '+SUPABASE_KEY; return h; };
-async function sb(path, opts={}){ const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{ ...opts, headers:{...H(),...(opts.headers||{})} }); if(!r.ok) throw new Error(r.status+' '+(await r.text())); return r.status===204?null:r.json(); }
-const sbSel=(t)=> sb(t+'?select=*');
-const CHARACTER_PROGRESS_SELECT = 'character_id,equipped_ilvl,gear,mythic_rating,mythic_best_runs,raid_progress,synced_ok,last_error,updated_at,professions,reputations,race,gender,faction,level,achievement_points,mounts_count,pets_count,exalted_reputations_count';
-const sbProgress=()=> sb('character_progress?select='+CHARACTER_PROGRESS_SELECT);
-const sbIns=(t,row)=> sb(t,{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(row)});
-const sbUpd=(t,id,patch)=> sb(t+'?id=eq.'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify(patch)});
-const sbDel=(t,id)=> sb(t+'?id=eq.'+encodeURIComponent(id),{method:'DELETE'});
-/* dispara la Edge Function sync-characters (re-pull desde Battle.net). Usa la key pública que el gateway acepta. */
+const edgeHeaders = (withSession=false)=>{
+  const headers={ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json' };
+  if(withSession && session&&session.token) headers['x-pt-token']=session.token;
+  return headers;
+};
+async function edgeRequest(fn,body,withSession=true){
+  const r=await fetch(SUPABASE_URL+'/functions/v1/'+fn,{ method:'POST', headers:edgeHeaders(withSession), body:JSON.stringify(body||{}) });
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) { const e=new Error(j.error||('HTTP '+r.status)); e.status=r.status; throw e; }
+  return j;
+}
+const authRequest=(action,payload={})=>edgeRequest('app-auth',{action,...payload},action!=='login');
+const appRequest=(action,payload={})=>edgeRequest('app-api',{action,...payload},true);
+const sbIns=(table,row)=>appRequest('mutate',{table,method:'insert',row});
+const sbUpd=(table,id,patch)=>appRequest('mutate',{table,method:'update',id,patch});
+const sbDel=(table,id)=>appRequest('mutate',{table,method:'delete',id});
+async function recruitAdmin(method, payload, qs=''){
+  const headers=edgeHeaders(true);
+  const r=await fetch(SUPABASE_URL+'/functions/v1/recruit-admin'+qs,{ method, headers, body:payload?JSON.stringify(payload):undefined });
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+  return j;
+}
+async function fetchRecruits(){
+  recruitLoadError='';
+  const j=await recruitAdmin('POST',{action:'list'});
+  recruits=j.applications||[];
+  if(selectedRecruitId && !recruits.find(r=>r.id===selectedRecruitId)) selectedRecruitId='';
+  if(!selectedRecruitId && recruits.length) selectedRecruitId=recruits[0].id;
+}
+/* Dispara sync-characters con una sesión Officer/Admin validada en el servidor. */
 async function manualSync(btn){
   const orig=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Sincronizando…'; }
   try{
-    const r=await fetch(SUPABASE_URL+'/functions/v1/sync-characters',{ method:'POST', headers:{ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json' }, body:JSON.stringify({source:'manual'}) });
+    const r=await fetch(SUPABASE_URL+'/functions/v1/sync-characters',{ method:'POST', headers:edgeHeaders(true), body:JSON.stringify({source:'manual'}) });
     const j=await r.json().catch(()=>({}));
     if(j.skipped==='too_soon') toast('Los datos ya estaban frescos (hace <1 min)');
     else if(j.synced!=null) toast('Actualizado: '+j.synced+' personajes'+(j.failed&&j.failed.length?' · '+j.failed.length+' con error':''));
@@ -617,6 +720,48 @@ async function manualSync(btn){
     await refresh(true);
   }catch(e){ toast('No se pudo sincronizar con Battle.net'); }
   finally{ if(btn){ btn.disabled=false; btn.textContent=orig||'↻ Refrescar API'; } }
+}
+async function manualWclSync(ch,btn){
+  const orig=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Actualizando WCL…'; }
+  const zones=[46,47,50], difficulties=[5,4,3,2], metrics=['dps','hps','playerspeed','bossdps'];
+  const batches=[];
+  zones.forEach(zoneId=>{
+    const ds=zoneId===47?[0]:difficulties;
+    ds.forEach(difficulty=>metrics.forEach(metric=>batches.push({zoneId,difficulty,metric})));
+  });
+  const total=batches.length;
+  let done=0, synced=0, failed=0, failedSamples=[];
+  try{
+    for(const batch of batches){
+      done++;
+      if(btn) btn.textContent=`WCL ${done}/${total}`;
+      try{
+        const r=await fetch(SUPABASE_URL+'/functions/v1/sync-warcraftlogs',{ method:'POST', headers:edgeHeaders(true), body:JSON.stringify({ fullSync:true, zoneIds:[batch.zoneId], difficulties:[batch.difficulty], metrics:[batch.metric] }) });
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+        synced+=Number(j.synced||0);
+        failed+=(j.failed||[]).length;
+        if(j.failed&&j.failed.length) failedSamples.push(...j.failed.slice(0,3));
+      }catch(e){ failed++; failedSamples.push({zoneId:batch.zoneId,difficulty:batch.difficulty,metric:batch.metric,error:e&&e.message?e.message:String(e)}); }
+    }
+    toast(`Warcraft Logs actualizado (${synced})${failed?' · '+failed+' con error':''}`);
+    if(failedSamples.length) console.warn('WCL sync failures', failedSamples.slice(0,12));
+    logAction('sync_warcraftlogs','roster',null,{synced,failed,batches:total,sample:failedSamples.slice(0,5)});
+    await refresh(true);
+  }catch(e){ toast('WCL todavía no está conectado'); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent=orig||'↻ WCL roster'; } }
+}
+async function manualRaiderSync(ch,btn){
+  const orig=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Actualizando…'; }
+  try{
+    const r=await fetch(SUPABASE_URL+'/functions/v1/sync-raiderio',{ method:'POST', headers:edgeHeaders(true), body:JSON.stringify({ characterId:ch.id }) });
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    toast(j.synced ? 'Raider.IO actualizado' : 'Raider.IO sin cambios');
+    logAction('sync_raiderio','character',ch.id,{target:ch.name,synced:j.synced,failed:(j.failed||[]).length});
+    await refresh(true);
+  }catch(e){ toast('Raider.IO todavía no está conectado'); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent=orig||'↻ Raider.IO'; } }
 }
 
 /* ---------- util ---------- */
@@ -635,8 +780,6 @@ function parseGold(str){ if(str==null) return 0; str=String(str).trim().toLowerC
 function blankSlots(){ const s={}; RAID_KEYS.forEach(k=>{ s[k]={}; RAIDS[k].bosses.forEach(b=> s[k][b]=DEFAULT_SLOTS); }); return s; }
 function curWeek(){ return state.weeks.find(w=>w.id===state.current); }
 function soldFor(w,k,b){ return w.sales.filter(s=>s.raid===k && (s.bosses||[]).includes(b)).length; }
-async function hashPass(pw){ const data=new TextEncoder().encode(SALT+'::'+pw); const buf=await crypto.subtle.digest('SHA-256',data); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
-
 function setLive(cls,txt){ const el=document.getElementById('live'); el.className='live '+cls; document.getElementById('liveTxt').textContent=txt; if(cls==='ok'){ el.classList.add('pulse'); setTimeout(()=>el.classList.remove('pulse'),600);} }
 function showError(m){ const b=document.getElementById('banner'); b.classList.add('on'); b.innerHTML=m; }
 function clearError(){ document.getElementById('banner').classList.remove('on'); }
@@ -644,20 +787,22 @@ let toastT; function toast(m){ const t=document.getElementById('toast'); t.textC
 
 /* ---------- fetch ---------- */
 async function fetchAll(){
-  const [weeks,sales,us,st,al]=await Promise.all([ sbSel('weeks'),sbSel('sales'),sbSel('users'),sbSel('app_settings'),sbSel('audit_log') ]);
+  if(!session||!session.token) throw new Error('Sesión requerida');
+  const data=await appRequest('snapshot');
+  const weeks=data.weeks||[], sales=data.sales||[], us=data.users||[], st=data.settings||[], al=data.audit||[];
   weeks.sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.created_at||'').localeCompare(b.created_at||''));
   weeks.forEach(w=>{ w.slots=w.slots||blankSlots(); w.sales=sales.filter(s=>s.week_id===w.id); });
   state.weeks=weeks; users=us||[]; settings=Object.assign({require_login:false,show_admin_activity:false,auto_sync:true},(st&&st[0])||{}); auditLog=(al||[]).sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
   if(!state.current||!state.weeks.find(w=>w.id===state.current)) state.current=state.weeks.length?state.weeks[state.weeks.length-1].id:null;
-  try{ const [ch,cp,rm,ta]=await Promise.all([ sbSel('characters'), sbProgress(), sbSel('wow_realms'), sbSel('tracked_abilities') ]); characters=ch||[]; characterProgress=cp||[]; realms=rm||[]; trackedAbilities=ta||[]; }catch(e){
-    try{ const [ch,cp,rm]=await Promise.all([ sbSel('characters'), sbProgress(), sbSel('wow_realms') ]); characters=ch||[]; characterProgress=cp||[]; realms=rm||[]; }catch(_){ characters=[]; characterProgress=[]; realms=[]; }
-    trackedAbilities=[];
-  }
+  characters=data.characters||[]; characterProgress=data.progress||[]; realms=data.realms||[]; trackedAbilities=data.abilities||[];
+  wclZones=data.zones||[]; wclRankings=data.rankings||[]; raiderProfiles=data.rio||[];
+  if(cap('manageRecruits')){ try{ await fetchRecruits(); }catch(e){ recruits=[]; recruitLoadError=e&&e.message?e.message:String(e); } }
 }
-function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled])]); }
+function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
 async function refresh(toastOnChange){
+  if(!session||!session.token) return;
   try{ await fetchAll(); clearError(); setLive('ok','en vivo');
-    if(session){ const u=users.find(x=>x.username===session.username); if(!u){ doLogout(true); return; } if(u.role!==session.role){ session.role=u.role; localStorage.setItem('pt_session',JSON.stringify(session)); } }
+    if(session){ const u=users.find(x=>x.id===session.id); if(!u){ doLogout(true); return; } if(u.role!==session.role){ session.role=u.role; sessionStorage.setItem('pt_secure_session',JSON.stringify(session)); } }
     const sig=dataSig(); if(sig!==lastSig){ lastSig=sig; render(); if(toastOnChange) toast('Actualizado'); }
   }catch(e){ setLive('err','sin conexión'); showError('No se pudo conectar. ¿Corriste el SQL nuevo (tablas <code>users</code>, <code>app_settings</code>, <code>audit_log</code>)? <code>'+esc(String(e.message).slice(0,150))+'</code>'); }
 }
@@ -667,12 +812,8 @@ async function ensureFirstWeek(){
   const w={ id:uid(), label:weekLabel(start), date:isoLocal(start), slots:blankSlots() };
   try{ await sbIns('weeks',w); await fetchAll(); state.current=w.id; }catch(e){} creating=false;
 }
-async function seedAdmin(){
-  if(users.length) return;
-  try{ const h=await hashPass(FIRST_ADMIN.pass); await sbIns('users',{ id:uid(), username:FIRST_ADMIN.username, pass_hash:h, role:FIRST_ADMIN.role }); await fetchAll(); }catch(e){}
-}
 async function logAction(action, entity, entity_id, detail){
-  try{ await sbIns('audit_log',{ id:uid(), actor:me(), action, entity, entity_id, detail:detail||null }); }catch(e){}
+  try{ await appRequest('audit',{audit_action:action,entity,entity_id,detail:detail||null}); }catch(e){}
 }
 
 /* ---------- auth ---------- */
@@ -681,30 +822,33 @@ async function doLogin(){
   const err=document.getElementById('lg_err'); err.textContent='';
   if(!u||!p){ err.textContent='Completá usuario y contraseña.'; return; }
   try{
-    const found=users.find(x=>x.username.toLowerCase()===u.toLowerCase());
-    if(!found){ err.textContent='Usuario o contraseña incorrectos.'; return; }
-    const h=await hashPass(p);
-    if(h!==found.pass_hash){ err.textContent='Usuario o contraseña incorrectos.'; return; }
-    session={ id:found.id, username:found.username, role:found.role };
-    localStorage.setItem('pt_session',JSON.stringify(session));
+    const result=await authRequest('login',{username:u,password:p});
+    session={...result.user,token:result.token,expires_at:result.expires_at};
+    sessionStorage.setItem('pt_secure_session',JSON.stringify(session));
+    localStorage.removeItem('pt_session');
     forceLogin=false; document.getElementById('lg_pass').value='';
-    logAction('login','session',found.id,null);
+    await fetchAll(); lastSig=dataSig();
+    logAction('login','session',session.id,null);
     gate();
-  }catch(e){ err.textContent='Error al validar (¿estás en la página https?).'; }
+  }catch(e){ err.textContent=e&&e.message?e.message:'No se pudo iniciar sesión.'; }
 }
-function doLogout(silent){ session=null; localStorage.removeItem('pt_session'); if(!silent) toast('Sesión cerrada'); view='semana'; gate(); }
+async function doLogout(silent){
+  if(session&&session.token){ try{ await authRequest('logout'); }catch(e){} }
+  session=null; sessionStorage.removeItem('pt_secure_session'); localStorage.removeItem('pt_session');
+  if(!silent) toast('Sesión cerrada'); view='semana'; gate();
+}
 
 /* ---------- gate: decide login vs app ---------- */
 function gate(){
-  const needLogin = (settings.require_login && !session) || forceLogin;
+  const needLogin = !session || forceLogin;
   document.getElementById('login').classList.toggle('on', needLogin);
   document.getElementById('app').style.display = needLogin ? 'none' : '';
-  document.getElementById('lg_guest').style.display = (forceLogin && !settings.require_login) ? '' : 'none';
+  document.getElementById('lg_guest').style.display = 'none';
   if(!needLogin) render();
 }
 
 /* ============================================================ RENDER ============================================================ */
-function visibleTabs(){ const t=[['semana','Semana'],['calendario','Calendario']]; if(cap('viewAudit')){ t.push(['progreso','Progreso'],['resumen','Resumen'],['roster','Roster'],['personaje','Personaje'],['auditoria','Auditoría']); } if(cap('manageUsers')) t.push(['usuarios','Usuarios']); return t; }
+function visibleTabs(){ const t=[['semana','Semana'],['calendario','Calendario']]; if(cap('viewAudit')){ t.push(['progreso','Progreso'],['resumen','Resumen'],['roster','Roster'],['personaje','Personaje'],['auditoria','Auditoría']); } if(cap('manageRecruits')) t.push(['reclutas','Reclutas']); if(cap('manageUsers')) t.push(['usuarios','Usuarios']); return t; }
 
 /* ---------- calculo: Great Vault, encantamientos, gemas ---------- */
 function vaultMplusSlots(bestRuns){ const n=(bestRuns||[]).length; if(n>=8) return 3; if(n>=4) return 2; if(n>=1) return 1; return 0; }
@@ -799,6 +943,7 @@ function render(){
   else if(view==='roster') renderRosterComp();
   else if(view==='personaje') renderPersonaje();
   else if(view==='auditoria') renderAuditoria();
+  else if(view==='reclutas') renderReclutas();
   else if(view==='usuarios') renderUsuarios();
 }
 
@@ -835,7 +980,7 @@ function renderProgreso(){
 function progFilteredRows(){
   const isAdmin=cap('manageUsers');
   const q=progSearch.trim().toLowerCase();
-  return characters.filter(ch=>isAdmin||ch.active!==false)
+  return characters.filter(ch=>(!ch.is_recruit_shadow) && (isAdmin||ch.active!==false))
     .filter(ch=> progClass==='all' || ch.class===progClass)
     .filter(ch=> progRole==='all' || ch.role===progRole)
     .filter(ch=>{ if(!q) return true; const hay=[ch.name, ch.class||'', CHAR_ROLE_LABEL[ch.role]||ch.role].join(' ').toLowerCase(); return hay.includes(q); })
@@ -1027,6 +1172,251 @@ function singleEnchantPanel(p){
   const rows=ENCHANTABLE_SLOTS.map(slot=>{ const it=bySlot[slot], ench=enchantName(it), label=(GEAR_SLOT_ORDER.find(x=>x[0]===slot)||[slot,slot])[1]; return `<tr><td class="slot">${esc(label)}</td><td>${it?(ench?'<span class="singleCheck">✓</span>':'<span style="color:var(--warn)">Falta</span>'):'<span style="color:var(--muted-2)">—</span>'}</td><td>${ench?esc(ench):'<span style="color:var(--muted-2)">—</span>'}</td></tr>`; }).join('');
   return `<div class="panel singlePanel"><div class="phead"><h2><span class="dia"></span>Encantamientos</h2></div><div class="pbody"><table class="singleGear"><thead><tr><th>Slot</th><th></th><th>Enchant</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
+function rioCharacterProfile(ch){ return (raiderProfiles||[]).find(r=>String(r.character_id)===String(ch.id)); }
+function rioProfileJson(row){ return row&&row.profile&&typeof row.profile==='object' ? row.profile : {}; }
+function rioRuns(row){
+  const p=rioProfileJson(row);
+  const pools=[
+    Array.isArray(row&&row.best_runs) ? row.best_runs : p.mythic_plus_best_runs,
+    Array.isArray(row&&row.recent_runs) ? row.recent_runs : p.mythic_plus_recent_runs,
+    Array.isArray(row&&row.highest_level_runs) ? row.highest_level_runs : p.mythic_plus_highest_level_runs,
+    Array.isArray(row&&row.weekly_highest_level_runs) ? row.weekly_highest_level_runs : p.mythic_plus_weekly_highest_level_runs,
+  ].filter(Array.isArray);
+  const seen=new Set(), out=[];
+  pools.flat().forEach(run=>{
+    const key=String(run.keystone_run_id || run.url || [run.dungeon,run.mythic_level,run.completed_at,run.score].join('|'));
+    if(seen.has(key)) return;
+    seen.add(key);
+    out.push(run);
+  });
+  return out;
+}
+function rioSeason(row){
+  const p=rioProfileJson(row);
+  const seasons=Array.isArray(row&&row.scores_by_season) ? row.scores_by_season : p.mythic_plus_scores_by_season;
+  return Array.isArray(seasons) ? (seasons[0]||{}) : {};
+}
+function rioRoleKey(role){
+  role=String(role||'').toLowerCase();
+  if(role==='healing') return 'healer';
+  if(role==='damage') return 'dps';
+  if(role==='tank') return 'tank';
+  if(role==='overall') return 'overall';
+  return role||'all';
+}
+function rioRoleLabel(role){ return ({overall:'Overall',healer:'Healer',dps:'DPS',tank:'Tank',all:'All'}[rioRoleKey(role)]||role||'Spec'); }
+function rioIconUrl(icon){
+  if(!icon) return '';
+  const s=String(icon);
+  if(/^https?:\/\//i.test(s)) return s;
+  return 'https://cdn.raiderio.net'+(s.startsWith('/')?s:'/'+s);
+}
+function rioRunSummary(run){ return run&&run.summary ? run.summary : run||{}; }
+function rioRunDungeon(run){ const s=rioRunSummary(run); return s.dungeon||run.dungeon||{}; }
+function rioRunName(run){ const d=rioRunDungeon(run); return d.name||run.dungeon||'—'; }
+function rioDungeonCanonicalKey(value){
+  return String(value||'')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,'')
+    .trim();
+}
+function rioRunDungeonKey(run){
+  const s=rioRunSummary(run), d=rioRunDungeon(run), name=rioRunName(run);
+  const nameKey=rioDungeonCanonicalKey(name);
+  const slugKey=rioDungeonCanonicalKey(d.slug||s.dungeon_slug||run.dungeon_slug);
+  const idKey=String(d.map_challenge_mode_id||d.id||'').trim().toLowerCase();
+  return nameKey||slugKey||idKey;
+}
+function rioRunLevel(run){
+  const s=rioRunSummary(run);
+  return Number(s.mythic_level ?? s.keystone_level ?? run?.mythic_level ?? run?.keystone_level ?? 0);
+}
+function rioRunScore(run){
+  const s=rioRunSummary(run);
+  return Number(run?.score ?? s.score ?? run?.mythic_plus_score ?? s.mythic_plus_score ?? NaN);
+}
+function rioRunId(run){ const s=rioRunSummary(run); return s.keystone_run_id||run.keystone_run_id; }
+function rioRunIcon(run){ const d=rioRunDungeon(run); return rioIconUrl(d.icon_url||run.icon_url); }
+function rioMissingRun(dungeon){
+  return { _missing:true, dungeon:typeof dungeon==='string'?dungeon:(dungeon&&dungeon.name)||'—', _dungeon:dungeon||{} };
+}
+function rioRunUrl(row,run){
+  if(run&&run._missing) return '';
+  const direct=run.url||'';
+  if(direct) return direct;
+  const id=rioRunId(run), season=(row&&row.all_runs&&row.all_runs.season)||rioSeason(row).season||'season-mn-1';
+  return id ? `https://raider.io/mythic-plus-runs/${encodeURIComponent(season)}/${encodeURIComponent(id)}` : '';
+}
+function rioPackRuns(pack){
+  if(!pack) return [];
+  if(Array.isArray(pack.runs)) return pack.runs;
+  if(Array.isArray(pack.dungeons)) return pack.dungeons;
+  return [];
+}
+function rioRunSort(a,b){
+  const aMissing=!!(a&&a._missing), bMissing=!!(b&&b._missing);
+  if(aMissing!==bMissing) return aMissing?1:-1;
+  const aScore=rioRunScore(a), bScore=rioRunScore(b);
+  const scoreDelta=(Number.isFinite(bScore)?bScore:-Infinity)-(Number.isFinite(aScore)?aScore:-Infinity);
+  if(scoreDelta) return scoreDelta;
+  return rioRunLevel(b)-rioRunLevel(a)||String(rioRunName(a)).localeCompare(String(rioRunName(b)));
+}
+function rioBestDungeonRuns(runs){
+  const best=new Map();
+  (runs||[]).forEach(run=>{
+    const key=rioRunDungeonKey(run);
+    const prev=best.get(key);
+    const score=rioRunScore(run), prevScore=prev?rioRunScore(prev):-Infinity;
+    const level=rioRunLevel(run), prevLevel=prev?rioRunLevel(prev):-Infinity;
+    if(!prev||score>prevScore||(score===prevScore&&level>prevLevel)) best.set(key,run);
+  });
+  return [...best.values()].sort(rioRunSort);
+}
+function rioDungeonCatalog(row){
+  const map=new Map();
+  const add=run=>{
+    const key=rioRunDungeonKey(run);
+    if(!key) return;
+    if(!map.has(key)) map.set(key, rioRunDungeon(run)||rioRunName(run));
+  };
+  rioRuns(row).forEach(add);
+  const roles=(row&&row.all_runs&&row.all_runs.roles)||{};
+  Object.values(roles).forEach(pack=>{
+    rioPackRuns(pack).forEach(add);
+  });
+  return [...map.entries()].map(([key,dungeon])=>({key,dungeon,name:typeof dungeon==='string'?dungeon:(dungeon&&dungeon.name)||'—'}))
+    .sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+}
+function rioCompleteDungeonRuns(row,runs){
+  const best=rioBestDungeonRuns(runs);
+  const byKey=new Map(best.map(run=>[rioRunDungeonKey(run),run]));
+  const catalog=rioDungeonCatalog(row);
+  if(!catalog.length) return best;
+  return catalog.map(d=>byKey.get(d.key)||rioMissingRun(d.dungeon)).sort(rioRunSort);
+}
+function rioRunsForRole(row,role){
+  const wanted=rioRoleKey(role);
+  return rioRuns(row).filter(run=>{
+    const spec=run&&run.spec||{};
+    const runRole=rioRoleKey(run&&run.role||spec.role);
+    return runRole===wanted;
+  });
+}
+function rioAllRunGroups(row){
+  const data=row&&row.all_runs;
+  if(!data||!data.roles||typeof data.roles!=='object') return [];
+  const season=rioSeason(row), scores=season.scores||{};
+  const roleGroups=['tank','healer','dps'].map(role=>{
+    const pack=data.roles[role]||{}, runs=rioPackRuns(pack);
+    const mergedRuns=[...runs,...rioRunsForRole(row,role)];
+    return {
+      key:'role-'+role,
+      label:rioRoleLabel(role),
+      role,
+      score:Number(scores[role] ?? NaN),
+      runs:rioCompleteDungeonRuns(row,mergedRuns),
+      mode:'best-dungeons',
+    };
+  }).filter(g=>g.runs.some(r=>!r._missing));
+  const overallRuns=rioCompleteDungeonRuns(row,[
+    ...rioRuns(row),
+    ...Object.values(data.roles).flatMap(pack=>rioPackRuns(pack))
+  ]);
+  const overall=overallRuns.some(r=>!r._missing) ? [{
+    key:'role-overall',
+    label:rioRoleLabel('overall'),
+    role:'overall',
+    score:Number(scores.all ?? NaN),
+    runs:overallRuns,
+    mode:'best-dungeons',
+  }] : [];
+  return [...overall,...roleGroups];
+}
+function rioSpecGroups(row){
+  const all=rioAllRunGroups(row);
+  if(all.length) return all;
+  const roleRuns=rioRuns(row);
+  if(roleRuns.length){
+    const season=rioSeason(row), scores=season.scores||{};
+    const overall=rioCompleteDungeonRuns(row,roleRuns);
+    const roleGroups=['tank','healer','dps'].map(role=>{
+      const runs=rioRunsForRole(row,role);
+      return {
+        key:'role-'+role,
+        label:rioRoleLabel(role),
+        role,
+        score:Number(scores[role] ?? NaN),
+        runs:rioCompleteDungeonRuns(row,runs),
+        mode:'best-dungeons',
+      };
+    }).filter(g=>g.runs.some(r=>!r._missing));
+    return [{
+      key:'role-overall',
+      label:rioRoleLabel('overall'),
+      role:'overall',
+      score:Number(scores.all ?? NaN),
+      runs:overall,
+      mode:'best-dungeons',
+    },...roleGroups].filter(g=>g.runs.some(r=>!r._missing));
+  }
+  const groups=new Map();
+  rioRuns(row).forEach(run=>{
+    const spec=run.spec||{}, role=rioRoleKey(run.role||spec.role), key=String(spec.id||spec.slug||role||'all');
+    if(!groups.has(key)) groups.set(key,{key,label:spec.name||rioRoleLabel(role),role,runs:[]});
+    groups.get(key).runs.push(run);
+  });
+  const season=rioSeason(row), scores=season.scores||{};
+  return [...groups.values()].map(g=>{
+    const ord=g.runs.find(r=>r&&r.spec&&Number.isFinite(Number(r.spec.ordinal)))?.spec?.ordinal;
+    g.score=Number((ord!=null?scores[`spec_${ord}`]:null) ?? scores[g.role] ?? scores.all ?? NaN);
+    g.runs.sort(rioRunSort);
+    return g;
+  }).sort((a,b)=>(b.score||0)-(a.score||0)||String(a.label).localeCompare(String(b.label)));
+}
+function rioFmtScore(v){ v=Number(v); return Number.isFinite(v) ? v.toFixed(1).replace(/\.0$/,'') : '—'; }
+function compactExternalError(msg){
+  const s=String(msg||'error desconocido')
+    .replace(/<script[\s\S]*?<\/script>/gi,' ')
+    .replace(/<style[\s\S]*?<\/style>/gi,' ')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+  return s.length>220 ? s.slice(0,220)+'…' : s;
+}
+function singleRaiderPanel(ch){
+  const row=rioCharacterProfile(ch);
+  const syncBtn=`<button class="btn ghost sm" id="rioSync">↻ Raider.IO</button>`;
+  if(!row){
+    return `<div class="panel singlePanel"><div class="phead rioHead"><h2><span class="dia"></span>Raider.IO</h2>${syncBtn}</div><div class="pbody"><div class="singleEmpty">Sin datos Raider.IO sincronizados para ${esc(ch.name)}. Corré el SQL 015, deployá <code>sync-raiderio</code> y tocá ↻ Raider.IO.</div></div></div>`;
+  }
+  if(row.synced_ok===false){
+    return `<div class="panel singlePanel"><div class="phead rioHead"><h2><span class="dia"></span>Raider.IO</h2>${syncBtn}</div><div class="pbody"><div class="singleEmpty">Raider.IO no devolvió datos: ${esc(compactExternalError(row.last_error))}</div></div></div>`;
+  }
+  const groups=rioSpecGroups(row);
+  if(!groups.length){
+    return `<div class="panel singlePanel"><div class="phead rioHead"><h2><span class="dia"></span>Raider.IO</h2>${syncBtn}</div><div class="pbody"><div class="singleEmpty">Sin runs Mythic+ por spec en Raider.IO para este personaje.</div></div></div>`;
+  }
+  if(!groups.find(g=>g.key===singleRioSpec)) singleRioSpec=groups[0].key;
+  const active=groups.find(g=>g.key===singleRioSpec)||groups[0];
+  const tabs=groups.map(g=>`<button class="rioTab ${g.key===active.key?'on':''}" data-rio-spec="${esc(g.key)}">${esc(g.label)} <span class="rioScore">${rioFmtScore(g.score)}</span></button>`).join('');
+  const rows=active.runs.map(run=>{
+    const dungeon=rioRunName(run), icon=rioRunIcon(run), level=rioRunLevel(run), url=rioRunUrl(row,run);
+    const name=url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(dungeon)}</a>`:esc(dungeon);
+    return `<tr>
+      <td><span class="rioDungeon">${icon?`<img src="${esc(icon)}" alt="">`:''}<span>${name}</span></span></td>
+      <td class="rioLevel">${run._missing?'—':'+'+esc(level)}</td>
+      <td class="rioScore">${run._missing?'—':rioFmtScore(rioRunScore(run))}</td>
+    </tr>`;
+  }).join('');
+  const updated=row.last_crawled_at||row.updated_at;
+  return `<div class="panel singlePanel"><div class="phead rioHead"><h2><span class="dia"></span>Raider.IO</h2>${syncBtn}</div><div class="pbody">
+    <div class="rioTabs">${tabs}</div>
+    <table class="singleGear"><thead><tr><th>Dungeon</th><th>Level</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="rioMeta">${active.mode==='best-dungeons'?'Best per dungeon':'Best runs'} · ${esc(active.label)}${Number.isFinite(active.score)?' · score '+rioFmtScore(active.score):''}${updated?' · actualizado '+esc(fmtDateTime(updated)):''}</div>
+  </div></div>`;
+}
 function singleMplusPanel(p){
   const runs=[...(p.mythic_best_runs||[])].sort((a,b)=>(b.score||0)-(a.score||0)||(b.keystone_level||0)-(a.keystone_level||0));
   const rows=runs.length ? runs.map(r=>`<tr><td>${esc(localizedName(r.dungeon)||'—')}</td><td class="ilvl">+${r.keystone_level||0}</td><td class="ilvl">${r.score?Math.round(r.score):'—'}</td></tr>`).join('') : '<tr><td colspan="3" class="singleEmpty">Sin M+ esta semana.</td></tr>';
@@ -1043,6 +1433,195 @@ function singleRenownPanel(p){
   const rows=renown.length ? renown.map(r=>`<div class="destrow"><span>${esc(r.name||'—')}</span><span class="g">${r.value!=null?esc(r.value+(r.max?' / '+r.max:'')):'—'}</span></div>`).join('') : `<div class="destrow"><span>Reputaciones exaltadas</span><span class="g">${p.exalted_reputations_count??'—'}</span></div>`;
   return `<div class="panel singlePanel"><div class="phead"><h2><span class="dia"></span>Renown / reps</h2></div><div class="pbody">${rows}</div></div>`;
 }
+const RAID_PROGRESSION_SECTIONS = [
+  { name:'Voidspire', aliases:['Voidspire','VS / DR / MQD'], bosses:['Imperator Averzian','Vorasius','Fallen-King Salhadaar','Vaelgor & Ezzorak','Lightblinded Vanguard','Crown of the Cosmos'] },
+  { name:'The Dreamrift', aliases:['The Dreamrift','Dreamrift','VS / DR / MQD'], bosses:['Chimaerus, the Undreamt God'] },
+  { name:"March on Quel'Danas", aliases:["March on Quel'Danas",'Quel Danas','VS / DR / MQD'], bosses:["Belo'ren, Child of Al'ar",'Midnight Falls'] },
+  { name:'Sporefall', aliases:['Sporefall'], bosses:['Rotmire'] },
+];
+const RAID_DIFFS = [
+  { key:'mythic', label:'M', cls:'prog-m', names:['MYTHIC','MYTHIC_RAID','Mythic'] },
+  { key:'heroic', label:'H', cls:'prog-h', names:['HEROIC','HEROIC_RAID','Heroic'] },
+  { key:'normal', label:'N', cls:'prog-n', names:['NORMAL','NORMAL_RAID','Normal'] },
+  { key:'lfr', label:'LFR', cls:'prog-l', names:['LFR','RAID_FINDER','Raid Finder'] },
+];
+function progKey(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,''); }
+function progDiffKey(diff){
+  const k=progKey(diff);
+  const found=RAID_DIFFS.find(d=>d.names.some(n=>progKey(n)===k)||k.includes(d.key));
+  return found ? found.key : '';
+}
+function progFlatten(progress){
+  const out=new Map();
+  Object.entries(progress||{}).forEach(([raid,diffs])=>{
+    if(String(raid).startsWith('_')||!diffs||typeof diffs!=='object') return;
+    Object.entries(diffs).forEach(([diff,bosses])=>{
+      const dkey=progDiffKey(diff);
+      if(!dkey||!bosses||typeof bosses!=='object') return;
+      Object.entries(bosses).forEach(([boss,count])=>{
+        const key=progKey(boss), n=Number(count)||0;
+        const prev=out.get(key)||{};
+        prev[dkey]=Math.max(prev[dkey]||0,n);
+        out.set(key,prev);
+      });
+    });
+  });
+  return out;
+}
+function progBossStatus(flat,boss){
+  const counts=flat.get(progKey(boss))||{};
+  const diff=RAID_DIFFS.find(d=>(counts[d.key]||0)>0);
+  return diff ? { ...diff, kills:counts[diff.key]||0 } : { label:'', cls:'prog-none', kills:0 };
+}
+function progSectionSummary(rows,total){
+  for(const diff of RAID_DIFFS){
+    const n=rows.filter(r=>r.label===diff.label).length;
+    if(n>0) return `${n}/${total} ${diff.label}`;
+  }
+  return `0/${total}`;
+}
+function singleProgressionPanel(p){
+  const progress=p.raid_progress||{};
+  const flat=progFlatten(progress);
+  const hasProgress=flat.size>0;
+  const sections=RAID_PROGRESSION_SECTIONS.map(sec=>{
+    const rows=sec.bosses.map(boss=>({ boss, ...progBossStatus(flat,boss) }));
+    const summary=progSectionSummary(rows,sec.bosses.length);
+    const body=rows.map(r=>`<tr>
+      <td><div class="progBoss">${esc(r.boss)}</div></td>
+      <td class="progDiff ${esc(r.cls)}">${esc(r.label)}</td>
+      <td class="progKills ${esc(r.cls)}">${r.kills}</td>
+    </tr>`).join('');
+    return `<div class="progSection">
+      <div class="progSecHead"><b>${esc(sec.name)}</b><span>${esc(summary)}</span></div>
+      <table class="progTable"><colgroup><col><col><col></colgroup><thead><tr><th></th><th>Dificultad</th><th>Cant. kills</th></tr></thead><tbody>${body}</tbody></table>
+    </div>`;
+  }).join('');
+  const empty='<div class="singleEmpty">Sin progreso de raid sincronizado desde Armory para este personaje.</div>';
+  return `<div class="panel singlePanel progPanel"><div class="phead"><h2><span class="dia"></span>Progresion del personaje</h2></div><div class="pbody">${hasProgress?sections:empty}</div></div>`;
+}
+const WCL_FALLBACK_ZONES = [
+  { id:46, name:"VS / DR / MQD", expansion_id:7, expansion_name:"Midnight" },
+  { id:47, name:"Mythic+ Season 1", expansion_id:7, expansion_name:"Midnight" },
+  { id:50, name:"Sporefall", expansion_id:7, expansion_name:"Midnight" },
+];
+const WCL_ACTIVE_ZONE_IDS = new Set(WCL_FALLBACK_ZONES.map(z=>String(z.id)));
+const WCL_ACTIVE_ZONE_ORDER = new Map(WCL_FALLBACK_ZONES.map((z,i)=>[String(z.id),i]));
+const WCL_METRIC_LABEL = { dps:"Damage", hps:"Healing", playerspeed:"Speed", bossdps:"Damage To Bosses" };
+const WCL_AMOUNT_LABEL = { dps:"Highest DPS", hps:"Highest HPS", playerspeed:"Best Speed", bossdps:"Boss DPS" };
+const WCL_DIFF_LABEL = { 5:"Mythic", 4:"Heroic", 3:"Normal", 2:"LFR", 1:"LFR" };
+function wclZoneOptions(){
+  const byId=new Map(WCL_FALLBACK_ZONES.map(z=>[String(z.id),z]));
+  (wclZones||[]).forEach(z=>{ if(WCL_ACTIVE_ZONE_IDS.has(String(z.id))) byId.set(String(z.id),z); });
+  return [...byId.values()].sort((a,b)=>(WCL_ACTIVE_ZONE_ORDER.get(String(a.id))??99)-(WCL_ACTIVE_ZONE_ORDER.get(String(b.id))??99));
+}
+function wclCharacterRows(ch){ return (wclRankings||[]).filter(r=>String(r.character_id)===String(ch.id)); }
+function wclSelectedRow(ch){
+  const rows=wclCharacterRows(ch);
+  if(!rows.length) return null;
+  const byFresh=(a,b)=>Number(wclHasRankings(b))-Number(wclHasRankings(a)) || new Date(b.updated_at||0)-new Date(a.updated_at||0);
+  if(String(singleWclZone)==='47'){
+    const mplus=rows.filter(r=>String(r.zone_id)==='47' && String(r.metric||'dps')===String(singleWclMetric));
+    return mplus.find(r=>String(r.difficulty)==='0') || mplus.sort(byFresh)[0] || null;
+  }
+  return rows.filter(r=>String(r.zone_id)===String(singleWclZone) && String(r.metric||'dps')===String(singleWclMetric) && String(r.difficulty||5)===String(singleWclDifficulty)).sort(byFresh)[0] || null;
+}
+function wclScoreClass(v){
+  v=Number(v);
+  if(!Number.isFinite(v) || v<=0) return 'gray';
+  if(v>=100) return 'legendary';
+  if(v>=99) return 'pink';
+  if(v>=95) return 'orange';
+  if(v>=75) return 'purple';
+  if(v>=50) return 'blue';
+  if(v>=25) return 'green';
+  return 'gray';
+}
+function wclPct(v){ return Number.isFinite(Number(v)) ? Number(v).toFixed(Number(v)>=100?0:1).replace(/\.0$/,'') : '—'; }
+function wclScore(v){ return `<span class="wclScore ${wclScoreClass(v)}">${wclPct(v)}</span>`; }
+function wclAmount(v){ v=Number(v); if(!Number.isFinite(v)) return '—'; return new Intl.NumberFormat('en-US',{maximumFractionDigits:1}).format(v); }
+function wclCompactAmount(v){
+  v=Number(v);
+  if(!Number.isFinite(v)) return '—';
+  const abs=Math.abs(v);
+  if(abs>=1000000) return (v/1000000).toFixed(2).replace(/\.00$/,'')+'M';
+  if(abs>=1000) return (v/1000).toFixed(2).replace(/\.00$/,'')+'K';
+  return new Intl.NumberFormat('en-US',{maximumFractionDigits:1}).format(v);
+}
+function wclDisplayAmount(row,r){
+  const v=Number(r.bestAmount);
+  if(!Number.isFinite(v)) return '—';
+  if(wclIsMplus(row) && ['dps','hps','bossdps'].includes(String(row.metric||singleWclMetric))) return wclCompactAmount(v/1000);
+  return wclAmount(v);
+}
+function wclDuration(ms){ ms=Number(ms); if(!Number.isFinite(ms)||ms<=0) return '—'; const s=Math.round(ms/1000), m=Math.floor(s/60), r=s%60; return m+':'+String(r).padStart(2,'0'); }
+function wclRankingsArray(row){ const r=row&&row.rankings; if(Array.isArray(r)) return r; if(r&&Array.isArray(r.rankings)) return r.rankings; if(r&&Array.isArray(r.data)) return r.data; return []; }
+function wclAllStar(row){ const a=row&&row.all_stars; if(Array.isArray(a)) return a[0]||{}; if(a&&Array.isArray(a.data)) return a.data[0]||{}; return a||{}; }
+function wclHasRankings(row){ return wclRankingsArray(row).length>0; }
+function wclIsMplus(row){ return String((row&&row.zone_id)||singleWclZone)==='47'; }
+function wclMplusPoints(r){
+  const vals=[r.points,r.score,r.bestRank&&r.bestRank.score,r.allStars&&r.allStars.points];
+  const found=vals.find(v=>Number.isFinite(Number(v)));
+  return found==null?null:Number(found);
+}
+function wclLevel(r){
+  const vals=[r.level,r.keystoneLevel,r.bracketData,r.bracket,r.bestRank&&r.bestRank.level,r.bestRank&&r.bestRank.keystoneLevel,r.bestRank&&r.bestRank.bracketData,r.bestRank&&r.bestRank.bracket,r.bestRank&&r.bestRank.ilvl];
+  const found=vals.find(v=>Number.isFinite(Number(v))&&Number(v)>0);
+  return found==null?'—':'+'+Number(found);
+}
+function singleWclPanel(ch){
+  const row=wclSelectedRow(ch), zones=wclZoneOptions();
+  if(row){ singleWclZone=String(row.zone_id||singleWclZone||50); singleWclMetric=String(row.metric||singleWclMetric||'dps'); singleWclDifficulty=String(row.difficulty||singleWclDifficulty||5); }
+  const selectedZone=zones.find(z=>String(z.id)===String(singleWclZone)) || (row?{id:row.zone_id,name:row.zone_name,expansion_name:row.expansion_name}:zones[0]);
+  const isMplusSelected=String((row&&row.zone_id)||singleWclZone)==='47';
+  const zoneOpts=zones.map(z=>`<option value="${esc(z.id)}" ${String(z.id)===String(singleWclZone)?'selected':''}>${esc(z.name)}</option>`).join('');
+  const metricOpts=Object.entries(WCL_METRIC_LABEL).map(([k,v])=>`<option value="${k}" ${k===singleWclMetric?'selected':''}>${esc(v)}</option>`).join('');
+  const diffOpts=Object.entries(WCL_DIFF_LABEL).map(([k,v])=>`<option value="${k}" ${String(k)===String(singleWclDifficulty)?'selected':''}>${esc(v)}</option>`).join('');
+  const diffControl=isMplusSelected ? '' : `<select id="wclDifficulty">${diffOpts}</select>`;
+  const controls=`<div class="wclControls"><select id="wclZone">${zoneOpts}</select><select id="wclMetric">${metricOpts}</select>${diffControl}<button class="btn ghost sm" id="wclSync">↻ WCL roster</button></div>`;
+  if(!row){
+    return `<div class="panel wclPanel"><div class="wclHead"><h2>Warcraft Logs</h2>${controls}</div><div class="pbody"><div class="singleEmpty">Sin datos WCL sincronizados para ${esc(ch.name)}. Cuando esté deployada <code>sync-warcraftlogs</code>, el botón ↻ WCL va a poblar esta vista.</div></div></div>`;
+  }
+  const all=wclAllStar(row), rankings=wclRankingsArray(row);
+  const isMplus=wclIsMplus(row);
+  const rows=rankings.map(r=>{
+    const pct=r.rankPercent, stars=r.allStars||{};
+    const label=(r.encounter&&r.encounter.name)||r.name||'—';
+    const icon=String(label).slice(0,1);
+    if(isMplus) return `<tr>
+      <td><span class="boss"><span class="bossIcon">${esc(icon)}</span>${esc(label)}</span></td>
+      <td>${wclScore(wclMplusPoints(r))}</td>
+      <td>${wclLevel(r)}</td>
+      <td class="wclAmount">${wclDisplayAmount(row,r)}</td>
+      <td>${r.totalKills??'—'}</td>
+      <td class="wclRank">${stars.rank??'—'}</td>
+    </tr>`;
+    return `<tr>
+      <td><span class="boss"><span class="bossIcon">${esc(icon)}</span>${esc(label)}</span></td>
+      <td>${wclScore(pct)}</td>
+      <td class="wclAmount">${wclAmount(r.bestAmount)}</td>
+      <td>${r.totalKills??'—'}</td>
+      <td class="wclRank">${stars.rank??'—'}</td>
+    </tr>`;
+  }).join('');
+  const updated=row.updated_at?fmtDateTime(row.updated_at):'—';
+  const head=isMplus
+    ? `<tr><th>Dungeon</th><th>Points</th><th>Level</th><th>${esc(WCL_AMOUNT_LABEL[singleWclMetric]||'Highest')}</th><th>Kills</th><th>Rank</th></tr>`
+    : `<tr><th>Boss</th><th>Best %</th><th>${esc(WCL_AMOUNT_LABEL[singleWclMetric]||'Highest')}</th><th>Kills</th><th>Rank</th></tr>`;
+  const emptyColspan=isMplus?6:5;
+  const emptyText=row.synced_ok===false && row.last_error ? `WCL no devolvió datos: ${esc(row.last_error)}` : 'Sin rankings para este filtro.';
+  return `<div class="panel wclPanel">
+    <div class="wclHead"><h2>Warcraft Logs · ${esc(selectedZone&&selectedZone.expansion_name||row.expansion_name||'Midnight')}</h2>${controls}</div>
+    <div class="wclKpis">
+      <div class="wclKpi"><span>Best Perf. Avg</span><b class="wclScore ${wclScoreClass(row.best_performance_average)}">${wclPct(row.best_performance_average)}</b></div>
+      <div class="wclKpi"><span>Median Perf. Avg</span><b class="wclScore ${wclScoreClass(row.median_performance_average)}">${wclPct(row.median_performance_average)}</b></div>
+      <div class="wclKpi"><span>All Star Points</span><b class="wclScore ${wclScoreClass(all.points)}">${wclPct(all.points)}</b></div>
+      <div class="wclKpi"><span>Rank</span><b class="purple">${all.rank??'—'}</b></div>
+    </div>
+    <div class="tablewrap" style="margin:8px 14px 12px"><table class="wclTable"><thead>${head}</thead><tbody>${rows||`<tr><td colspan="${emptyColspan}" class="singleEmpty">${emptyText}</td></tr>`}</tbody></table></div>
+    <div class="wclMeta">${isMplus?'Season':esc(WCL_DIFF_LABEL[singleWclDifficulty]||'Difficulty')} · ${esc(WCL_METRIC_LABEL[singleWclMetric]||singleWclMetric)} · actualizado ${esc(updated)}</div>
+  </div>`;
+}
 function renderPersonaje(){
   const c=document.getElementById('content'), rows=singleRows();
   if(!rows.length){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin personajes todavia</b>Sincroniza el roster primero.</div>'; return; }
@@ -1055,9 +1634,206 @@ function renderPersonaje(){
         <div class="singleHeroStats"><div class="mini"><b>${fmtIlvl(p)}</b><span>item level</span></div><div class="mini"><b>${p.mythic_rating?Math.round(p.mythic_rating):'—'}</b><span>M+ rating</span></div><div class="mini"><b>${(p.mythic_best_runs||[]).length}</b><span>esta semana</span></div></div>
       </div>
     </div>
-    <div class="singleGrid"><div class="singleStack">${singleGearPanel(p)}</div><div class="singleStack">${singleProfessionsPanel(p)}${singleInfoPanel(ch,p)}${singleRenownPanel(p)}</div><div class="singleStack">${singleMplusPanel(p)}${singleRaidPanel(p)}${singleLinksPanel(ch)}${singleEnchantPanel(p)}</div></div>
+    <div class="singleGrid"><div class="singleStack">${singleGearPanel(p)}${singleWclPanel(ch)}</div><div class="singleStack">${singleProfessionsPanel(p)}${singleInfoPanel(ch,p)}${singleRenownPanel(p)}${singleProgressionPanel(p)}</div><div class="singleStack">${singleMplusPanel(p)}${singleRaidPanel(p)}${singleLinksPanel(ch)}${singleEnchantPanel(p)}${singleRaiderPanel(ch)}</div></div>
   </div>`;
   const sel=document.getElementById('singleCharSelect'); if(sel) sel.onchange=()=>{ singleCharId=sel.value; renderPersonaje(); };
+  const wz=document.getElementById('wclZone'); if(wz) wz.onchange=()=>{ singleWclZone=wz.value; renderPersonaje(); };
+  const wm=document.getElementById('wclMetric'); if(wm) wm.onchange=()=>{ singleWclMetric=wm.value; renderPersonaje(); };
+  const wd=document.getElementById('wclDifficulty'); if(wd) wd.onchange=()=>{ singleWclDifficulty=wd.value; renderPersonaje(); };
+  const wb=document.getElementById('wclSync'); if(wb) wb.onclick=()=>manualWclSync(ch,wb);
+  const rb=document.getElementById('rioSync'); if(rb) rb.onclick=()=>manualRaiderSync(ch,rb);
+  document.querySelectorAll('[data-rio-spec]').forEach(b=> b.onclick=()=>{ singleRioSpec=b.dataset.rioSpec; renderPersonaje(); });
+}
+
+/* ---------- RECLUTAS ---------- */
+const RECRUIT_STATUS_LABEL={new:'Nuevo',reviewing:'En revisión',accepted:'Aceptado',declined:'Rechazado',archived:'Archivado'};
+function recruitSnapshot(app){
+  const raw=app&&app.character_snapshot;
+  if(!raw) return {};
+  if(typeof raw==='string'){ try{ return JSON.parse(raw)||{}; }catch(e){ return {}; } }
+  return raw;
+}
+function recruitNorm(s){ return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function recruitClass(app){ const s=recruitSnapshot(app); return app.class||s.class||''; }
+function recruitSpec(app){ const s=recruitSnapshot(app); return app.main_spec||s.active_spec||''; }
+function recruitIlvl(app){ const s=recruitSnapshot(app); return app.equipped_ilvl||s.equipped_item_level||s.average_item_level||null; }
+function recruitRealm(app){ const s=recruitSnapshot(app); return app.realm_name||s.realm_name||realmLabel(app.region||s.region||'us',app.realm_slug||s.realm_slug)||app.realm_slug||''; }
+function recruitLinkedCharacter(app){
+  if(!app) return null;
+  if(app.linked_character_id){
+    const linked=characters.find(ch=>String(ch.id)===String(app.linked_character_id));
+    if(linked) return linked;
+  }
+  return null;
+}
+function recruitRosterMatch(app){
+  const nm=recruitNorm(app.character_name||recruitSnapshot(app).name), realm=recruitNorm(app.realm_slug||recruitSnapshot(app).realm_slug), region=recruitNorm(app.region||recruitSnapshot(app).region||'us');
+  return recruitLinkedCharacter(app) || characters.find(ch=>!ch.is_recruit_shadow && recruitNorm(ch.name)===nm && recruitNorm(ch.realm_slug)===realm && recruitNorm(ch.region||'us')===region);
+}
+function recruitRows(){
+  const q=recruitNorm(recruitFilter.q), st=recruitFilter.status;
+  return [...(recruits||[])].filter(app=>{
+    if(st==='open' && !['new','reviewing'].includes(app.status||'new')) return false;
+    else if(st!=='all' && st!=='open' && app.status!==st) return false;
+    if(!q) return true;
+    return [app.character_name, app.realm_name, app.realm_slug, app.class, app.main_spec, app.role, app.discord, app.battle_tag, app.status]
+      .some(v=>recruitNorm(v).includes(q));
+  }).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+}
+function recruitPanel(title, body, extra=''){
+  return `<div class="panel singlePanel"><div class="phead"><h2><span class="dia"></span>${esc(title)}</h2></div><div class="pbody">${body||'<div class="singleEmpty">—</div>'}${extra}</div></div>`;
+}
+function recruitLinksPanel(app){
+  const s=recruitSnapshot(app);
+  const armory=app.armory_url||s.profile_url;
+  const wcl=app.logs_url||`https://www.warcraftlogs.com/character/${encodeURIComponent(app.region||s.region||'us')}/${encodeURIComponent(app.realm_slug||s.realm_slug||'')}/${encodeURIComponent(app.character_name||s.name||'')}`;
+  const rio=app.raiderio_url||`https://raider.io/characters/${encodeURIComponent(app.region||s.region||'us')}/${encodeURIComponent(app.realm_slug||s.realm_slug||'')}/${encodeURIComponent(app.character_name||s.name||'')}`;
+  const btn=(href,label)=>href?`<a class="btn ghost sm" href="${esc(href)}" target="_blank" rel="noopener">${esc(label)}</a>`:'';
+  return recruitPanel('Links', `<div class="actions">${btn(armory,'Armory')}${btn(wcl,'Warcraft Logs')}${btn(rio,'Raider.IO')}</div>`);
+}
+function recruitContactPanel(app){
+  return recruitPanel('Postulación', [
+    kvRow('Discord',app.discord||'—'),
+    kvRow('BattleTag',app.battle_tag||'—'),
+    kvRow('Rol',CHAR_ROLE_LABEL[app.role]||app.role||'—'),
+    kvRow('Main spec',recruitSpec(app)||'—'),
+    kvRow('Offspec',app.offspec||'—'),
+    kvRow('Enviada',app.created_at?fmtDateTime(app.created_at):'—')
+  ].join('') + (app.availability?`<div class="divider"></div><div class="recruitNote"><b>Disponibilidad</b><br>${esc(app.availability)}</div>`:'')
+    + (app.experience?`<div class="divider"></div><div class="recruitNote"><b>Experiencia</b><br>${esc(app.experience)}</div>`:'')
+    + (app.notes?`<div class="divider"></div><div class="recruitNote"><b>Notas</b><br>${esc(app.notes)}</div>`:''));
+}
+function recruitAnswersPanel(app){
+  const linkRow=(label,url)=>`<div class="destrow"><span>${esc(label)}</span><span class="g">${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc('Abrir link')}</a>`:'—'}</span></div>`;
+  return `<div class="panel singlePanel"><div class="phead"><h2><span class="dia"></span>Ficha completada</h2></div><div class="pbody singleKV">
+    ${kvRow('Discord',app.discord||'—')}${kvRow('BattleTag',app.battle_tag||'—')}${kvRow('Rol',CHAR_ROLE_LABEL[app.role]||app.role||'—')}${kvRow('Offspec',app.offspec||'—')}
+    ${linkRow('Warcraft Logs',app.logs_url)}${linkRow('Raider.IO',app.raiderio_url)}
+    ${app.availability?`<div class="divider" style="grid-column:1/-1"></div><div class="recruitNote" style="grid-column:1/-1"><b>Disponibilidad</b><br>${esc(app.availability)}</div>`:''}
+    ${app.experience?`<div class="divider" style="grid-column:1/-1"></div><div class="recruitNote" style="grid-column:1/-1"><b>Experiencia</b><br>${esc(app.experience)}</div>`:''}
+    ${app.notes?`<div class="divider" style="grid-column:1/-1"></div><div class="recruitNote" style="grid-column:1/-1"><b>Algo más</b><br>${esc(app.notes)}</div>`:''}
+  </div></div>`;
+}
+function recruitSnapshotPanel(app){
+  const s=recruitSnapshot(app), cls=recruitClass(app);
+  return recruitPanel('Snapshot Armory', [
+    kvRow('Clase',cls||'—'),
+    kvRow('Spec activa',recruitSpec(app)||'—'),
+    kvRow('Realm',recruitRealm(app)||'—'),
+    kvRow('Facción',app.faction||s.faction||'—'),
+    kvRow('Nivel',app.level||s.level||'—'),
+    kvRow('Item level',recruitIlvl(app)||'—')
+  ].join(''));
+}
+function recruitFullCharacter(app,ch){
+  if(!ch) return '';
+  const p=characterProgress.find(x=>x.character_id===ch.id)||{};
+  return `<div class="recruitFull singleView" style="--cc:${CLASS_COLOR[ch.class]||'var(--blue)'}">
+    <div class="sectitle">Panel de personaje ${ch.is_recruit_shadow?'<span class="tag">postulante</span>':(ch.active===false?'<span class="tag">inactivo</span>':'<span class="recruitMatch">ya está en roster</span>')}</div>
+    <div class="singleGrid"><div class="singleStack">${singleGearPanel(p)}${singleWclPanel(ch)}</div><div class="singleStack">${singleProfessionsPanel(p)}${singleInfoPanel(ch,p)}${singleRenownPanel(p)}${singleProgressionPanel(p)}</div><div class="singleStack">${singleMplusPanel(p)}${singleRaidPanel(p)}${singleLinksPanel(ch)}${singleEnchantPanel(p)}${singleRaiderPanel(ch)}</div></div>
+  </div>`;
+}
+function renderReclutas(){
+  const c=document.getElementById('content');
+  if(!cap('manageRecruits')){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin permiso</b>Tu usuario no puede ver postulaciones.</div>'; return; }
+  if(recruitLoadError){
+    c.innerHTML=`<div class="panel"><div class="phead"><h2><span class="dia"></span>Reclutas</h2></div><div class="empty" style="padding:42px"><b>No se pudo cargar recruit-admin</b>Deployá <code>supabase/functions/recruit-admin</code> y corré el SQL 018. Error: <code>${esc(recruitLoadError)}</code></div></div>`;
+    return;
+  }
+  const rows=recruitRows();
+  if(selectedRecruitId && !rows.find(r=>r.id===selectedRecruitId)) selectedRecruitId=rows[0]&&rows[0].id||'';
+  if(!selectedRecruitId && rows.length) selectedRecruitId=rows[0].id;
+  const app=rows.find(r=>r.id===selectedRecruitId)||rows[0]||null;
+  const list=rows.map(app=>{
+    const s=recruitSnapshot(app), cls=recruitClass(app), avatar=s.avatar_url, match=recruitRosterMatch(app);
+    return `<div class="recruitRow ${app.id===selectedRecruitId?'on':''}" data-recruit-id="${esc(app.id)}" style="--cc:${CLASS_COLOR[cls]||'var(--text)'}">
+      <div class="recruitAvatar">${avatar?`<img src="${esc(avatar)}" alt="">`:classBadge(cls)}</div>
+      <div class="recruitName"><b>${esc(app.character_name||s.name||'—')}</b><span>${esc(cls||'—')} · ${esc(recruitSpec(app)||'—')} · ${esc(recruitRealm(app)||'—')}${match?' · roster':''}</span></div>
+      <div class="recruitMeta"><span class="recruitStatus ${esc(app.status||'new')}">${esc(RECRUIT_STATUS_LABEL[app.status]||app.status||'Nuevo')}</span><span class="recruitAge">${app.created_at?fmtDateTime(app.created_at):'—'}</span></div>
+    </div>`;
+  }).join('');
+  const detail=app?recruitDetailHtml(app):'<div class="panel recruitDetail"><div class="recruitEmpty">No hay postulaciones con este filtro.</div></div>';
+  c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Reclutas</div><div class="actions"><button class="btn ghost sm" id="recruitReload">↻ Recargar</button><a class="btn ghost sm" href="recruit.html" target="_blank" rel="noopener">Abrir formulario</a></div></div>
+    <div class="recruitBoard">
+      <div class="panel">
+        <div class="recruitTools"><input id="recruitQ" placeholder="Buscar recluta…" value="${esc(recruitFilter.q)}"><select id="recruitStatusFilter"><option value="open" ${recruitFilter.status==='open'?'selected':''}>Abiertas</option><option value="all" ${recruitFilter.status==='all'?'selected':''}>Todos</option>${Object.entries(RECRUIT_STATUS_LABEL).map(([k,v])=>`<option value="${k}" ${recruitFilter.status===k?'selected':''}>${esc(v)}</option>`).join('')}</select></div>
+        <div class="recruitRows">${list||'<div class="empty">Sin postulaciones todavía.</div>'}</div>
+      </div>
+      ${detail}
+    </div>`;
+  document.getElementById('recruitReload').onclick=async()=>{ try{ await fetchRecruits(); renderReclutas(); toast('Reclutas actualizados'); }catch(e){ recruitLoadError=e.message||String(e); renderReclutas(); } };
+  document.getElementById('recruitQ').oninput=e=>{ recruitFilter.q=e.target.value; renderReclutas(); };
+  document.getElementById('recruitStatusFilter').onchange=e=>{ recruitFilter.status=e.target.value; renderReclutas(); };
+  document.querySelectorAll('[data-recruit-id]').forEach(el=> el.onclick=()=>{ selectedRecruitId=el.dataset.recruitId; renderReclutas(); });
+  wireRecruitDetail(app);
+}
+function recruitDetailHtml(app){
+  const s=recruitSnapshot(app), cls=recruitClass(app), ch=recruitRosterMatch(app), clsColor=CLASS_COLOR[ch&&ch.class||cls]||'var(--blue)';
+  const avatar=s.avatar_url, ilvl=recruitIlvl(app);
+  const panelOpen=recruitPanelOpenId===app.id;
+  return `<div class="recruitDetail singleView" style="--cc:${clsColor}">
+    <div class="recruitActions">
+      <select id="recruitStatusSelect">${Object.entries(RECRUIT_STATUS_LABEL).map(([k,v])=>`<option value="${k}" ${app.status===k?'selected':''}>${esc(v)}</option>`).join('')}</select>
+      <button class="btn ghost sm" id="recruitRefreshArmory">↻ Armory</button>
+      <button class="btn primary sm" id="recruitAddRoster">${ch&&ch.active!==false?'Ya está en roster':(ch?'Reactivar en roster':'Agregar al roster')}</button>
+      <button class="btn ghost sm" id="recruitOpenPanel" ${ch?'':'disabled'}>${panelOpen?'Ocultar Panel de Personaje':'Abrir Panel de Personaje'}</button>
+      <button class="btn ghost sm danger" id="recruitDelete">Borrar</button>
+    </div>
+    <div class="singleTop">
+      <div class="singleHero">
+        <div class="singleIdentity">${avatar?`<span class="classbadge"><img src="${esc(avatar)}" alt=""></span>`:classBadge(cls)}<div><h2>${esc(app.character_name||s.name||'—')}</h2><div class="meta">${esc(cls||'—')} · ${esc(CHAR_ROLE_LABEL[app.role]||app.role||'—')} · ${esc(recruitRealm(app)||'—')}</div></div></div>
+        <div class="singleHeroStats"><div class="mini"><b>${ilvl||'—'}</b><span>item level</span></div><div class="mini"><b>${app.level||s.level||'—'}</b><span>nivel</span></div><div class="mini"><b>${esc(RECRUIT_STATUS_LABEL[app.status]||app.status||'Nuevo')}</b><span>estado</span></div></div>
+      </div>
+    </div>
+    ${recruitAnswersPanel(app)}
+    <div class="recruitGrid">${recruitSnapshotPanel(app)}${recruitLinksPanel(app)}</div>
+    ${panelOpen?recruitFullCharacter(app,ch):''}
+  </div>`;
+}
+function wireRecruitDetail(app){
+  if(!app) return;
+  const st=document.getElementById('recruitStatusSelect');
+  if(st) st.onchange=()=>updateRecruitStatus(app,st.value);
+  const del=document.getElementById('recruitDelete');
+  if(del) del.onclick=()=>deleteRecruit(app);
+  const add=document.getElementById('recruitAddRoster');
+  if(add) add.onclick=()=>addRecruitToRoster(app,add);
+  const open=document.getElementById('recruitOpenPanel');
+  if(open) open.onclick=()=>{ recruitPanelOpenId = recruitPanelOpenId===app.id ? '' : app.id; renderReclutas(); };
+  const arm=document.getElementById('recruitRefreshArmory');
+  if(arm) arm.onclick=()=>refreshRecruitArmory(app,arm);
+  const wz=document.getElementById('wclZone'); if(wz) wz.onchange=()=>{ singleWclZone=wz.value; renderReclutas(); };
+  const wm=document.getElementById('wclMetric'); if(wm) wm.onchange=()=>{ singleWclMetric=wm.value; renderReclutas(); };
+  const wd=document.getElementById('wclDifficulty'); if(wd) wd.onchange=()=>{ singleWclDifficulty=wd.value; renderReclutas(); };
+  const ch=recruitRosterMatch(app);
+  const wb=document.getElementById('wclSync'); if(wb&&ch) wb.onclick=()=>manualWclSync(ch,wb);
+  const rb=document.getElementById('rioSync'); if(rb&&ch) rb.onclick=()=>manualRaiderSync(ch,rb);
+  document.querySelectorAll('[data-rio-spec]').forEach(b=> b.onclick=()=>{ singleRioSpec=b.dataset.rioSpec; renderReclutas(); });
+}
+async function updateRecruitStatus(app,status){
+  try{ await recruitAdmin('PATCH',{id:app.id,status}); await fetchRecruits(); renderReclutas(); toast('Estado actualizado'); }
+  catch(e){ toast('No se pudo cambiar estado'); }
+}
+async function refreshRecruitArmory(app,btn){
+  const orig=btn.textContent; btn.disabled=true; btn.textContent='Actualizando…';
+  try{ await recruitAdmin('POST',{action:'refresh_armory',id:app.id}); await fetchRecruits(); renderReclutas(); toast('Snapshot Armory actualizado'); }
+  catch(e){ toast('No se pudo refrescar Armory'); }
+  finally{ btn.disabled=false; btn.textContent=orig; }
+}
+async function deleteRecruit(app){
+  if(!confirm('¿Borrar la postulación de "'+(app.character_name||'este recluta')+'"? Esto borra solo la postulación y su cache.')) return;
+  try{ await recruitAdmin('DELETE',null,'?id='+encodeURIComponent(app.id)); selectedRecruitId=''; await fetchRecruits(); renderReclutas(); toast('Postulación borrada'); }
+  catch(e){ toast('No se pudo borrar'); }
+}
+async function addRecruitToRoster(app,btn){
+  const orig=btn.textContent; btn.disabled=true; btn.textContent='Agregando…';
+  try{
+    const before=recruitRosterMatch(app);
+    await recruitAdmin('POST',{action:'import_to_roster',id:app.id});
+    toast(before?'Actualizado en roster':'Agregado al roster — los syncs quedan en cola');
+    await refresh(true);
+    if(view==='reclutas') renderReclutas();
+  }catch(e){ toast('No se pudo agregar al roster'); }
+  finally{ btn.disabled=false; btn.textContent=orig; }
 }
 
 /* ---------- ROSTER (composición por rol / clase / armadura) ---------- */
@@ -1171,7 +1947,7 @@ function openNewChar(){
     if(!name){ err.textContent='Poné el nombre del personaje.'; return false; }
     if(!slug||!region){ err.textContent='Elegí un servidor de la lista (no vale escribirlo libre).'; return false; }
     if(characters.find(x=>x.name.toLowerCase()===name.toLowerCase() && x.realm_slug===slug)){ err.textContent='Ya existe ese personaje en ese realm.'; return false; }
-    try{ await sbIns('characters',{ name, role:rl, realm_slug:slug, region, active:true }); logAction('crear_personaje','character',name,{target:name}); await refresh(); toast('Personaje agregado — la clase llega en la próxima sincronización'); }
+    try{ await sbIns('characters',{ name, role:rl, realm_slug:slug, region, active:true }); logAction('crear_personaje','character',name,{target:name}); await refresh(); toast('Personaje agregado — Armory, WCL y Raider.IO quedan en cola'); }
     catch(e){ err.textContent='No se pudo crear.'; return false; }
   });
   wireRealmPicker();
@@ -1375,9 +2151,8 @@ async function lookupAbilitySpell(btn){
   if(!id){ toast('Poné un spell ID'); return; }
   const orig=btn.textContent; btn.disabled=true; btn.textContent='Buscando…';
   try{
-    const r=await fetch(SUPABASE_URL+'/functions/v1/inspect-wow-spells',{ method:'POST', headers:{ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json' }, body:JSON.stringify({spellId:id}) });
-    const j=await r.json();
-    if(!r.ok||!j.spell) throw new Error(j.error||'No encontrado');
+    const j=await appRequest('inspect_spell',{spell_id:id});
+    if(!j.spell) throw new Error(j.error||'No encontrado');
     document.getElementById('ab_name').value=j.spell.name||'';
     document.getElementById('ab_name').dataset.icon=j.spell.icon_url||'';
     toast('Spell encontrado: '+(j.spell.name||id));
@@ -1440,21 +2215,20 @@ function renderUsuarios(){
   c.innerHTML=`<div class="wbar"><div></div><div class="actions"><button class="btn primary" id="newUser">+ Usuario</button></div></div>
     <div class="tablewrap"><table class="utable"><thead><tr><th>Usuario</th><th>Rol</th><th>Creado</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="sectitle">Acceso a la página</div>
-    <div class="toggle"><div class="lab"><b>Requerir inicio de sesión</b><span>Si está activado, nadie ve nada sin loguearse. Si está apagado, cualquiera con el link entra como invitado (solo ver Semana y Calendario) y puede loguearse para más permisos.</span></div><div class="sw ${settings.require_login?'on':''}" id="swLogin"></div></div>
+    <div class="toggle"><div class="lab"><b>Inicio de sesión obligatorio</b><span>La página operativa es privada. Las sesiones vencen y los permisos se validan en el servidor.</span></div><div class="sw on" title="Obligatorio por seguridad"></div></div>
     <div class="toggle"><div class="lab"><b>Mostrar actividad de admins a todos</b><span>Por defecto, las acciones hechas por un Admin solo las ven otros Admin en la Auditoría. Activá esto si querés que los Officers también vean la actividad de los admins.</span></div><div class="sw ${settings.show_admin_activity?'on':''}" id="swAdminAct"></div></div>
-    <div class="toggle"><div class="lab"><b>Auto-sincronizar con Battle.net</b><span>Cuando está activo, los datos de personajes se refrescan solos cada 5 minutos. Si lo apagás, solo se actualizan cuando alguien toca el botón "Refrescar API".</span></div><div class="sw ${settings.auto_sync?'on':''}" id="swAutoSync"></div></div>
-    <p class="hint" style="margin-top:14px">Nota de seguridad: este control de usuarios es práctico para la guild, pero no es seguridad de nivel bancario. Las contraseñas van cifradas, pero alguien técnico con el link podría saltear los permisos vía la base. Para candado duro de verdad hace falta Supabase Auth.</p>
+    <div class="toggle"><div class="lab"><b>Auto-sincronizar fuentes externas</b><span>Cuando está activo, Armory, Warcraft Logs y Raider.IO se actualizan con los cron horarios protegidos.</span></div><div class="sw ${settings.auto_sync?'on':''}" id="swAutoSync"></div></div>
+    <p class="hint" style="margin-top:14px">Las contraseñas se verifican en el servidor, las sesiones vencen a las 12 horas y el navegador no recibe hashes ni claves privadas.</p>
     ${abilityConfigHtml()}`;
   document.getElementById('newUser').onclick=openNewUser;
-  document.getElementById('swLogin').onclick=async()=>{ const nv=!settings.require_login; try{ await sbUpd('app_settings',1,{require_login:nv}); settings.require_login=nv; logAction('cambiar_acceso','settings','1',{target:nv?'login requerido':'público'}); renderUsuarios(); toast('Acceso actualizado'); }catch(e){ toast('No se pudo'); } };
   document.getElementById('swAdminAct').onclick=async()=>{ const nv=!settings.show_admin_activity; try{ await sbUpd('app_settings',1,{show_admin_activity:nv}); settings.show_admin_activity=nv; logAction('cambiar_acceso','settings','1',{target:nv?'actividad admin visible a todos':'actividad admin solo admins'}); renderUsuarios(); toast('Visibilidad actualizada'); }catch(e){ toast('No se pudo (¿falta la columna show_admin_activity?)'); } };
   document.getElementById('swAutoSync').onclick=async()=>{ const nv=!settings.auto_sync; try{ await sbUpd('app_settings',1,{auto_sync:nv}); settings.auto_sync=nv; logAction('cambiar_acceso','settings','1',{target:nv?'auto-sync activado':'auto-sync apagado'}); renderUsuarios(); toast(nv?'Auto-sync activado (cada 5 min)':'Auto-sync apagado'); }catch(e){ toast('No se pudo (¿corriste el SQL 008?)'); } };
   document.getElementById('ab_lookup').onclick=()=>lookupAbilitySpell(document.getElementById('ab_lookup'));
   document.getElementById('ab_add').onclick=addTrackedAbility;
   document.querySelectorAll('[data-editabil]').forEach(b=> b.onclick=()=>openEditAbility(b.dataset.editabil));
   document.querySelectorAll('[data-delabil]').forEach(b=> b.onclick=()=>delTrackedAbility(b.dataset.delabil));
-  document.querySelectorAll('.rolesel').forEach(sel=> sel.onchange=async()=>{ const u=users.find(x=>x.id===sel.dataset.uid); try{ await sbUpd('users',u.id,{role:sel.value}); logAction('cambiar_rol','user',u.id,{target:u.username+' → '+ROLE_LABEL[sel.value]}); await refresh(); toast('Rol actualizado'); }catch(e){ toast('No se pudo'); } });
-  document.querySelectorAll('[data-delid]').forEach(b=> b.onclick=async()=>{ const u=users.find(x=>x.id===b.dataset.delid); if(!confirm('¿Borrar al usuario "'+u.username+'"?')) return; try{ await sbDel('users',u.id); logAction('borrar_usuario','user',u.id,{target:u.username}); await refresh(); toast('Usuario borrado'); }catch(e){ toast('No se pudo'); } });
+  document.querySelectorAll('.rolesel').forEach(sel=> sel.onchange=async()=>{ const u=users.find(x=>x.id===sel.dataset.uid); try{ await authRequest('update_role',{user_id:u.id,role:sel.value}); logAction('cambiar_rol','user',u.id,{target:u.username+' → '+ROLE_LABEL[sel.value]}); await refresh(); toast('Rol actualizado'); }catch(e){ toast(e.message||'No se pudo'); } });
+  document.querySelectorAll('[data-delid]').forEach(b=> b.onclick=async()=>{ const u=users.find(x=>x.id===b.dataset.delid); if(!confirm('¿Borrar al usuario "'+u.username+'"?')) return; try{ await authRequest('delete_user',{user_id:u.id}); logAction('borrar_usuario','user',u.id,{target:u.username}); await refresh(); toast('Usuario borrado'); }catch(e){ toast(e.message||'No se pudo'); } });
   document.querySelectorAll('[data-pwid]').forEach(b=> b.onclick=()=> openResetPass(b.dataset.pwid));
 }
 
@@ -1512,17 +2286,17 @@ function closeM2(){ document.getElementById('scrim2').classList.remove('on'); }
 function openChangePass(){ openM2('Cambiar mi contraseña',
   `<div class="field"><label>Contraseña actual</label><input type="password" id="cp_old"></div><div class="field"><label>Nueva contraseña</label><input type="password" id="cp_new"></div><div class="field"><label>Repetir nueva</label><input type="password" id="cp_new2"></div><div class="err" id="cp_err"></div>`,
   async()=>{ const o=document.getElementById('cp_old').value,n=document.getElementById('cp_new').value,n2=document.getElementById('cp_new2').value; const err=document.getElementById('cp_err'); err.textContent='';
-    if(!n||n.length<3){ err.textContent='La nueva debe tener al menos 3 caracteres.'; return false; } if(n!==n2){ err.textContent='No coinciden.'; return false; }
-    const u=users.find(x=>x.id===session.id); const oh=await hashPass(o); if(!u||oh!==u.pass_hash){ err.textContent='La contraseña actual es incorrecta.'; return false; }
-    try{ const nh=await hashPass(n); await sbUpd('users',u.id,{pass_hash:nh}); logAction('cambiar_pass','user',u.id,{target:'propia'}); toast('Contraseña cambiada'); }catch(e){ err.textContent='No se pudo guardar.'; return false; } }); }
+    if(!n||n.length<10){ err.textContent='La nueva debe tener al menos 10 caracteres.'; return false; } if(n!==n2){ err.textContent='No coinciden.'; return false; }
+    try{ await authRequest('change_password',{old_password:o,new_password:n}); logAction('cambiar_pass','user',session.id,{target:'propia'}); await doLogout(true); toast('Contraseña cambiada. Volvé a iniciar sesión.'); }catch(e){ err.textContent=e.message||'No se pudo guardar.'; return false; } }); }
 function openResetPass(uidv){ const u=users.find(x=>x.id===uidv); openM2('Reset contraseña · '+u.username,
   `<p class="hint">Le ponés una contraseña nueva a <b>${esc(u.username)}</b>. Después que la cambie por una suya.</p><div class="field"><label>Nueva contraseña</label><input type="password" id="rp_new"></div><div class="err" id="rp_err"></div>`,
-  async()=>{ const n=document.getElementById('rp_new').value; const err=document.getElementById('rp_err'); if(!n||n.length<3){ err.textContent='Mínimo 3 caracteres.'; return false; } try{ const nh=await hashPass(n); await sbUpd('users',u.id,{pass_hash:nh}); logAction('cambiar_pass','user',u.id,{target:u.username}); toast('Contraseña reseteada'); }catch(e){ err.textContent='No se pudo.'; return false; } }); }
+  async()=>{ const n=document.getElementById('rp_new').value; const err=document.getElementById('rp_err'); if(!n||n.length<10){ err.textContent='Mínimo 10 caracteres.'; return false; } try{ await authRequest('reset_password',{user_id:u.id,password:n}); logAction('cambiar_pass','user',u.id,{target:u.username}); toast('Contraseña reseteada'); }catch(e){ err.textContent=e.message||'No se pudo.'; return false; } }); }
 function openNewUser(){ openM2('Nuevo usuario',
   `<div class="field"><label>Usuario</label><input type="text" id="nu_user"></div><div class="field"><label>Contraseña</label><input type="password" id="nu_pass"></div><div class="field"><label>Rol</label><select id="nu_role">${Object.keys(ROLE_LABEL).map(r=>`<option value="${r}">${ROLE_LABEL[r]}</option>`).join('')}</select></div><div class="err" id="nu_err"></div>`,
   async()=>{ const un=document.getElementById('nu_user').value.trim(), pw=document.getElementById('nu_pass').value, rl=document.getElementById('nu_role').value; const err=document.getElementById('nu_err'); err.textContent='';
     if(!un||!pw){ err.textContent='Completá usuario y contraseña.'; return false; } if(users.find(x=>x.username.toLowerCase()===un.toLowerCase())){ err.textContent='Ese usuario ya existe.'; return false; }
-    try{ const h=await hashPass(pw); await sbIns('users',{ id:uid(), username:un, pass_hash:h, role:rl }); logAction('crear_usuario','user',un,{target:un+' ('+ROLE_LABEL[rl]+')'}); await refresh(); toast('Usuario creado'); }catch(e){ err.textContent='No se pudo crear.'; return false; } }); }
+    if(pw.length<10){ err.textContent='La contraseña debe tener al menos 10 caracteres.'; return false; }
+    try{ await authRequest('create_user',{username:un,password:pw,role:rl}); logAction('crear_usuario','user',un,{target:un+' ('+ROLE_LABEL[rl]+')'}); await refresh(); toast('Usuario creado'); }catch(e){ err.textContent=e.message||'No se pudo crear.'; return false; } }); }
 
 /* ---------- user menu ---------- */
 function openUserMenu(e){ const m=document.getElementById('userMenu'); const r=document.getElementById('uchip').getBoundingClientRect();
@@ -1558,9 +2332,14 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSale(); clos
 function showSetup(){ document.getElementById('app').style.display=''; document.getElementById('content').innerHTML=`<div class="setup"><h2>Falta conectar la base</h2><p>Pegá tu <code>SUPABASE_URL</code> y <code>SUPABASE_KEY</code> arriba del archivo, y corré el SQL nuevo (tablas users, app_settings, audit_log).</p></div>`; setLive('err','sin configurar'); }
 async function boot(){
   if(!configured()){ showSetup(); return; }
-  try{ await fetchAll(); }catch(e){ document.getElementById('app').style.display=''; setLive('err','sin conexión'); showError('No se pudo conectar / faltan las tablas nuevas. Corré el SQL de la guía v2. <code>'+esc(String(e.message).slice(0,150))+'</code>'); return; }
-  await seedAdmin(); await ensureFirstWeek(); await fetchAll();
-  if(session){ const u=users.find(x=>x.username===session.username); if(!u){ session=null; localStorage.removeItem('pt_session'); } else session.role=u.role; }
+  localStorage.removeItem('pt_session');
+  if(session&&session.token){
+    try{ const valid=await authRequest('session'); session={...valid.user,token:session.token,expires_at:session.expires_at}; sessionStorage.setItem('pt_secure_session',JSON.stringify(session)); }
+    catch(e){ session=null; sessionStorage.removeItem('pt_secure_session'); }
+  }
+  if(!session){ gate(); setLive('ok','listo'); return; }
+  try{ await fetchAll(); }catch(e){ if(e.status===401){ await doLogout(true); return; } document.getElementById('app').style.display=''; setLive('err','sin conexión'); showError('No se pudo conectar con el gateway seguro. Verificá SQL 019 y las funciones <code>app-auth</code>/<code>app-api</code>.'); return; }
+  await ensureFirstWeek(); await fetchAll();
   lastSig=dataSig(); gate();
   setInterval(()=>{ const busy=document.getElementById('scrim').classList.contains('on')||document.getElementById('scrim2').classList.contains('on')||document.getElementById('login').classList.contains('on')||(document.activeElement&&['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)); if(!busy) refresh(true); },4000);
 }

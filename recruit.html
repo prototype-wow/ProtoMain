@@ -1,0 +1,292 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-qBAL552S28Wbr/kv8LfG7jlaFOGK2qBSBKn27WTx7gY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co">
+<title>PROTOTYPE · Recruitment</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Inter:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap');
+  :root{
+    --bg:#06080b; --bg-1:#0c1116; --bg-2:#121a21; --bg-3:#19242d;
+    --line:#1f2c36; --line-soft:#161f27; --blue:#009BDB; --blue-2:#33b6e8;
+    --text:#e7eef4; --muted:#8a9caa; --muted-2:#566671; --gold:#f0c14b;
+    --ok:#2fbf71; --rose:#e8556b; --purple:#9b7be8;
+    --font-display:'Montserrat',system-ui,sans-serif; --font-body:'Inter',system-ui,sans-serif; --font-mono:'Space Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{min-height:100vh; color:var(--text); font-family:var(--font-body); line-height:1.45; background:radial-gradient(800px 460px at 88% -12%, rgba(0,155,219,.16), transparent 60%),var(--bg)}
+  .wrap{max-width:980px; margin:0 auto; padding:24px clamp(14px,4vw,34px) 64px}
+  .brand{display:flex; align-items:center; gap:14px; padding-bottom:18px; border-bottom:1px solid var(--line-soft)}
+  .mark{width:42px; height:42px; display:grid; place-items:center; transform:rotate(45deg); border:2px solid var(--blue); box-shadow:0 0 20px -8px var(--blue)}
+  .mark span{width:22px; height:22px; border:2px solid #fff; display:block}
+  h1{margin:0; font-family:var(--font-display); font-size:22px; letter-spacing:.24em; text-transform:uppercase}
+  .brand p{margin:3px 0 0; color:var(--muted); font-size:11px; letter-spacing:.18em; text-transform:uppercase}
+  .grid{display:grid; grid-template-columns:1.1fr .9fr; gap:18px; margin-top:22px; align-items:start}
+  .panel{border:1px solid var(--line); border-radius:14px; background:var(--bg-1); overflow:hidden}
+  .head{position:relative; padding:16px 18px 13px; border-bottom:1px solid var(--line-soft)}
+  .head::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--blue)}
+  .head h2{margin:0; display:flex; align-items:center; gap:9px; font-family:var(--font-display); font-size:15px; letter-spacing:.14em; text-transform:uppercase}
+  .dia{width:9px; height:9px; transform:rotate(45deg); background:var(--blue)}
+  .body{padding:16px 18px 18px}
+  .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  label{display:block; margin:0 0 6px; color:var(--muted-2); font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:700}
+  input,select,textarea{width:100%; border:1px solid var(--line); border-radius:9px; background:var(--bg); color:var(--text); padding:10px 11px; font:14px var(--font-body)}
+  textarea{min-height:82px; resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--blue)}
+  .field{margin-bottom:13px}
+  .btn{border:1px solid var(--line); border-radius:9px; background:var(--bg-2); color:var(--text); padding:10px 14px; cursor:pointer; font-weight:800}
+  .btn:hover{border-color:var(--blue)}
+  .btn.primary{border-color:transparent; color:#021018; background:linear-gradient(120deg,#2bb6e8,#009BDB)}
+  .btn:disabled{opacity:.45; cursor:not-allowed}
+  .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .hint{color:var(--muted); font-size:12.5px; margin:8px 0 0}
+  .msg{margin-top:12px; color:var(--muted); font-size:13px}
+  .msg.ok{color:var(--ok)} .msg.err{color:#ffd9df}
+  .found{display:none; margin-top:14px; border:1px solid var(--line-soft); border-radius:12px; background:var(--bg); padding:12px}
+  .found.on{display:grid; grid-template-columns:56px minmax(0,1fr); gap:12px; align-items:center}
+  .found img{width:56px; height:56px; border-radius:10px; border:1px solid var(--line); background:var(--bg-3)}
+  .found b{display:block; font-size:18px; color:var(--blue-2)}
+  .found span{display:block; color:var(--muted); font-size:12px}
+  .pill{display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:999px; padding:5px 9px; color:var(--muted); font-size:12px; margin:4px 5px 0 0}
+  .sideText{color:var(--muted); font-size:13px}
+  .sideText b{color:var(--text)}
+  .steps{display:grid; gap:10px; margin-top:12px}
+  .step{border:1px solid var(--line-soft); border-radius:10px; padding:11px 12px; background:var(--bg)}
+  .step b{color:var(--gold)}
+  @media(max-width:760px){.grid,.row{grid-template-columns:1fr}.brand{align-items:flex-start}.brand h1{font-size:18px}}
+</style>
+
+<div class="wrap">
+  <header class="brand">
+    <div class="mark"><span></span></div>
+    <div>
+      <h1>Prototype</h1>
+      <p>US-Quel'Thalas · Recruitment</p>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="panel">
+      <div class="head"><h2><span class="dia"></span>Aplicar al roster</h2></div>
+      <form class="body" id="form">
+        <div class="row">
+          <div class="field">
+            <label for="charName">Personaje</label>
+            <input id="charName" autocomplete="off" placeholder="Ej: Deideideidei" required>
+          </div>
+          <div class="field">
+            <label for="realm">Realm</label>
+            <select id="realm" required></select>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="lookupBtn">Buscar personaje</button>
+          <span class="hint">Primero confirmamos el personaje contra Blizzard.</span>
+        </div>
+        <div class="found" id="found"></div>
+        <div class="msg" id="lookupMsg"></div>
+
+        <div class="row">
+          <div class="field">
+            <label for="discord">Discord</label>
+            <input id="discord" placeholder="usuario#1234 / usuario" required>
+          </div>
+          <div class="field">
+            <label for="battleTag">BattleTag</label>
+            <input id="battleTag" placeholder="Opcional">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="role">Rol principal</label>
+            <select id="role">
+              <option value="">Elegir</option>
+              <option value="tank">Tank</option>
+              <option value="healer">Healer</option>
+              <option value="melee">Melee DPS</option>
+              <option value="ranged">Ranged DPS</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="offspec">Offspec</label>
+            <input id="offspec" placeholder="Opcional">
+          </div>
+        </div>
+        <div class="field">
+          <label for="availability">Disponibilidad</label>
+          <textarea id="availability" placeholder="Dias/horarios, asistencia esperada, notas de disponibilidad"></textarea>
+        </div>
+        <div class="field">
+          <label for="experience">Experiencia</label>
+          <textarea id="experience" placeholder="Progreso actual, CE/AOTC anteriores, M+, guild anterior"></textarea>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="logs">Warcraft Logs</label>
+            <input id="logs" placeholder="URL opcional">
+          </div>
+          <div class="field">
+            <label for="rio">Raider.IO</label>
+            <input id="rio" placeholder="URL opcional">
+          </div>
+        </div>
+        <div class="field">
+          <label for="notes">Algo mas</label>
+          <textarea id="notes" placeholder="Contanos lo que creas importante"></textarea>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="submitBtn" disabled>Enviar postulacion</button>
+          <span class="hint">Se habilita despues de confirmar el personaje.</span>
+        </div>
+        <div class="msg" id="submitMsg"></div>
+      </form>
+    </section>
+
+    <aside class="panel">
+      <div class="head"><h2><span class="dia"></span>Que revisamos</h2></div>
+      <div class="body sideText">
+        <p><b>Primero validamos tu personaje</b> con la API de Blizzard para evitar nombres o realms mal escritos.</p>
+        <div class="steps">
+          <div class="step"><b>1.</b> Elegi realm y buscá tu personaje.</div>
+          <div class="step"><b>2.</b> Confirmá que el resultado es tu personaje.</div>
+          <div class="step"><b>3.</b> Completá disponibilidad, experiencia y links.</div>
+        </div>
+        <p>Después un officer va a poder abrir tu postulación y revisar progreso, Armory, Warcraft Logs y Raider.IO.</p>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+/* Identificador y clave publicable del backend. No otorgan acceso privilegiado;
+   Blizzard, WCL y service_role viven exclusivamente en Edge Function secrets. */
+const SUPABASE_URL = "https://hjatxlvqytgkizcaopce.supabase.co";
+const SUPABASE_KEY = "sb_publishable_jgKmy1j1js3YiGsPlcervQ_TyaJx86P";
+const H = () => ({ apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" });
+
+let confirmedCharacter = null;
+let realms = [];
+
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function msg(id, text, cls=""){ const el=document.getElementById(id); el.className="msg "+cls; el.textContent=text||""; }
+function errText(e){
+  if(!e) return "Error desconocido";
+  if(typeof e === "string") return e;
+  if(e.message) return e.message;
+  if(e.error) return errText(e.error);
+  try{ return JSON.stringify(e); }catch(_){ return String(e); }
+}
+function currentRealm(){ const opt=document.getElementById("realm").selectedOptions[0]; return { slug:opt?.value||"", name:opt?.dataset.name||opt?.textContent||"", region:opt?.dataset.region||"us" }; }
+
+async function recruitApi(body){
+  const res=await fetch(SUPABASE_URL + "/functions/v1/recruit-lookup", { method:"POST", headers:H(), body:JSON.stringify(body||{}) });
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(errText(data.error||data)||("HTTP "+res.status));
+  return data;
+}
+
+async function loadRealms(){
+  const select=document.getElementById("realm");
+  try{
+    const data=await recruitApi({action:"list_realms"});
+    realms=data.realms||[];
+  }catch(e){
+    realms = [{ name:"Quel'Thalas", slug:"quelthalas", region:"us" }];
+  }
+  if(!realms.find(r=>r.slug==="quelthalas")) realms.unshift({ name:"Quel'Thalas", slug:"quelthalas", region:"us" });
+  select.innerHTML = realms.map(r=>`<option value="${esc(r.slug)}" data-name="${esc(r.name)}" data-region="${esc(r.region||"us")}" ${r.slug==="quelthalas"?"selected":""}>${esc(r.name)} (${esc((r.region||"us").toUpperCase())})</option>`).join("");
+}
+
+function resetConfirmation(){
+  confirmedCharacter=null;
+  document.getElementById("found").classList.remove("on");
+  document.getElementById("found").innerHTML="";
+  document.getElementById("submitBtn").disabled=true;
+}
+
+async function lookupCharacter(){
+  resetConfirmation();
+  const name=document.getElementById("charName").value.trim();
+  const realm=currentRealm();
+  if(!name || !realm.slug){ msg("lookupMsg","Completá personaje y realm.","err"); return; }
+  const btn=document.getElementById("lookupBtn");
+  btn.disabled=true; btn.textContent="Buscando...";
+  msg("lookupMsg","");
+  try{
+    const data=await recruitApi({ name, realm_slug:realm.slug, region:realm.region });
+    if(!data.found) throw new Error(data.error || "No encontrado");
+    confirmedCharacter=data.character;
+    const c=data.character;
+    const found=document.getElementById("found");
+    found.innerHTML = `
+      ${c.avatar_url ? `<img src="${esc(c.avatar_url)}" alt="">` : `<div></div>`}
+      <div>
+        <b>${esc(c.name)} · ${esc(c.realm_name)}</b>
+        <span>${esc(c.class || "-")} · ${esc(c.active_spec || "-")} · nivel ${esc(c.level || "-")} · ilvl ${esc(c.equipped_item_level || "-")}</span>
+        <span class="pill">${esc(c.faction || "-")}</span><span class="pill">${esc((c.region || "us").toUpperCase())}</span>
+      </div>`;
+    found.classList.add("on");
+    document.getElementById("submitBtn").disabled=false;
+    msg("lookupMsg","Confirmado. Si este es tu personaje, completá y enviá.","ok");
+  }catch(e){
+    msg("lookupMsg", e.message || "No se pudo validar el personaje.", "err");
+  }finally{
+    btn.disabled=false; btn.textContent="Buscar personaje";
+  }
+}
+
+async function submitApplication(ev){
+  ev.preventDefault();
+  if(!confirmedCharacter){ msg("submitMsg","Primero confirmá el personaje con Blizzard.","err"); return; }
+  const c=confirmedCharacter;
+  const payload={
+    discord:document.getElementById("discord").value.trim(),
+    battle_tag:document.getElementById("battleTag").value.trim() || null,
+    character_name:c.name,
+    realm_slug:c.realm_slug,
+    realm_name:c.realm_name,
+    region:c.region || "us",
+    class:c.class,
+    main_spec:c.active_spec,
+    offspec:document.getElementById("offspec").value.trim() || null,
+    role:document.getElementById("role").value || null,
+    faction:c.faction,
+    level:c.level,
+    equipped_ilvl:c.equipped_item_level,
+    availability:document.getElementById("availability").value.trim() || null,
+    experience:document.getElementById("experience").value.trim() || null,
+    logs_url:document.getElementById("logs").value.trim() || null,
+    raiderio_url:document.getElementById("rio").value.trim() || null,
+    armory_url:c.profile_url,
+    notes:document.getElementById("notes").value.trim() || null,
+    character_snapshot:c
+  };
+  if(!payload.discord){ msg("submitMsg","Discord es obligatorio.","err"); return; }
+  const btn=document.getElementById("submitBtn");
+  btn.disabled=true; btn.textContent="Enviando...";
+  try{
+    const data=await recruitApi({ action:"submit_application", name:c.name, realm_slug:c.realm_slug, region:c.region || "us", ...payload });
+    if(data.duplicate){
+      msg("submitMsg",data.message || "Ese personaje ya tiene una postulación abierta.","err");
+      return;
+    }
+    msg("submitMsg","Postulación enviada. Gracias, la vamos a revisar.","ok");
+    document.getElementById("form").reset();
+    resetConfirmation();
+    await loadRealms();
+  }catch(e){
+    console.error("Recruit submit failed", e);
+    msg("submitMsg","No se pudo enviar: " + errText(e).slice(0,180),"err");
+  }finally{
+    btn.textContent="Enviar postulacion";
+    btn.disabled=!confirmedCharacter;
+  }
+}
+
+document.getElementById("lookupBtn").addEventListener("click", lookupCharacter);
+document.getElementById("form").addEventListener("submit", submitApplication);
+document.getElementById("charName").addEventListener("input", resetConfirmation);
+document.getElementById("realm").addEventListener("change", resetConfirmation);
+loadRealms();
+</script>
