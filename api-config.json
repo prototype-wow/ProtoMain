@@ -1,3 +1,4 @@
 {
-  "backend": "supabase"
+  "backend": "cloudflare",
+  "apiBaseUrl": "https://rest-spies-trinity-meetings.trycloudflare.com"
 }
