@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-EKC1TjWfjjr9vTHABlVi9vC6BtJmtB0UsySkjiCR20U='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-x36tZIHo2vZYt3pJAMvlk3n8KwAxxRqiPrHmbY0naag='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -1960,7 +1960,13 @@ async function updateRecruitStatus(app,status){
 }
 async function refreshRecruitArmory(app,btn){
   const orig=btn.textContent; btn.disabled=true; btn.textContent='Actualizando…';
-  try{ await recruitAdmin('POST',{action:'refresh_armory',id:app.id}); await fetchRecruits(); renderReclutas(); toast('Snapshot Armory actualizado'); }
+  try{
+    await recruitAdmin('POST',{action:'refresh_armory',id:app.id});
+    await fetchRecruits();
+    await refresh(false);
+    if(view==='reclutas') renderReclutas();
+    toast('Armory actualizado');
+  }
   catch(e){ toast('No se pudo refrescar Armory'); }
   finally{ btn.disabled=false; btn.textContent=orig; }
 }
