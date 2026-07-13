@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-A4SwZpB8zUy1Lw8hNRqmgo+oSzbm3namblDUQoKLnKQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-iFo6XSKhn5Z3f8i8qNpy1HoEw37g19kj/mHMoer0RBU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -1848,6 +1848,9 @@ function recruitFullCharacter(app,ch){
     <div class="singleGrid"><div class="singleStack">${singleGearPanel(p)}${singleWclPanel(ch)}</div><div class="singleStack">${singleInfoPanel(ch,p)}${singleProfessionsPanel(p)}${singleRenownPanel(p)}${singleProgressionPanel(p)}</div><div class="singleStack">${singleMplusPanel(p)}${singleRaidPanel(p)}${singleLinksPanel(ch)}${singleEnchantPanel(p)}${singleRaiderPanel(ch)}</div></div>
   </div>`;
 }
+function recruitFormHref(){
+  return `recruit.html?api=${encodeURIComponent(API_BASE_URL)}`;
+}
 function renderReclutas(){
   const c=document.getElementById('content');
   if(!cap('manageRecruits')){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin permiso</b>Tu usuario no puede ver postulaciones.</div>'; return; }
@@ -1868,7 +1871,7 @@ function renderReclutas(){
     </div>`;
   }).join('');
   const detail=app?recruitDetailHtml(app):'<div class="panel recruitDetail"><div class="recruitEmpty">No hay postulaciones con este filtro.</div></div>';
-  c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Reclutas</div><div class="actions"><button class="btn ghost sm" id="recruitReload">↻ Recargar</button><a class="btn ghost sm" href="recruit.html" target="_blank" rel="noopener">Abrir formulario</a></div></div>
+  c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Reclutas</div><div class="actions"><button class="btn ghost sm" id="recruitReload">↻ Recargar</button><a class="btn ghost sm" href="${esc(recruitFormHref())}" target="_blank" rel="noopener">Abrir formulario</a></div></div>
     <div class="recruitBoard">
       <div class="panel">
         <div class="recruitTools"><input id="recruitQ" placeholder="Buscar recluta…" value="${esc(recruitFilter.q)}"><select id="recruitStatusFilter"><option value="open" ${recruitFilter.status==='open'?'selected':''}>Abiertas</option><option value="all" ${recruitFilter.status==='all'?'selected':''}>Todos</option>${Object.entries(RECRUIT_STATUS_LABEL).map(([k,v])=>`<option value="${k}" ${recruitFilter.status===k?'selected':''}>${esc(v)}</option>`).join('')}</select></div>
