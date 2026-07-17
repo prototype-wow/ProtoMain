@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-x36tZIHo2vZYt3pJAMvlk3n8KwAxxRqiPrHmbY0naag='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-76Vcw93GPiMK4u1XAuIjN73oooa30q7QX13OH8v+HRI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -1083,19 +1083,24 @@ function render(){
 
 /* ---------- PROGRESO (equipo / M+ / raid, vía Battle.net) ---------- */
 const PROG_VIEWS = [['general','General'],['gear','Equipo por slot'],['tier','Piezas de tier'],['enchants','Encantamientos'],['gems','Gemas'],['stats','Distribución de stats'],['vault','Bóveda']];
+const PROG_ADMIN_VIEWS = [['inactive','Personajes inactivos']];
 function renderProgreso(){
   const c=document.getElementById('content');
   const isAdmin=cap('manageRoster');
-  if(!characters.length){
+  const rosterChars=characters.filter(ch=>!ch.is_recruit_shadow);
+  const activeChars=rosterChars.filter(ch=>ch.active!==false);
+  if(!rosterChars.length){
     c.innerHTML='<div class="empty" style="padding:60px"><b>Sin datos todavía</b>Corré la sincronización de Armory para traer equipo, Mythic+ y progreso de raid desde Battle.net.'
       +(isAdmin?' O agregá el primer personaje del roster con el botón de abajo.':'')+'</div>';
     if(isAdmin){ c.innerHTML+=`<div class="actions" style="margin-top:10px"><button class="btn primary" id="newChar">+ Personaje</button></div>`; document.getElementById('newChar').onclick=openNewChar; }
     return;
   }
-  const usedClasses=[...new Set(characters.filter(ch=>ch.class).map(ch=>ch.class))].sort();
+  if(!isAdmin && progView==='inactive') progView='general';
+  const viewOptions=isAdmin ? PROG_VIEWS.concat(PROG_ADMIN_VIEWS) : PROG_VIEWS;
+  const usedClasses=[...new Set(rosterChars.filter(ch=>ch.class).map(ch=>ch.class))].sort();
   c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Progreso del roster</div><div class="actions">${cap('syncExternal')?'<button class="btn ghost sm" id="progSync" title="Traer los datos más recientes desde Battle.net ahora">↻ Refrescar API</button>':''}${isAdmin?'<button class="btn primary" id="newChar">+ Personaje</button>':''}</div></div>
     <div class="audbar">
-      <select id="prog_view">${PROG_VIEWS.map(([v,l])=>`<option value="${v}" ${progView===v?'selected':''}>${l}</option>`).join('')}</select>
+      <select id="prog_view">${viewOptions.map(([v,l])=>`<option value="${v}" ${progView===v?'selected':''}>${l}</option>`).join('')}</select>
       <input type="text" id="prog_search" placeholder="Buscar por nombre, clase o rol…" value="${esc(progSearch)}" autocomplete="off">
       <select id="prog_class"><option value="all">Todas las clases</option>${usedClasses.map(cl=>`<option value="${esc(cl)}" ${progClass===cl?'selected':''}>${esc(cl)}</option>`).join('')}</select>
       <select id="prog_role"><option value="all">Todos los roles</option>${Object.entries(CHAR_ROLE_LABEL).map(([r,l])=>`<option value="${r}" ${progRole===r?'selected':''}>${l}</option>`).join('')}</select>
@@ -1112,9 +1117,8 @@ function renderProgreso(){
   renderProgTable();
 }
 function progFilteredRows(){
-  const isAdmin=cap('manageRoster');
   const q=progSearch.trim().toLowerCase();
-  return characters.filter(ch=>(!ch.is_recruit_shadow) && (isAdmin||ch.active!==false))
+  return characters.filter(ch=>(!ch.is_recruit_shadow) && ch.active!==false)
     .filter(ch=> progClass==='all' || ch.class===progClass)
     .filter(ch=> progRole==='all' || ch.role===progRole)
     .filter(ch=>{ if(!q) return true; const hay=[ch.name, ch.class||'', CHAR_ROLE_LABEL[ch.role]||ch.role].join(' ').toLowerCase(); return hay.includes(q); })
@@ -1125,8 +1129,10 @@ function nameCell(r){ return `<td class="classcell" style="--cc:${CLASS_COLOR[r.
 function renderProgTable(){
   const wrap=document.getElementById('prog_table'); if(!wrap) return;
   const isAdmin=cap('manageRoster');
+  if(progView==='inactive') return void renderInactiveCharacters(wrap);
   let rows=progFilteredRows();
-  const cnt=document.getElementById('prog_count'); if(cnt) cnt.textContent=rows.length+' de '+characters.filter(ch=>isAdmin||ch.active!==false).length;
+  const activeTotal=characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false).length;
+  const cnt=document.getElementById('prog_count'); if(cnt) cnt.textContent=rows.length+' de '+activeTotal;
   if(!rows.length){ wrap.innerHTML='<div class="empty" style="padding:40px">Ningún personaje coincide con el filtro.</div>'; return; }
   if(progView==='gear') return void(wrap.innerHTML=progGearView(rows));
   if(progView==='tier') return void(wrap.innerHTML=progTierView(rows));
@@ -1149,10 +1155,10 @@ function progGeneralView(rows, isAdmin){
     ${sortHead('Personaje','name')}<th>Clase</th><th>Rol</th>${sortHead('ilvl','ilvl')}${sortHead('M+ Rating','mrating')}${sortHead('M+ semana','mweek')}${sortHead('Vault M+','vaultm')}${sortHead('Vault Raid','vaultr')}${sortHead('Encant./Gemas','gaps')}<th>Sync</th>${isAdmin?'<th></th>':''}
   </tr></thead><tbody>`;
   rows.forEach(r=>{
-    const stale=!r.p.updated_at, failed=r.p.synced_ok===false, inactive=r.ch.active===false;
-    const syncCell = inactive ? '<span class="badge reservado">inactivo</span>' : stale ? '<span class="badge reservado">sin sync</span>' : failed ? `<span class="badge reservado" title="${esc(r.p.last_error||'')}">error</span>` : fmtDateTime(r.p.updated_at);
+    const stale=!r.p.updated_at, failed=r.p.synced_ok===false;
+    const syncCell = stale ? '<span class="badge reservado">sin sync</span>' : failed ? `<span class="badge reservado" title="${esc(r.p.last_error||'')}">error</span>` : fmtDateTime(r.p.updated_at);
     const gapsWarn=(r.missingEnchant+r.missingGem)>0;
-    html+=`<tr style="${inactive?'opacity:.5':''}">${nameCell(r)}<td>${classTag(r.ch.class)}</td><td>${roleTag(r.ch.role)}</td>
+    html+=`<tr>${nameCell(r)}<td>${classTag(r.ch.class)}</td><td>${roleTag(r.ch.role)}</td>
       <td class="mono">${fmtIlvl(r.p)}</td>
       <td class="mono">${r.p.mythic_rating?Math.round(r.p.mythic_rating):'—'}</td>
       <td class="mono">${r.mplusRuns}</td>
@@ -1160,12 +1166,39 @@ function progGeneralView(rows, isAdmin){
       <td class="mono" title="Slots por raid (2/4/6 jefes)">${r.vaultR}/3</td>
       <td class="mono" style="${gapsWarn?'color:var(--warn)':''}">${r.missingEnchant} / ${r.missingGem}</td>
       <td>${syncCell}</td>
-      ${isAdmin?`<td style="white-space:nowrap"><span class="miniop edit" data-editid="${r.ch.id}">Editar</span> <span class="miniop ${inactive?'':'del'}" data-toggleid="${r.ch.id}">${inactive?'Reactivar':'Dar de baja'}</span></td>`:''}
+      ${isAdmin?`<td style="white-space:nowrap"><span class="miniop edit" data-editid="${r.ch.id}">Editar</span> <span class="miniop del" data-toggleid="${r.ch.id}">Dar de baja</span></td>`:''}
     </tr>`;
   });
   html+='</tbody></table></div>';
   setTimeout(()=>wireSort(document.getElementById('prog_table')),0);
   return html;
+}
+function inactiveFilteredRows(){
+  const q=progSearch.trim().toLowerCase();
+  return characters.filter(ch=>!ch.is_recruit_shadow && ch.active===false)
+    .filter(ch=> progClass==='all' || ch.class===progClass)
+    .filter(ch=> progRole==='all' || ch.role===progRole)
+    .filter(ch=>{ if(!q) return true; const hay=[ch.name, ch.class||'', CHAR_ROLE_LABEL[ch.role]||ch.role].join(' ').toLowerCase(); return hay.includes(q); })
+    .sort((a,b)=>String(b.deactivated_at||'').localeCompare(String(a.deactivated_at||'')) || String(a.name).localeCompare(String(b.name)));
+}
+function renderInactiveCharacters(wrap){
+  if(!cap('manageRoster')){ wrap.innerHTML='<div class="empty" style="padding:40px">Sin permiso.</div>'; return; }
+  const rows=inactiveFilteredRows();
+  const total=characters.filter(ch=>!ch.is_recruit_shadow && ch.active===false).length;
+  const cnt=document.getElementById('prog_count'); if(cnt) cnt.textContent=rows.length+' de '+total;
+  if(!rows.length){ wrap.innerHTML='<div class="empty" style="padding:40px"><b>Sin personajes inactivos</b>No hay bajas que coincidan con el filtro.</div>'; return; }
+  wrap.innerHTML=`<div class="tablewrap"><table class="utable"><thead><tr><th>Personaje</th><th>Clase</th><th>Rol</th><th>Fecha de baja</th><th></th></tr></thead><tbody>
+    ${rows.map(ch=>`<tr>
+      <td class="classcell" style="--cc:${CLASS_COLOR[ch.class]||''}"><span class="classrow">${classBadge(ch.class)}<b style="color:var(--cc)">${esc(ch.name)}</b></span></td>
+      <td>${classTag(ch.class)}</td>
+      <td>${roleTag(ch.role)}</td>
+      <td class="mono">${ch.deactivated_at?fmtDateTime(ch.deactivated_at):'<span style="color:var(--muted-2)">sin fecha</span>'}</td>
+      <td style="white-space:nowrap; text-align:right"><span class="miniop" data-restoreid="${ch.id}">Restaurar</span> <span class="miniop del" data-deletecharid="${ch.id}">Eliminar definitivo</span></td>
+    </tr>`).join('')}
+  </tbody></table></div>
+  <p class="hint" style="margin-top:10px">Eliminar definitivo borra el personaje y sus datos asociados. Después podés volver a cargarlo desde <b>+ Personaje</b>.</p>`;
+  wrap.querySelectorAll('[data-restoreid]').forEach(b=> b.onclick=()=>toggleCharActive(b.dataset.restoreid));
+  wrap.querySelectorAll('[data-deletecharid]').forEach(b=> b.onclick=()=>deleteCharacterForever(b.dataset.deletecharid));
 }
 function progGearView(rows){
   rows=sortRows(rows, r=>displayIlvl(r.p));
@@ -2120,8 +2153,15 @@ async function toggleCharActive(idv){
   const ch=characters.find(x=>x.id===idv); if(!ch) return;
   const nv=!(ch.active!==false);
   if(!confirm((nv?'¿Reactivar':'¿Dar de baja')+' a "'+ch.name+'"?')) return;
-  try{ await sbUpd('characters',ch.id,{active:nv}); logAction(nv?'reactivar_personaje':'dar_baja_personaje','character',ch.id,{target:ch.name}); await refresh(); toast(nv?'Reactivado':'Dado de baja'); }
+  try{ await sbUpd('characters',ch.id,{active:nv,deactivated_at:nv?null:new Date().toISOString()}); logAction(nv?'reactivar_personaje':'dar_baja_personaje','character',ch.id,{target:ch.name}); await refresh(); toast(nv?'Restaurado al roster':'Dado de baja'); }
   catch(e){ toast('No se pudo'); }
+}
+async function deleteCharacterForever(idv){
+  const ch=characters.find(x=>x.id===idv); if(!ch) return;
+  if(ch.active!==false) return toast('Solo se pueden eliminar definitivamente personajes inactivos');
+  if(!confirm('¿Eliminar definitivamente a "'+ch.name+'"? Esto borra sus datos asociados y no se puede deshacer.')) return;
+  try{ await sbDel('characters',ch.id); logAction('eliminar_personaje_definitivo','character',ch.id,{target:ch.name}); await refresh(); if(progView==='inactive') renderProgTable(); toast('Personaje eliminado definitivamente'); }
+  catch(e){ toast('No se pudo eliminar'); }
 }
 
 /* ---------- SEMANA ---------- */
