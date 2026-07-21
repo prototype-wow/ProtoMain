@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-0odk6IfdvYvKd946vULFOtzmGUvaZrLHV1ksHg3FNu0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-Dku7D6GSLfTrJzsf1ypOZ+IXVRFX3wOiaxXBjITzTX4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -894,8 +894,9 @@ function fmtDM(d){ const dt=parseLocalDate(d); return dt.getDate()+'/'+(dt.getMo
 function fmtDateTime(d){ const dt=new Date(d); return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'); }
 function tuesdayOnOrBefore(dt){ const d=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()); const diff=(d.getDay()-2+7)%7; d.setDate(d.getDate()-diff); return d; }
 function weekLabel(startDt){ const end=new Date(startDt); end.setDate(end.getDate()+6); return 'Semana '+fmtDM(startDt)+' a '+fmtDM(end); }
-function fmtGold(n){ return new Intl.NumberFormat('es-AR').format(Math.round(n||0))+'g'; }
-function fmtGoldShort(n){ n=Math.round(n||0); if(n>=1e6) return (n/1e6).toFixed(n%1e6?1:0).replace('.',',')+'M g'; if(n>=1e3) return Math.round(n/1e3)+'k g'; return n+' g'; }
+function goldValue(n){ const v=Number(n); return Number.isFinite(v)?v:0; }
+function fmtGold(n){ return new Intl.NumberFormat('es-AR').format(Math.round(goldValue(n)))+'g'; }
+function fmtGoldShort(n){ n=Math.round(goldValue(n)); if(n>=1e6) return (n/1e6).toFixed(n%1e6?1:0).replace('.',',')+'M g'; if(n>=1e3) return Math.round(n/1e3)+'k g'; return n+' g'; }
 function parseGold(str){ if(str==null) return 0; str=String(str).trim().toLowerCase().replace(/\s/g,'').replace(/g$/,''); if(!str) return 0; let m=1; if(str.endsWith('m')){m=1e6;str=str.slice(0,-1);} else if(str.endsWith('k')){m=1e3;str=str.slice(0,-1);} if((str.match(/\./g)||[]).length>1) str=str.replace(/\./g,''); str=str.replace(',','.'); const n=parseFloat(str); return isNaN(n)?0:Math.round(n*m); }
 function blankSlots(){ const s={}; RAID_KEYS.forEach(k=>{ s[k]={}; RAIDS[k].bosses.forEach(b=> s[k][b]=DEFAULT_SLOTS); }); return s; }
 function curWeek(){ return state.weeks.find(w=>w.id===state.current); }
@@ -2222,8 +2223,8 @@ function renderSemana(){
   if(!state.current){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin semanas todavía</b>'+(cap('manageWeek')?'Creá la primera con “+ Semana”.':'Esperá a que un officer/admin cree la primera semana.')+'</div>'; return; }
   const w=curWeek(); const idx=state.weeks.findIndex(x=>x.id===state.current);
   const prevWk=state.weeks[idx-1], nextWk=state.weeks[idx+1];
-  const totalGold=w.sales.reduce((a,s)=>a+(s.gold||0),0);
-  const paidGold=w.sales.filter(s=>s.status==='pagado').reduce((a,s)=>a+(s.gold||0),0);
+  const totalGold=w.sales.reduce((a,s)=>a+goldValue(s.gold),0);
+  const paidGold=w.sales.filter(s=>s.status==='pagado').reduce((a,s)=>a+goldValue(s.gold),0);
   let openSlots=0; RAID_KEYS.forEach(k=>RAIDS[k].bosses.forEach(b=>{ openSlots+=Math.max(0,((w.slots[k]||{})[b]??DEFAULT_SLOTS)-soldFor(w,k,b)); }));
   let html=`<div class="wbar"><div class="weeknav">
       ${prevWk?`<div class="wkside" data-go="${prevWk.id}"><div class="lbl">${esc(prevWk.label)}</div><div class="dt">reset ${fmtDate(prevWk.date)}</div></div>`:`<div class="wkside empty">—</div>`}
@@ -2257,7 +2258,7 @@ function renderSemana(){
   document.querySelectorAll('.qadd').forEach(b=> b.onclick=()=> openSale(null,{raid:b.dataset.raid,boss:b.dataset.boss}));
 }
 function renderRaid(k,w){
-  const R=RAIDS[k]; const raidGold=w.sales.filter(s=>s.raid===k).reduce((a,s)=>a+(s.gold||0),0);
+  const R=RAIDS[k]; const raidGold=w.sales.filter(s=>s.raid===k).reduce((a,s)=>a+goldValue(s.gold),0);
   let bossRows='';
   R.bosses.forEach(b=>{
     const total=(w.slots[k]||{})[b]??DEFAULT_SLOTS; const sold=soldFor(w,k,b); const vac=total-sold;
@@ -2288,7 +2289,7 @@ function renderCalendario(){
   const c=document.getElementById('content');
   if(!state.weeks.length){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin semanas todavía</b></div>'; return; }
   const cards=[...state.weeks].reverse().map(w=>{
-    const total=w.sales.reduce((a,s)=>a+(s.gold||0),0); const paid=w.sales.filter(s=>s.status==='pagado').reduce((a,s)=>a+(s.gold||0),0);
+    const total=w.sales.reduce((a,s)=>a+goldValue(s.gold),0); const paid=w.sales.filter(s=>s.status==='pagado').reduce((a,s)=>a+goldValue(s.gold),0);
     let slots=0,sold=0; RAID_KEYS.forEach(k=>RAIDS[k].bosses.forEach(b=>{ slots+=(w.slots[k]||{})[b]??DEFAULT_SLOTS; sold+=soldFor(w,k,b); }));
     return `<div class="wcard ${w.id===state.current?'cur':''}" data-id="${w.id}"><div class="wl">${esc(w.label)}</div><div class="wd">reset ${fmtDate(w.date)}</div>
       <div class="wm"><div>Gold<b class="gold">${fmtGoldShort(total)}</b></div><div>Cobrado<b>${fmtGoldShort(paid)}</b></div><div>Ventas<b>${w.sales.length}</b></div><div>Cupos<b class="blue">${sold}/${slots}</b></div></div>
@@ -2320,10 +2321,10 @@ function filteredAudit(){ return allSales().filter(s=>{
 const ACTION_LABEL={ crear_venta:'cargó venta', editar_venta:'editó venta', borrar_venta:'borró venta', crear_semana:'creó semana', borrar_semana:'borró semana', renombrar_semana:'editó semana', editar_cupos:'cambió cupos', crear_usuario:'creó usuario', cambiar_rol:'cambió rol', borrar_usuario:'borró usuario', cambiar_pass:'cambió contraseña', cambiar_acceso:'cambió acceso', login:'inició sesión' };
 function renderAuditoria(){
   const c=document.getElementById('content'); const rows=filteredAudit();
-  const total=rows.reduce((a,s)=>a+(s.gold||0),0);
-  const paid=rows.filter(s=>s.status==='pagado').reduce((a,s)=>a+(s.gold||0),0); const pend=total-paid;
+  const total=rows.reduce((a,s)=>a+goldValue(s.gold),0);
+  const paid=rows.filter(s=>s.status==='pagado').reduce((a,s)=>a+goldValue(s.gold),0); const pend=total-paid;
   const kills=rows.reduce((a,s)=>a+((s.bosses||[]).length),0);
-  const byDest={}; rows.forEach(s=>{ const d=(s.gold_to||'— sin destino —'); byDest[d]=(byDest[d]||0)+(s.gold||0); });
+  const byDest={}; rows.forEach(s=>{ const d=(s.gold_to||'— sin destino —'); byDest[d]=(byDest[d]||0)+goldValue(s.gold); });
   const destRows=Object.entries(byDest).sort((a,b)=>b[1]-a[1]).map(([d,g])=>`<div class="destrow"><span>${esc(d)}</span><span class="g">${fmtGold(g)}</span></div>`).join('')||'<div class="destrow"><span>—</span></div>';
   const viewerIsAdmin = role()==='admin';
   const showAdminActs = !!settings.show_admin_activity;
@@ -2366,7 +2367,7 @@ function renderAuditoria(){
 }
 function exportAuditCSV(){
   const rows=[['Semana','Fecha','Raid','Bosses','Comprador','BattleTag','Gold','Estado','FechaCarry','Destino','Cargó','UltimaEdicionPor','UltimaEdicionFecha','Notas']];
-  filteredAudit().forEach(s=> rows.push([s.weekLabel,s.weekDate,RAIDS[s.raid].name,(s.bosses||[]).join(' | '),s.buyer||'',s.btag||'',s.gold||0,s.status,s.run_date||'',s.gold_to||'',s.created_by||'',s.updated_by||'',s.updated_at||'',s.notes||'']));
+  filteredAudit().forEach(s=> rows.push([s.weekLabel,s.weekDate,RAIDS[s.raid].name,(s.bosses||[]).join(' | '),s.buyer||'',s.btag||'',goldValue(s.gold),s.status,s.run_date||'',s.gold_to||'',s.created_by||'',s.updated_by||'',s.updated_at||'',s.notes||'']));
   const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='auditoria-carries.csv'; a.click(); URL.revokeObjectURL(a.href); toast('CSV exportado');
 }
