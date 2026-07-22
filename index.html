@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-Dku7D6GSLfTrJzsf1ypOZ+IXVRFX3wOiaxXBjITzTX4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-KToMEc1IXKyIn+zPiJhYHN1WAIinOERbgFWRAsRjm74='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -467,6 +467,34 @@
   .progBoss{font-size:11.5px; font-weight:700; color:var(--text); line-height:1.15; overflow-wrap:anywhere}
   .progDiff,.progKills{font-family:var(--font-mono); font-size:14px; line-height:1; font-weight:900; text-align:right}
   .prog-m{color:#a335ee}.prog-h{color:#0070ff}.prog-n{color:#1eff00}.prog-l{color:#fff}.prog-none{color:#666}
+  .calendarShell{display:grid; gap:14px}
+  .calendarTools{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .calendarTitle{font-family:var(--font-display); font-size:16px; letter-spacing:.12em; text-transform:uppercase; margin-right:auto}
+  .segBtn{border:1px solid var(--line); background:var(--bg); color:var(--text); border-radius:8px; padding:8px 10px; font-weight:800; cursor:pointer}
+  .segBtn.on{border-color:var(--blue); color:var(--blue); background:rgba(0,155,219,.12)}
+  .calMonth,.calWeek{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--bg-0)}
+  .calDow{padding:8px 9px; background:var(--bg-2); border-right:1px solid var(--line-soft); color:var(--muted); font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.1em}
+  .calDow:last-child{border-right:0}
+  .calDay{min-height:122px; padding:8px; border-top:1px solid var(--line-soft); border-right:1px solid var(--line-soft); display:grid; align-content:start; gap:6px}
+  .calWeek .calDay{min-height:420px}
+  .calDay:nth-child(7n){border-right:0}
+  .calDay.out{opacity:.42}
+  .calDate{display:flex; align-items:center; justify-content:space-between; font-family:var(--font-mono); font-size:11px; color:var(--muted)}
+  .calDate.today b{color:var(--blue)}
+  .calEvent{width:100%; text-align:left; border:1px solid var(--line-soft); background:var(--bg-2); color:var(--text); border-radius:8px; padding:7px 8px; cursor:pointer; display:grid; gap:3px; min-width:0}
+  .calEvent:hover{border-color:var(--blue)}
+  .calEvent b{font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .calEvent span{font-family:var(--font-mono); font-size:10px; color:var(--muted)}
+  .calEvent.closed{border-color:rgba(39,216,130,.35)}
+  .calEvent.cancelled{opacity:.55; text-decoration:line-through}
+  .eventDetail{display:grid; gap:10px}
+  .eventSummary{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px}
+  .eventMini{border:1px solid var(--line-soft); background:var(--bg); border-radius:8px; padding:8px}
+  .eventMini span{display:block; color:var(--muted-2); text-transform:uppercase; letter-spacing:.1em; font-size:9px}
+  .eventMini b{display:block; margin-top:2px; font-family:var(--font-mono); color:var(--gold)}
+  .attendanceTable select,.attendanceTable input{width:100%; min-width:0; padding:6px 7px; border-radius:7px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-size:11px}
+  .attendancePct{font-family:var(--font-mono); font-weight:900}
+  .att100{color:#0fa85f}.att75{color:#27d882}.att50{color:#ffd166}.att25{color:#ff9f1c}.att0{color:#ff4d6d}
   .adminGrid{display:grid; grid-template-columns:minmax(0,1.35fr) minmax(320px,.9fr); gap:16px; align-items:start}
   .adminPanel .pbody{padding:14px}
   .permTable{width:100%; border-collapse:separate; border-spacing:0; font-size:12px}
@@ -718,10 +746,10 @@ function tierScore(t){ let sc=0; TIER_SLOTS.forEach(s=>{ const c=t.slots[s]; if(
 
 /* capacidades por rol: defaults locales, editables desde Admin cuando SQL 020 este aplicado */
 const DEFAULT_CAP = {
-  basico:  { viewSemana:true, viewCalendario:true, viewProgreso:false, viewResumen:false, viewRoster:false, viewPersonaje:false, viewAuditoria:false, viewReclutas:false, viewUsuarios:false, viewAdmin:false, addSale:false, editAny:false, editOwn:false, delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageRoster:false, manageUsers:false, manageRecruits:false, manageAbilities:false, syncExternal:false, manageAdmin:false },
-  cargador:{ viewSemana:true, viewCalendario:true, viewProgreso:false, viewResumen:false, viewRoster:false, viewPersonaje:false, viewAuditoria:false, viewReclutas:false, viewUsuarios:false, viewAdmin:false, addSale:true,  editAny:false, editOwn:true,  delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageRoster:false, manageUsers:false, manageRecruits:false, manageAbilities:false, syncExternal:false, manageAdmin:false },
-  officer: { viewSemana:true, viewCalendario:true, viewProgreso:true,  viewResumen:true,  viewRoster:true,  viewPersonaje:true,  viewAuditoria:true,  viewReclutas:true,  viewUsuarios:false, viewAdmin:false, addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageRoster:false, manageUsers:false, manageRecruits:true,  manageAbilities:false, syncExternal:true,  manageAdmin:false },
-  admin:   { viewSemana:true, viewCalendario:true, viewProgreso:true,  viewResumen:true,  viewRoster:true,  viewPersonaje:true,  viewAuditoria:true,  viewReclutas:true,  viewUsuarios:true,  viewAdmin:true,  addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageRoster:true,  manageUsers:true,  manageRecruits:true,  manageAbilities:true,  syncExternal:true,  manageAdmin:true }
+  basico:  { viewSemana:true, viewCalendario:true, viewProgreso:false, viewResumen:false, viewRoster:false, viewPersonaje:false, viewAuditoria:false, viewReclutas:false, viewUsuarios:false, viewAdmin:false, addSale:false, editAny:false, editOwn:false, delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageRoster:false, manageUsers:false, manageRecruits:false, manageAbilities:false, syncExternal:false, manageAdmin:false, manageCalendar:false, manageAttendance:false, closeAttendance:false },
+  cargador:{ viewSemana:true, viewCalendario:true, viewProgreso:false, viewResumen:false, viewRoster:false, viewPersonaje:false, viewAuditoria:false, viewReclutas:false, viewUsuarios:false, viewAdmin:false, addSale:true,  editAny:false, editOwn:true,  delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageRoster:false, manageUsers:false, manageRecruits:false, manageAbilities:false, syncExternal:false, manageAdmin:false, manageCalendar:false, manageAttendance:false, closeAttendance:false },
+  officer: { viewSemana:true, viewCalendario:true, viewProgreso:true,  viewResumen:true,  viewRoster:true,  viewPersonaje:true,  viewAuditoria:true,  viewReclutas:true,  viewUsuarios:false, viewAdmin:false, addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageRoster:false, manageUsers:false, manageRecruits:true,  manageAbilities:false, syncExternal:true,  manageAdmin:false, manageCalendar:true, manageAttendance:true, closeAttendance:true },
+  admin:   { viewSemana:true, viewCalendario:true, viewProgreso:true,  viewResumen:true,  viewRoster:true,  viewPersonaje:true,  viewAuditoria:true,  viewReclutas:true,  viewUsuarios:true,  viewAdmin:true,  addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageRoster:true,  manageUsers:true,  manageRecruits:true,  manageAbilities:true,  syncExternal:true,  manageAdmin:true, manageCalendar:true, manageAttendance:true, closeAttendance:true }
 };
 const ROLE_KEYS = Object.keys(ROLE_LABEL);
 const TAB_DEFS = [
@@ -739,7 +767,8 @@ const TAB_DEFS = [
 const PERMISSION_GROUPS = [
   ['Solapas', TAB_DEFS.map(([id,label,cap])=>[cap,label])],
   ['Ventas', [['addSale','Cargar venta'],['editOwn','Editar propias'],['editAny','Editar todas'],['delSale','Borrar ventas'],['setPaid','Marcar pagado']]],
-  ['Gestión', [['manageWeek','Semanas/cupos'],['editSlots','Editar cupos'],['manageRoster','Roster/personajes'],['manageRecruits','Reclutas'],['manageUsers','Usuarios'],['manageAbilities','Habilidades'],['syncExternal','Sync manual'],['manageAdmin','Panel Admin']]]
+  ['Gestión', [['manageWeek','Semanas/cupos'],['editSlots','Editar cupos'],['manageRoster','Roster/personajes'],['manageRecruits','Reclutas'],['manageUsers','Usuarios'],['manageAbilities','Habilidades'],['syncExternal','Sync manual'],['manageAdmin','Panel Admin']]],
+  ['Raid Attendance', [['manageCalendar','Crear/editar calendario'],['manageAttendance','Editar attendance'],['closeAttendance','Cerrar/corregir attendance']]]
 ];
 const DEFAULT_WCL_ZONE_IDS = [46,47,50];
 const DEFAULT_WCL_DIFFS = [5,4,3,2];
@@ -756,6 +785,12 @@ const DEFAULT_SYNC_SETTINGS = {
   wcl_batch_size:2,
   wcl_batch_every_minutes:5
 };
+const DEFAULT_CALENDAR_SETTINGS = {
+  calendar_week_start_dow:2,
+  calendar_timezone_mode:'local',
+  calendar_timezone_offset_minutes:-180,
+  calendar_timezone_label:'America/Buenos_Aires'
+};
 function normalizePerms(value){
   const src=(value&&typeof value==='object'&&!Array.isArray(value))?value:{};
   const out={};
@@ -770,10 +805,13 @@ function normalizePerms(value){
 function rolePerms(){ return normalizePerms(settings.role_permissions); }
 
 let state={ weeks:[], current:null };
-let users=[], settings={ require_login:false, role_permissions:null, wcl_active_zone_ids:DEFAULT_WCL_ZONE_IDS, wcl_mplus_zone_id:DEFAULT_WCL_MPLUS_ZONE_ID, wcl_active_difficulties:DEFAULT_WCL_DIFFS, wcl_active_metrics:DEFAULT_WCL_METRICS, raiderio_season:'current', ...DEFAULT_SYNC_SETTINGS }, auditLog=[];
+let users=[], settings={ require_login:false, role_permissions:null, wcl_active_zone_ids:DEFAULT_WCL_ZONE_IDS, wcl_mplus_zone_id:DEFAULT_WCL_MPLUS_ZONE_ID, wcl_active_difficulties:DEFAULT_WCL_DIFFS, wcl_active_metrics:DEFAULT_WCL_METRICS, raiderio_season:'current', ...DEFAULT_SYNC_SETTINGS, ...DEFAULT_CALENDAR_SETTINGS }, auditLog=[];
 let characters=[], characterProgress=[], realms=[], trackedAbilities=[], wclRankings=[], wclZones=[], raiderProfiles=[];
+let raidEvents=[], raidEventSegments=[], raidAttendance=[];
 let recruits=[], recruitFilter={q:"",status:"open"}, recruitLoadError='', recruitPanelOpenId=''; let selectedRecruitId="";
 let progView='general', progSearch='', progClass='all', progRole='all', progSort={col:'ilvl',dir:-1};
+let attendanceFilter={period:'30',from:'',to:''};
+let calendarMode='month', calendarCursor=new Date(), selectedRaidEventId='';
 let singleCharId='', singleWclZone='46', singleWclMetric='dps', singleWclDifficulty='5', singleRioSpec='';
 let session = JSON.parse(sessionStorage.getItem('pt_secure_session')||'null');
 let view='semana', editingId=null, lastSig="", creating=false, forceLogin=false;
@@ -941,7 +979,8 @@ async function fetchAll(){
     wcl_active_difficulties:DEFAULT_WCL_DIFFS,
     wcl_active_metrics:DEFAULT_WCL_METRICS,
     raiderio_season:'current',
-    ...DEFAULT_SYNC_SETTINGS
+    ...DEFAULT_SYNC_SETTINGS,
+    ...DEFAULT_CALENDAR_SETTINGS
   },(st&&st[0])||{});
   if('audit' in data) auditLog=(al||[]).sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
   if(!state.current||!state.weeks.find(w=>w.id===state.current)) state.current=state.weeks.length?state.weeks[state.weeks.length-1].id:null;
@@ -952,9 +991,12 @@ async function fetchAll(){
   if('zones' in data) wclZones=data.zones||[];
   if('rankings' in data) wclRankings=data.rankings||[];
   if('rio' in data) raiderProfiles=data.rio||[];
+  if('raid_events' in data) raidEvents=data.raid_events||[];
+  if('raid_event_segments' in data) raidEventSegments=data.raid_event_segments||[];
+  if('raid_attendance' in data) raidAttendance=data.raid_attendance||[];
   if(cap('manageRecruits')){ try{ await fetchRecruits(); }catch(e){ recruits=[]; recruitLoadError=e&&e.message?e.message:String(e); } }
 }
-function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
+function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
 async function refresh(toastOnChange){
   if(!session||!session.token) return;
   try{ await fetchAll(); clearError(); setLive('ok','en vivo');
@@ -1105,7 +1147,7 @@ function render(){
 }
 
 /* ---------- PROGRESO (equipo / M+ / raid, vía Battle.net) ---------- */
-const PROG_VIEWS = [['general','General'],['gear','Equipo por slot'],['tier','Piezas de tier'],['enchants','Encantamientos'],['gems','Gemas'],['stats','Distribución de stats'],['vault','Bóveda']];
+const PROG_VIEWS = [['general','General'],['attendance','Raid Attendance'],['gear','Equipo por slot'],['tier','Piezas de tier'],['enchants','Encantamientos'],['gems','Gemas'],['stats','Distribución de stats'],['vault','Bóveda']];
 const PROG_ADMIN_VIEWS = [['inactive','Personajes inactivos']];
 function renderProgreso(){
   const c=document.getElementById('content');
@@ -1157,6 +1199,7 @@ function renderProgTable(){
   const activeTotal=characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false).length;
   const cnt=document.getElementById('prog_count'); if(cnt) cnt.textContent=rows.length+' de '+activeTotal;
   if(!rows.length){ wrap.innerHTML='<div class="empty" style="padding:40px">Ningún personaje coincide con el filtro.</div>'; return; }
+  if(progView==='attendance') return void(wrap.innerHTML=progAttendanceView(rows));
   if(progView==='gear') return void(wrap.innerHTML=progGearView(rows));
   if(progView==='tier') return void(wrap.innerHTML=progTierView(rows));
   if(progView==='enchants') return void(wrap.innerHTML=progEnchantView(rows));
@@ -1283,6 +1326,89 @@ function progVaultView(rows){
     html+=`<tr>${nameCell(r)}<td>${keyTag(m[0])}</td><td>${keyTag(m[1])}</td><td>${keyTag(m[2])}</td><td>${diffTag(rd[0])}</td><td>${diffTag(rd[1])}</td><td>${diffTag(rd[2])}</td><td>${na}</td><td>${na}</td><td>${na}</td></tr>`;
   });
   return html+`</tbody></table></div><p class="hint" style="margin-top:10px">9 slots de bóveda en 3 categorías. <b>Mazmorra</b>: nivel de la 1ª/4ª/8ª key. <b>Raid</b>: dificultad del 2º/4º/6º jefe (M=Mítico, H=Héroico, N=Normal). <b>Mundo</b>: delves/actividades (2/4/8) — <span style="color:var(--muted)">Blizzard no expone este dato en la API pública que uso, así que queda como "—"</span>.</p>`;
+}
+function attendancePeriodRange(){
+  const now=new Date(), today=isoLocal(now);
+  if(attendanceFilter.period==='all') return {from:'0000-01-01',to:'9999-12-31'};
+  if(attendanceFilter.period==='season') return {from:'0000-01-01',to:today};
+  if(attendanceFilter.period==='custom') return {from:attendanceFilter.from||'0000-01-01',to:attendanceFilter.to||'9999-12-31'};
+  const days=Number(attendanceFilter.period||30);
+  const from=new Date(now); from.setDate(from.getDate()-Math.max(0,days-1));
+  return {from:isoLocal(from),to:today};
+}
+function attendanceFraction(ev,row){
+  const st=String(row.status||'present');
+  if(st==='not_required') return null;
+  if(st==='present'||st==='bench') return 1;
+  if(st==='absent_notice'||st==='absent_no_notice') return 0;
+  const dur=eventDurationMinutes(ev), start=minutesOf(ev.start_time)||0, end=start+dur;
+  let arrive=minutesOf(row.arrival_time), leave=minutesOf(row.leave_time), away=Math.max(0,Number(row.away_minutes||0));
+  if(arrive==null && st==='late') arrive=start+Math.round(dur*.25);
+  if(leave==null && st==='left_early') leave=start+Math.round(dur*.75);
+  if(arrive==null) arrive=start;
+  if(leave==null) leave=end;
+  if(leave<start) leave+=1440;
+  if(arrive<start) arrive+=1440;
+  const present=Math.max(0,Math.min(end,leave)-Math.max(start,arrive)-away);
+  return Math.max(0,Math.min(1,present/dur));
+}
+function attendanceColorClass(pct){
+  if(pct>=100) return 'att100';
+  if(pct>=75) return 'att75';
+  if(pct>=50) return 'att50';
+  if(pct>=25) return 'att25';
+  return 'att0';
+}
+function closedAttendanceEvents(){
+  const range=attendancePeriodRange();
+  return raidEvents.filter(ev=>ev.status==='closed' && sameDayKey(ev.event_date)>=range.from && sameDayKey(ev.event_date)<=range.to);
+}
+function attendanceStatsForChar(ch, events){
+  let earned=0, possible=0, notices=0, noNotice=0, tardy=0, attended=0, bench=0;
+  events.forEach(ev=>{
+    const row=raidAttendance.find(a=>String(a.event_id)===String(ev.id)&&String(a.character_id)===String(ch.id));
+    if(!row) return;
+    const frac=attendanceFraction(ev,row);
+    if(frac==null) return;
+    possible++;
+    earned+=frac;
+    if(row.status==='absent_notice') notices++;
+    if(row.status==='absent_no_notice') noNotice++;
+    if(row.status==='late') tardy++;
+    if(row.status==='bench') bench++;
+    if(frac>0) attended++;
+  });
+  const pct=possible?Math.round((earned/possible)*1000)/10:null;
+  return {pct,possible,notices,noNotice,tardy,attended,bench};
+}
+function progAttendanceView(rows){
+  const events=closedAttendanceEvents();
+  const stats=rows.map(r=>({...r,att:attendanceStatsForChar(r.ch,events)}));
+  const valById={ name:r=>r.ch.name, category:r=>r.ch.roster_category||'raider', class:r=>r.ch.class||'', role:r=>CHAR_ROLE_LABEL[r.ch.role]||'', ilvl:r=>displayIlvl(r.p), attendance:r=>r.att.pct??-1, notices:r=>r.att.notices, tardy:r=>r.att.tardy, attended:r=>r.att.attended };
+  const prev=progSort.col; if(!valById[progSort.col]) progSort={col:'attendance',dir:-1};
+  const sorted=sortRows(stats,valById[progSort.col]||valById.attendance);
+  const opts=[['30','Últimos 30 días'],['60','Últimos 60 días'],['90','Últimos 90 días'],['21','Últimas 3 semanas'],['season','Temporada completa'],['all','Todo histórico'],['custom','Rango personalizado']];
+  setTimeout(()=>{
+    const p=document.getElementById('att_period'); if(p) p.onchange=()=>{ attendanceFilter.period=p.value; renderProgTable(); };
+    const f=document.getElementById('att_from'); if(f) f.onchange=()=>{ attendanceFilter.from=f.value; renderProgTable(); };
+    const t=document.getElementById('att_to'); if(t) t.onchange=()=>{ attendanceFilter.to=t.value; renderProgTable(); };
+    wireSort(document.getElementById('prog_table'));
+  },0);
+  return `<div class="audbar" style="margin:0 0 10px">
+    <select id="att_period">${opts.map(([v,l])=>`<option value="${v}" ${attendanceFilter.period===v?'selected':''}>${l}</option>`).join('')}</select>
+    ${attendanceFilter.period==='custom'?`<input type="date" id="att_from" value="${esc(attendanceFilter.from)}"><input type="date" id="att_to" value="${esc(attendanceFilter.to)}">`:''}
+    <span class="live">${events.length} eventos cerrados</span>
+  </div>
+  <div class="tablewrap"><table class="utable"><thead><tr>
+    ${sortHead('Personaje','name')}${sortHead('Categoría','category')}${sortHead('Clase','class')}${sortHead('Rol','role')}${sortHead('ilvl','ilvl')}${sortHead('Attendance','attendance')}${sortHead('Cant. Avisos','notices')}<th>Sin aviso</th>${sortHead('Cant. Tarde','tardy')}<th>Banca</th>${sortHead('Raids asistidas','attended')}
+  </tr></thead><tbody>
+    ${sorted.map(r=>{
+      const pct=r.att.pct;
+      return `<tr>${nameCell(r)}<td>${esc(r.ch.roster_category||'raider')}</td><td>${classTag(r.ch.class)}</td><td>${roleTag(r.ch.role)}</td><td class="mono">${fmtIlvl(r.p)}</td>
+        <td class="attendancePct ${pct==null?'':attendanceColorClass(pct)}">${pct==null?'—':pct+'%'}</td>
+        <td class="mono">${r.att.notices}</td><td class="mono">${r.att.noNotice}</td><td class="mono">${r.att.tardy}</td><td class="mono">${r.att.bench}</td><td class="mono">${r.att.attended}/${r.att.possible}</td></tr>`;
+    }).join('') || `<tr><td colspan="11" class="singleEmpty">Sin attendance cerrado para este período.</td></tr>`}
+  </tbody></table></div>`;
 }
 
 /* ---------- RESUMEN (stat boxes + rankings) ---------- */
@@ -2120,7 +2246,12 @@ function charFormFields(ch){
       <input type="hidden" id="ch_realm_region" value="${ch?esc(ch.region||''):''}">
       <div class="menu" id="ch_realm_list" style="position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:220px; overflow:auto"></div>
     </div>
-    <div class="field"><label>Rol</label><select id="ch_role">${Object.keys(CHAR_ROLE_LABEL).map(r=>`<option value="${r}" ${ch&&ch.role===r?'selected':''}>${CHAR_ROLE_LABEL[r]}</option>`).join('')}</select></div>
+    <div class="row2">
+      <div class="field"><label>Rol</label><select id="ch_role">${Object.keys(CHAR_ROLE_LABEL).map(r=>`<option value="${r}" ${ch&&ch.role===r?'selected':''}>${CHAR_ROLE_LABEL[r]}</option>`).join('')}</select></div>
+      <div class="field"><label>Categoría</label><select id="ch_category">
+        ${[['raider','Raider'],['trial','Trial'],['social','Social'],['backup','Backup']].map(([v,l])=>`<option value="${v}" ${(ch&&String(ch.roster_category||'raider')===v)?'selected':''}>${l}</option>`).join('')}
+      </select></div>
+    </div>
     <p class="hint">La clase (${ch?esc(ch.class||'todavía sin sincronizar'):'se completa sola'}) sale de Battle.net en la próxima sincronización — no hace falta elegirla acá.</p>
     <div class="err" id="ch_err"></div>`;
 }
@@ -2150,12 +2281,13 @@ function openNewChar(){
     const name=document.getElementById('ch_name').value.trim();
     const slug=document.getElementById('ch_realm_slug').value, region=document.getElementById('ch_realm_region').value;
     const rl=document.getElementById('ch_role').value;
+    const cat=document.getElementById('ch_category').value;
     const err=document.getElementById('ch_err'); err.textContent='';
     if(!name){ err.textContent='Poné el nombre del personaje.'; return false; }
     if(!slug||!region){ err.textContent='Elegí un servidor de la lista (no vale escribirlo libre).'; return false; }
     if(characters.find(x=>x.name.toLowerCase()===name.toLowerCase() && x.realm_slug===slug)){ err.textContent='Ya existe ese personaje en ese realm.'; return false; }
     try{
-      const rows=mutationRows(await sbIns('characters',{ name, role:rl, realm_slug:slug, region, active:true }));
+      const rows=mutationRows(await sbIns('characters',{ name, role:rl, realm_slug:slug, region, active:true, roster_category:cat }));
       const ch=(rows&&rows[0])||{id:null,name,realm_slug:slug,region,role:rl};
       logAction('crear_personaje','character',ch.id||name,{target:name,realm:slug});
       try{ await syncCharacterArmoryNow(ch); }catch(syncErr){ console.warn('Armory sync failed for new character', syncErr); }
@@ -2173,12 +2305,13 @@ function openEditChar(idv){
     const name=document.getElementById('ch_name').value.trim();
     const slug=document.getElementById('ch_realm_slug').value||ch.realm_slug, region=document.getElementById('ch_realm_region').value||ch.region;
     const rl=document.getElementById('ch_role').value;
+    const cat=document.getElementById('ch_category').value;
     const err=document.getElementById('ch_err'); err.textContent='';
     if(!name){ err.textContent='Poné el nombre del personaje.'; return false; }
     try{
       const identityChanged=name.toLowerCase()!==String(ch.name||'').toLowerCase() || slug!==ch.realm_slug || region!==ch.region;
       const needsSync=!characterProgress.find(p=>String(p.character_id)===String(ch.id) && p.synced_ok!==false);
-      const rows=mutationRows(await sbUpd('characters',ch.id,{ name, role:rl, realm_slug:slug, region }));
+      const rows=mutationRows(await sbUpd('characters',ch.id,{ name, role:rl, roster_category:cat, realm_slug:slug, region }));
       const updated=(rows&&rows[0])||{...ch,name,role:rl,realm_slug:slug,region};
       logAction('editar_personaje','character',ch.id,{target:name});
       if(identityChanged||needsSync){
@@ -2285,20 +2418,208 @@ function renderRaid(k,w){
 }
 
 /* ---------- CALENDARIO ---------- */
+const RAID_EVENT_STATUS={planned:'Planificado',open:'Abierto',closed:'Cerrado',cancelled:'Cancelado'};
+const RAID_EVENT_TYPE={raid:'Raid',carry:'Carry',mplus:'M+',guild:'Guild',other:'Otro'};
+const ATT_STATUS={present:'Presente',bench:'Banca',absent_notice:'Ausente avisó',absent_no_notice:'Ausente sin aviso',late:'Tarde',left_early:'Se fue antes',partial:'Parcial',not_required:'No requerido'};
+const WEEKDAY_SHORT=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+function calendarWeekStart(){ const n=Number(settings.calendar_week_start_dow); return Number.isInteger(n)&&n>=0&&n<=6?n:2; }
+function sameDayKey(d){ return isoLocal(parseLocalDate(d)); }
+function minutesOf(t){ const m=String(t||'').match(/^(\d{1,2}):(\d{2})/); return m?(Number(m[1])*60+Number(m[2])):null; }
+function eventDurationMinutes(ev){ const s=minutesOf(ev.start_time), e=minutesOf(ev.end_time); if(s==null||e==null) return 180; return Math.max(1,e>s?e-s:e+1440-s); }
+function eventStartDate(ev){ const d=parseLocalDate(ev.event_date); const m=minutesOf(ev.start_time)||0; d.setHours(Math.floor(m/60),m%60,0,0); return d; }
+function eventDue(ev){ return !['closed','cancelled'].includes(ev.status) && eventStartDate(ev) <= new Date(); }
+function calendarEventsForDay(key){ return raidEvents.filter(ev=>sameDayKey(ev.event_date)===key).sort((a,b)=>String(a.start_time).localeCompare(String(b.start_time))); }
+function eventSegments(ev){ return raidEventSegments.filter(s=>String(s.event_id)===String(ev.id)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)); }
+function eventLabel(ev){
+  const seg=eventSegments(ev)[0];
+  const zone=seg&&(seg.instance_name||seg.zone_name);
+  const diff=seg&&seg.difficulty;
+  return [zone,diff].filter(Boolean).join(' · ') || RAID_EVENT_TYPE[ev.event_type] || ev.event_type || 'Evento';
+}
+function eventCard(ev){
+  return `<button class="calEvent ${esc(ev.status||'planned')}" data-event="${esc(ev.id)}"><b>${esc(ev.title)}</b><span>${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))} · ${esc(eventLabel(ev))}</span></button>`;
+}
+async function ensureDueAttendance(){
+  if(!cap('manageAttendance')) return;
+  const due=raidEvents.filter(eventDue).slice(0,3);
+  if(!due.length) return;
+  const key='pt_att_ensured_'+due.map(e=>e.id).join('_');
+  if(sessionStorage.getItem(key)) return;
+  sessionStorage.setItem(key,'1');
+  for(const ev of due){ try{ await appRequest('ensure_attendance',{event_id:ev.id}); }catch(e){} }
+  await refresh(true);
+}
 function renderCalendario(){
   const c=document.getElementById('content');
-  if(!state.weeks.length){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin semanas todavía</b></div>'; return; }
-  const cards=[...state.weeks].reverse().map(w=>{
-    const total=w.sales.reduce((a,s)=>a+goldValue(s.gold),0); const paid=w.sales.filter(s=>s.status==='pagado').reduce((a,s)=>a+goldValue(s.gold),0);
-    let slots=0,sold=0; RAID_KEYS.forEach(k=>RAIDS[k].bosses.forEach(b=>{ slots+=(w.slots[k]||{})[b]??DEFAULT_SLOTS; sold+=soldFor(w,k,b); }));
-    return `<div class="wcard ${w.id===state.current?'cur':''}" data-id="${w.id}"><div class="wl">${esc(w.label)}</div><div class="wd">reset ${fmtDate(w.date)}</div>
-      <div class="wm"><div>Gold<b class="gold">${fmtGoldShort(total)}</b></div><div>Cobrado<b>${fmtGoldShort(paid)}</b></div><div>Ventas<b>${w.sales.length}</b></div><div>Cupos<b class="blue">${sold}/${slots}</b></div></div>
-      ${cap('manageWeek')?`<div class="adminrow"><button class="btn ghost sm" data-act="open" data-id="${w.id}">Abrir</button><button class="btn ghost sm danger" data-act="del" data-id="${w.id}">Borrar</button></div>`:''}</div>`;
-  }).join('');
-  c.innerHTML=`<div class="calgrid">${cards}</div>`;
-  document.querySelectorAll('.wcard').forEach(card=> card.onclick=(e)=>{ if(e.target.dataset.act) return; state.current=card.dataset.id; view='semana'; render(); });
-  document.querySelectorAll('[data-act="open"]').forEach(b=> b.onclick=()=>{ state.current=b.dataset.id; view='semana'; render(); });
-  document.querySelectorAll('[data-act="del"]').forEach(b=> b.onclick=()=> deleteWeekById(b.dataset.id));
+  const cur=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth(),calendarCursor.getDate());
+  const monthName=cur.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  const title=calendarMode==='week' ? weekLabel(calendarWeekStartDate(cur)) : monthName;
+  c.innerHTML=`<div class="calendarShell">
+    <div class="calendarTools">
+      <div class="calendarTitle">${esc(title)}</div>
+      <button class="segBtn ${calendarMode==='month'?'on':''}" id="calMonth">Mes</button>
+      <button class="segBtn ${calendarMode==='week'?'on':''}" id="calWeek">Semana</button>
+      <button class="btn ghost sm" id="calPrev">‹</button>
+      <button class="btn ghost sm" id="calToday">Hoy</button>
+      <button class="btn ghost sm" id="calNext">›</button>
+      ${cap('manageCalendar')?'<button class="btn primary sm" id="calNew">+ Evento</button>':''}
+    </div>
+    ${calendarMode==='week'?calendarWeekHtml(cur):calendarMonthHtml(cur)}
+  </div>`;
+  document.getElementById('calMonth').onclick=()=>{ calendarMode='month'; renderCalendario(); };
+  document.getElementById('calWeek').onclick=()=>{ calendarMode='week'; renderCalendario(); };
+  document.getElementById('calPrev').onclick=()=>{ if(calendarMode==='month'){ calendarCursor.setDate(1); calendarCursor.setMonth(calendarCursor.getMonth()-1); } else calendarCursor.setDate(calendarCursor.getDate()-7); renderCalendario(); };
+  document.getElementById('calNext').onclick=()=>{ if(calendarMode==='month'){ calendarCursor.setDate(1); calendarCursor.setMonth(calendarCursor.getMonth()+1); } else calendarCursor.setDate(calendarCursor.getDate()+7); renderCalendario(); };
+  document.getElementById('calToday').onclick=()=>{ calendarCursor=new Date(); renderCalendario(); };
+  const nb=document.getElementById('calNew'); if(nb) nb.onclick=()=>openRaidEventForm(null, isoLocal(new Date()));
+  c.querySelectorAll('[data-event]').forEach(b=> b.onclick=()=>openRaidEventDetail(b.dataset.event));
+  ensureDueAttendance().catch(()=>{});
+}
+function calendarWeekStartDate(dt){
+  const d=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate());
+  const diff=(d.getDay()-calendarWeekStart()+7)%7;
+  d.setDate(d.getDate()-diff);
+  return d;
+}
+function calendarHeaderHtml(){
+  const start=calendarWeekStart();
+  return Array.from({length:7},(_,i)=>`<div class="calDow">${WEEKDAY_SHORT[(start+i)%7]}</div>`).join('');
+}
+function calendarMonthHtml(cur){
+  const first=new Date(cur.getFullYear(),cur.getMonth(),1);
+  const start=calendarWeekStartDate(first);
+  const today=isoLocal(new Date());
+  const cells=[];
+  for(let i=0;i<42;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const key=isoLocal(d), out=d.getMonth()!==cur.getMonth();
+    cells.push(`<div class="calDay ${out?'out':''}" data-date="${key}"><div class="calDate ${key===today?'today':''}"><b>${d.getDate()}</b>${cap('manageCalendar')?`<button class="linkbtn" data-newdate="${key}">+</button>`:''}</div>${calendarEventsForDay(key).map(eventCard).join('')}</div>`);
+  }
+  setTimeout(()=>document.querySelectorAll('[data-newdate]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openRaidEventForm(null,b.dataset.newdate); }),0);
+  return `<div class="calMonth">${calendarHeaderHtml()}${cells.join('')}</div>`;
+}
+function calendarWeekHtml(cur){
+  const start=calendarWeekStartDate(cur), today=isoLocal(new Date());
+  const cells=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const key=isoLocal(d);
+    cells.push(`<div class="calDay" data-date="${key}"><div class="calDate ${key===today?'today':''}"><b>${fmtDate(key)}</b>${cap('manageCalendar')?`<button class="linkbtn" data-newdate="${key}">+</button>`:''}</div>${calendarEventsForDay(key).map(eventCard).join('')}</div>`);
+  }
+  setTimeout(()=>document.querySelectorAll('[data-newdate]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openRaidEventForm(null,b.dataset.newdate); }),0);
+  return `<div class="calWeek">${calendarHeaderHtml()}${cells.join('')}</div>`;
+}
+function raidEventFormHtml(ev, dateKey){
+  const segs=ev?eventSegments(ev):[];
+  const segmentText=segs.length?segs.map(s=>[s.instance_name||'',s.difficulty||'',(s.bosses||[]).join(', '),s.notes||''].join(' | ')).join('\n'):'';
+  return `<div class="row2"><div class="field"><label>Título</label><input id="ev_title" value="${esc(ev?ev.title:'Raid Main')}" placeholder="Raid Main"></div>
+    <div class="field"><label>Tipo</label><select id="ev_type">${Object.entries(RAID_EVENT_TYPE).map(([k,l])=>`<option value="${k}" ${ev&&ev.event_type===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
+    <div class="row2"><div class="field"><label>Fecha</label><input id="ev_date" type="date" value="${esc(ev?sameDayKey(ev.event_date):dateKey)}"></div>
+    <div class="field"><label>Estado</label><select id="ev_status">${Object.entries(RAID_EVENT_STATUS).map(([k,l])=>`<option value="${k}" ${ev&&ev.status===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
+    <div class="row2"><div class="field"><label>Inicio</label><input id="ev_start" type="time" value="${esc(String(ev&&ev.start_time||'21:00').slice(0,5))}"></div>
+    <div class="field"><label>Finalización</label><input id="ev_end" type="time" value="${esc(String(ev&&ev.end_time||'00:00').slice(0,5))}"></div></div>
+    <div class="row2"><div class="field"><label>Recurrencia</label><select id="ev_recur"><option value="none">No repetir</option><option value="weekly" ${ev&&ev.recurrence==='weekly'?'selected':''}>Semanal (crear próximas 12)</option></select></div>
+    <div class="field"><label>Zona horaria</label><input id="ev_tz" value="${esc(ev&&ev.timezone_label||settings.calendar_timezone_label||'America/Buenos_Aires')}"></div></div>
+    <div class="field"><label>Segmentos (uno por línea: instancia | dificultad | bosses opcionales | nota)</label><textarea id="ev_segments" placeholder="Voidsire | Mythic | Imperator, Vorasius">${esc(segmentText)}</textarea></div>
+    <div class="field"><label>Notas</label><textarea id="ev_notes">${esc(ev&&ev.notes||'')}</textarea></div>
+    <div class="err" id="ev_err"></div>`;
+}
+function parseSegments(text){
+  return String(text||'').split(/\r?\n/).map((line,i)=>{
+    const parts=line.split('|').map(x=>x.trim());
+    if(!parts[0]) return null;
+    return { sort_order:i, instance_name:parts[0], difficulty:parts[1]||null, bosses:parts[2]?parts[2].split(',').map(x=>x.trim()).filter(Boolean):[], notes:parts[3]||null };
+  }).filter(Boolean);
+}
+async function saveEventSegments(eventId, segments){
+  const old=eventSegments({id:eventId});
+  for(const s of old) await sbDel('raid_event_segments',s.id);
+  for(const seg of segments) await sbIns('raid_event_segments',{...seg,event_id:eventId});
+}
+async function openRaidEventForm(eventId, dateKey){
+  if(!cap('manageCalendar')) return toast('No tenés permiso para editar calendario');
+  const ev=eventId?raidEvents.find(x=>String(x.id)===String(eventId)):null;
+  openM2((ev?'Editar evento':'Nuevo evento'), raidEventFormHtml(ev,dateKey||isoLocal(new Date())), async()=>{
+    const err=document.getElementById('ev_err'); err.textContent='';
+    const row={
+      title:document.getElementById('ev_title').value.trim(),
+      event_type:document.getElementById('ev_type').value,
+      event_date:document.getElementById('ev_date').value,
+      start_time:document.getElementById('ev_start').value,
+      end_time:document.getElementById('ev_end').value,
+      status:document.getElementById('ev_status').value,
+      recurrence:document.getElementById('ev_recur').value,
+      timezone_mode:settings.calendar_timezone_mode||'local',
+      timezone_offset_minutes:Number(settings.calendar_timezone_offset_minutes)||-180,
+      timezone_label:document.getElementById('ev_tz').value.trim()||settings.calendar_timezone_label||'America/Buenos_Aires',
+      notes:document.getElementById('ev_notes').value.trim()||null
+    };
+    if(!row.title||!row.event_date||!row.start_time||!row.end_time){ err.textContent='Completá título, fecha e inicio/finalización.'; return false; }
+    try{
+      const segments=parseSegments(document.getElementById('ev_segments').value);
+      if(ev){
+        await sbUpd('raid_events',ev.id,row);
+        await saveEventSegments(ev.id,segments);
+      }else{
+        const repeat=row.recurrence==='weekly'?12:1, start=parseLocalDate(row.event_date);
+        const group=repeat>1?crypto.randomUUID():null;
+        for(let i=0;i<repeat;i++){
+          const d=new Date(start); d.setDate(start.getDate()+i*7);
+          const rows=mutationRows(await sbIns('raid_events',{...row,event_date:isoLocal(d),recurrence_group_id:group}));
+          const created=rows[0]; if(created) await saveEventSegments(created.id,segments);
+        }
+      }
+      logAction(ev?'editar_raid_event':'crear_raid_event','raid_event',ev&&ev.id,{target:row.title});
+      await refresh(true); toast('Evento guardado');
+    }catch(e){ err.textContent='No se pudo guardar el evento. ¿Corriste la migración 002/SQL 022?'; return false; }
+  });
+}
+function attendanceRowsForEvent(ev){
+  const byChar=new Map(raidAttendance.filter(a=>String(a.event_id)===String(ev.id)).map(a=>[String(a.character_id),a]));
+  return characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false && ['raider','trial'].includes(String(ch.roster_category||'raider'))).sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(ch=>({ch,row:byChar.get(String(ch.id))||{event_id:ev.id,character_id:ch.id,status:'present'}}));
+}
+async function openRaidEventDetail(eventId){
+  const ev=raidEvents.find(x=>String(x.id)===String(eventId)); if(!ev) return;
+  selectedRaidEventId=eventId;
+  if(eventDue(ev)&&cap('manageAttendance')){ try{ await appRequest('ensure_attendance',{event_id:ev.id}); await fetchAll(); }catch(e){} }
+  const rows=attendanceRowsForEvent(ev);
+  const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''}</span><span class="g">${(s.bosses||[]).length?esc((s.bosses||[]).join(', ')):'—'}</span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
+  const table=`<div class="eventDetail"><div class="eventSummary">
+    <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(String(ev.start_time).slice(0,5))}-${esc(String(ev.end_time).slice(0,5))}</b></div>
+    <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Duración</span><b>${eventDurationMinutes(ev)} min</b></div>
+  </div><div class="destbox">${segs}</div>
+  <div class="tablewrap"><table class="utable attendanceTable"><thead><tr><th>Personaje</th><th>Categoría</th><th>Estado</th><th>Llega</th><th>Sale</th><th>Ausente min</th><th>Nota / justificación</th></tr></thead><tbody>
+    ${rows.map(({ch,row})=>`<tr data-att="${esc(row.id||'')}" data-char="${esc(ch.id)}"><td>${classBadge(ch.class)} <b>${esc(ch.name)}</b></td><td>${esc(ch.roster_category||'raider')}</td>
+      <td><select class="attStatus">${Object.entries(ATT_STATUS).map(([k,l])=>`<option value="${k}" ${String(row.status||'present')===k?'selected':''}>${l}</option>`).join('')}</select></td>
+      <td><input class="attArrival" type="time" value="${esc(String(row.arrival_time||'').slice(0,5))}"></td>
+      <td><input class="attLeave" type="time" value="${esc(String(row.leave_time||'').slice(0,5))}"></td>
+      <td><input class="attAway" type="number" min="0" step="1" value="${Number(row.away_minutes||0)}"></td>
+      <td><input class="attNote" value="${esc(row.note||'')}" placeholder="Otro / razón"></td></tr>`).join('')}
+  </tbody></table></div></div>`;
+  const actions=`<div class="actions" style="margin-top:12px">${cap('manageCalendar')?'<button class="btn ghost sm" id="evEdit">Editar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSave">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClose">Cerrar evento</button>':''}</div>`;
+  openM2(ev.title, table+actions, async()=>true);
+  const eb=document.getElementById('evEdit'); if(eb) eb.onclick=()=>openRaidEventForm(ev.id,sameDayKey(ev.event_date));
+  const sb=document.getElementById('attSave'); if(sb) sb.onclick=()=>saveAttendanceRows(ev);
+  const cb=document.getElementById('attClose'); if(cb) cb.onclick=()=>closeAttendanceEvent(ev);
+}
+async function saveAttendanceRows(ev){
+  if(!cap('manageAttendance')) return toast('Sin permiso');
+  try{
+    await appRequest('ensure_attendance',{event_id:ev.id});
+    const rows=[...document.querySelectorAll('.attendanceTable tbody tr')];
+    for(const tr of rows){
+      const patch={ status:tr.querySelector('.attStatus').value, arrival_time:tr.querySelector('.attArrival').value||null, leave_time:tr.querySelector('.attLeave').value||null, away_minutes:Number(tr.querySelector('.attAway').value||0), note:tr.querySelector('.attNote').value.trim()||null };
+      if(tr.dataset.att) await sbUpd('raid_attendance',tr.dataset.att,patch);
+      else await sbIns('raid_attendance',{...patch,event_id:ev.id,character_id:tr.dataset.char});
+    }
+    logAction('editar_attendance','raid_event',ev.id,{target:ev.title});
+    await refresh(true); toast('Attendance guardado');
+  }catch(e){ toast('No se pudo guardar attendance'); }
+}
+async function closeAttendanceEvent(ev){
+  if(!confirm('¿Cerrar attendance de "'+ev.title+'"? Desde ahí ya cuenta para estadísticas.')) return;
+  try{ await saveAttendanceRows(ev); await appRequest('close_event',{event_id:ev.id}); await refresh(true); toast('Evento cerrado'); }
+  catch(e){ toast('No se pudo cerrar'); }
 }
 
 /* ---------- AUDITORÍA ---------- */
@@ -2527,6 +2848,17 @@ function syncConfigHtml(){
     </div>
   </div>`;
 }
+function calendarConfigHtml(){
+  const days=[['0','Domingo'],['1','Lunes'],['2','Martes'],['3','Miércoles'],['4','Jueves'],['5','Viernes'],['6','Sábado']];
+  return `<div><label class="miniLabel">Calendario / attendance</label>
+    <div class="adminFieldGrid">
+      <div class="field"><label>Inicio de semana</label><select id="adminCalWeekStart">${days.map(([v,l])=>`<option value="${v}" ${String(settings.calendar_week_start_dow??2)===v?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label>Modo horario</label><select id="adminCalTzMode"><option value="local" ${String(settings.calendar_timezone_mode||'local')==='local'?'selected':''}>Horario local</option><option value="server" ${String(settings.calendar_timezone_mode||'local')==='server'?'selected':''}>Server time</option><option value="fixed" ${String(settings.calendar_timezone_mode||'local')==='fixed'?'selected':''}>GMT fijo</option></select></div>
+      <div class="field"><label>GMT offset minutos</label><input id="adminCalTzOffset" type="number" step="1" value="${Number(settings.calendar_timezone_offset_minutes??-180)}"></div>
+    </div>
+    <div class="field" style="margin-top:10px"><label>Etiqueta horaria</label><input id="adminCalTzLabel" value="${esc(settings.calendar_timezone_label||'America/Buenos_Aires')}" placeholder="America/Buenos_Aires / Server time / GMT-3"></div>
+  </div>`;
+}
 function renderAdmin(){
   const c=document.getElementById('content');
   if(!cap('viewAdmin')){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin permiso</b>Tu usuario no puede abrir el panel Admin.</div>'; return; }
@@ -2543,6 +2875,7 @@ function renderAdmin(){
         ${backendConfigHtml()}
         <div class="field"><label>Raider.IO season</label><input id="adminRioSeason" value="${esc(settings.raiderio_season||'current')}" placeholder="current o season-mn-1"></div>
         ${syncConfigHtml()}
+        ${calendarConfigHtml()}
         <div><label class="miniLabel">Dificultades WCL</label><div class="chipGrid">${diffChips}</div></div>
         <div><label class="miniLabel">Métricas WCL</label><div class="chipGrid">${metricChips}</div></div>
         <div><label class="miniLabel">Zonas WCL activas</label><div class="zoneList">${adminZoneRowsHtml()}</div></div>
@@ -2596,7 +2929,11 @@ async function saveAdminApiConfig(){
     raiderio_batch_every_minutes:intVal('adminRioBatchEvery',DEFAULT_SYNC_SETTINGS.raiderio_batch_every_minutes,0),
     wcl_refresh_minutes:intVal('adminWclRefresh',DEFAULT_SYNC_SETTINGS.wcl_refresh_minutes,1),
     wcl_batch_size:intVal('adminWclBatch',DEFAULT_SYNC_SETTINGS.wcl_batch_size,0),
-    wcl_batch_every_minutes:intVal('adminWclBatchEvery',DEFAULT_SYNC_SETTINGS.wcl_batch_every_minutes,0)
+    wcl_batch_every_minutes:intVal('adminWclBatchEvery',DEFAULT_SYNC_SETTINGS.wcl_batch_every_minutes,0),
+    calendar_week_start_dow:intVal('adminCalWeekStart',DEFAULT_CALENDAR_SETTINGS.calendar_week_start_dow,0,6),
+    calendar_timezone_mode:document.getElementById('adminCalTzMode').value,
+    calendar_timezone_offset_minutes:intVal('adminCalTzOffset',DEFAULT_CALENDAR_SETTINGS.calendar_timezone_offset_minutes,-840,840),
+    calendar_timezone_label:(document.getElementById('adminCalTzLabel').value||'America/Buenos_Aires').trim()
   };
   try{ await sbUpd('app_settings',1,patch); Object.assign(settings,patch); logAction('cambiar_api_config','settings','1',patch); await refresh(true); toast('Configuración guardada'); }
   catch(e){ toast('No se pudo guardar. ¿Corriste SQL 020?'); }
