@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-skcA5QboIKu5eQweA1ObEoP/gfPFHXtHp5yqGEdNzuQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-nE6HtmdsHern+C3DuT6OmXur4fT6gpLE7pHvoTLdPnQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -3010,7 +3010,12 @@ function refreshSegmentBossSelect(row,preferred){
 function bindSegmentEditor(root=document){
   const rows=root.querySelector('#segRows');
   if(!rows) return;
-  const refresh=()=>{ [...rows.querySelectorAll('.segRow')].forEach((row,i)=>{ row.dataset.segRow=i; row.classList.toggle('segSelected',!!row.querySelector('.segCheck')?.checked); }); };
+  const saleSelectionValues=(sales)=>[...sales.selectedOptions].map(o=>o.value).filter(Boolean);
+  const refreshSaleMemory=(row)=>{
+    const sales=row.querySelector('.segSales');
+    if(sales && sales.dataset.prevSelected==null) sales.dataset.prevSelected=saleSelectionValues(sales).join(',');
+  };
+  const refresh=()=>{ [...rows.querySelectorAll('.segRow')].forEach((row,i)=>{ row.dataset.segRow=i; row.classList.toggle('segSelected',!!row.querySelector('.segCheck')?.checked); refreshSaleMemory(row); }); };
   let draggedRow=null;
   const rowAfterPointer=(y)=>{
     const available=[...rows.querySelectorAll('.segRow:not(.dragging)')];
@@ -3050,9 +3055,13 @@ function bindSegmentEditor(root=document){
       const instance=row.querySelector('.segInstance').value, boss=row.querySelector('.segBoss').value;
       const sales=row.querySelector('.segSales');
       if(e.target.classList.contains('segSales')){
+        const prev=(sales.dataset.prevSelected||'').split(',').filter(Boolean);
         const pickedNow=[...sales.selectedOptions].map(o=>o.value);
-        if(pickedNow.includes('')){
+        const pickedCarries=pickedNow.filter(Boolean);
+        if(pickedNow.includes('') && prev.length>0){
           [...sales.options].forEach(o=>{ o.selected=o.value===''; });
+        }else if(pickedNow.includes('') && pickedCarries.length>0){
+          [...sales.options].forEach(o=>{ o.selected=o.value!=='' && pickedCarries.includes(o.value); });
         }else{
           const no=sales.querySelector('option[value=""]');
           if(no) no.selected=false;
@@ -3060,6 +3069,7 @@ function bindSegmentEditor(root=document){
       }
       const picked=[...sales.selectedOptions].map(o=>o.value).filter(Boolean);
       sales.innerHTML=segmentSaleOptions(instance,boss,picked);
+      sales.dataset.prevSelected=picked.join(',');
       row.querySelector('.segStatus').innerHTML=segmentStatusOptions(row.querySelector('.segStatus').value,picked.length>0);
     }
   };
