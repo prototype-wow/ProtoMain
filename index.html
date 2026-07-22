@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-nE6HtmdsHern+C3DuT6OmXur4fT6gpLE7pHvoTLdPnQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-z5mocKDuty/ARKRiPYZPZn8mhWab5gasALADMyGVQlc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -242,6 +242,13 @@
   .segGrid select option{background:var(--bg-1)!important; color:var(--text)!important}
   .segTools select{width:auto!important; min-width:150px; max-width:260px; flex:0 0 auto; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-0)!important; color:var(--text)!important; padding:0 8px; font-size:12px; font-weight:800}
   .segTools button{flex:0 0 auto; white-space:nowrap}
+  .segBossDropdown{position:relative; flex:0 0 auto}
+  .segBossMenu{position:absolute; z-index:80; top:calc(100% + 6px); left:0; min-width:270px; max-height:320px; overflow:auto; display:none; border:1px solid var(--line); border-radius:12px; background:var(--bg-1); box-shadow:0 20px 50px -16px rgba(0,0,0,.85); padding:6px}
+  .segBossDropdown.on .segBossMenu{display:block}
+  .segBossMenu label{display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px; cursor:pointer; color:var(--text); font-size:12px; text-transform:none; letter-spacing:0; margin:0}
+  .segBossMenu label:hover{background:var(--bg-2)}
+  .segBossMenu input{width:15px; height:15px; accent-color:var(--blue)}
+  .segBossMenu .empty{padding:10px; color:var(--muted); font-size:12px}
   .segGrid .segOps{display:flex; gap:4px}
   .segGrid .segOps button{width:24px; height:24px; padding:0; border-radius:7px}
   .segRow{cursor:grab}
@@ -2962,6 +2969,9 @@ function segmentStatusOptions(value,hasSale){
 function segmentBulkStatusOptions(value){
   return Object.entries(SEGMENT_STATUS).map(([k,label])=>`<option value="${k}" ${String(value||'killed')===k?'selected':''}>${esc(label)}</option>`).join('');
 }
+function segmentBossKey(instance,difficulty,boss){
+  return [instance||'',difficulty||'',boss||''].map(x=>String(x).trim().toLowerCase()).join('|');
+}
 function segmentRowHtml(seg,i){
   const instance=seg.instance_name||raidInstanceOptions()[0]||'';
   const boss=arrish(seg.bosses)[0]||'';
@@ -2989,7 +2999,10 @@ function segmentEditorHtml(segs){
         <button class="btn ghost sm" type="button" id="segAdd">+ Segmento</button>
         <select id="segBulkInstance" title="Instancia">${optionsHtml(raidInstanceOptions(),defaultInstance,null)}</select>
         <select id="segBulkDifficulty" title="Dificultad">${optionsHtml(segmentDifficultyOptions(defaultDifficulty),defaultDifficulty,null)}</select>
-        <button class="btn ghost sm" type="button" id="segAddBosses">+ Bosses de instancia</button>
+        <div class="segBossDropdown" id="segBossDropdown">
+          <button class="btn ghost sm" type="button" id="segBossToggle">Bosses de instancia ▾</button>
+          <div class="segBossMenu" id="segBossMenu"></div>
+        </div>
         <select id="segBulkStatus" title="Estado">${segmentBulkStatusOptions('killed')}</select>
         <button class="btn ghost sm" type="button" id="segBulkState">Cambiar estado selección</button>
       </div>
@@ -3007,6 +3020,18 @@ function refreshSegmentBossSelect(row,preferred){
   const options=raidBossOptions(instance);
   boss.innerHTML=optionsHtml(options,options.includes(current)?current:'','Boss / dungeon');
 }
+function renderSegmentBossMenu(root=document){
+  const menu=root.querySelector('#segBossMenu');
+  if(!menu) return;
+  const instance=root.querySelector('#segBulkInstance')?.value||'The Voidspire';
+  const diff=root.querySelector('#segBulkDifficulty')?.value||'Mythic';
+  const bosses=raidBossOptions(instance);
+  const present=new Set([...root.querySelectorAll('#segRows .segRow')].map(row=>segmentBossKey(row.querySelector('.segInstance')?.value,row.querySelector('.segDifficulty')?.value,row.querySelector('.segBoss')?.value)));
+  menu.innerHTML=bosses.length?bosses.map(b=>{
+    const checked=present.has(segmentBossKey(instance,diff,b));
+    return `<label><input type="checkbox" class="segBossPick" value="${esc(b)}" ${checked?'checked':''}><span>${esc(b)}</span></label>`;
+  }).join(''):'<div class="empty">No tengo bosses precargados para esa instancia.</div>';
+}
 function bindSegmentEditor(root=document){
   const rows=root.querySelector('#segRows');
   if(!rows) return;
@@ -3015,7 +3040,7 @@ function bindSegmentEditor(root=document){
     const sales=row.querySelector('.segSales');
     if(sales && sales.dataset.prevSelected==null) sales.dataset.prevSelected=saleSelectionValues(sales).join(',');
   };
-  const refresh=()=>{ [...rows.querySelectorAll('.segRow')].forEach((row,i)=>{ row.dataset.segRow=i; row.classList.toggle('segSelected',!!row.querySelector('.segCheck')?.checked); refreshSaleMemory(row); }); };
+  const refresh=()=>{ [...rows.querySelectorAll('.segRow')].forEach((row,i)=>{ row.dataset.segRow=i; row.classList.toggle('segSelected',!!row.querySelector('.segCheck')?.checked); refreshSaleMemory(row); }); renderSegmentBossMenu(root); };
   let draggedRow=null;
   const rowAfterPointer=(y)=>{
     const available=[...rows.querySelectorAll('.segRow:not(.dragging)')];
@@ -3084,21 +3109,39 @@ function bindSegmentEditor(root=document){
     const diff=root.querySelector('#segBulkDifficulty')?.value||'Mythic';
     rows.insertAdjacentHTML('beforeend',segmentRowHtml({instance_name:instance,difficulty:diff,bosses:[],sale_ids:[],segment_status:'pending'},rows.children.length)); refresh();
   };
-  const addBosses=root.querySelector('#segAddBosses'); if(addBosses) addBosses.onclick=()=>{
+  const bossDropdown=root.querySelector('#segBossDropdown');
+  const bossToggle=root.querySelector('#segBossToggle');
+  if(bossToggle&&bossDropdown) bossToggle.onclick=(e)=>{ e.stopPropagation(); bossDropdown.classList.toggle('on'); renderSegmentBossMenu(root); };
+  const menu=root.querySelector('#segBossMenu');
+  if(menu) menu.onchange=e=>{
+    if(!e.target.classList.contains('segBossPick')) return;
     const instance=root.querySelector('#segBulkInstance')?.value||'The Voidspire';
     const diff=root.querySelector('#segBulkDifficulty')?.value||'Mythic';
-    const bosses=raidBossOptions(instance);
-    if(!bosses.length){ toast('No tengo bosses precargados para esa instancia'); return; }
-    bosses.forEach(b=>rows.insertAdjacentHTML('beforeend',segmentRowHtml({instance_name:instance,difficulty:diff,bosses:[b],sale_ids:[],segment_status:'pending'},rows.children.length)));
+    const boss=e.target.value;
+    const key=segmentBossKey(instance,diff,boss);
+    if(e.target.checked){
+      const exists=[...rows.querySelectorAll('.segRow')].some(row=>segmentBossKey(row.querySelector('.segInstance')?.value,row.querySelector('.segDifficulty')?.value,row.querySelector('.segBoss')?.value)===key);
+      if(!exists) rows.insertAdjacentHTML('beforeend',segmentRowHtml({instance_name:instance,difficulty:diff,bosses:[boss],sale_ids:[],segment_status:'pending'},rows.children.length));
+    }else{
+      [...rows.querySelectorAll('.segRow')].filter(row=>segmentBossKey(row.querySelector('.segInstance')?.value,row.querySelector('.segDifficulty')?.value,row.querySelector('.segBoss')?.value)===key).forEach(row=>row.remove());
+    }
     refresh();
   };
+  ['segBulkInstance','segBulkDifficulty'].forEach(id=>{ const el=root.querySelector('#'+id); if(el) el.onchange=()=>renderSegmentBossMenu(root); });
   const bulk=root.querySelector('#segBulkState'); if(bulk) bulk.onclick=()=>{
     const selected=[...rows.querySelectorAll('.segRow')].filter(r=>r.querySelector('.segCheck').checked);
     if(!selected.length) return toast('Seleccioná segmentos primero');
     const value=root.querySelector('#segBulkStatus')?.value||'killed';
     if(!SEGMENT_STATUS[value]) return;
-    selected.forEach(r=>{ const sel=r.querySelector('.segStatus'); sel.innerHTML=segmentStatusOptions(value,r.querySelector('.segSales').selectedOptions.length>0); sel.value=value; });
+    selected.forEach(r=>{
+      const hasSale=r.querySelector('.segSales').selectedOptions.length>0;
+      const target=hasSale && ['killed','reclear'].includes(value) ? 'done' : value;
+      const sel=r.querySelector('.segStatus');
+      sel.innerHTML=segmentStatusOptions(target,hasSale);
+      sel.value=target;
+    });
   };
+  root.addEventListener('click',e=>{ if(bossDropdown && !e.target.closest('#segBossDropdown')) bossDropdown.classList.remove('on'); });
   refresh();
 }
 function bindEventForm(){
@@ -3164,13 +3207,40 @@ async function saveEventSegments(eventId, segments){
   const old=eventSegments({id:eventId});
   for(const s of old) await sbDel('raid_event_segments',s.id);
   for(const seg of segments) await sbIns('raid_event_segments',{...seg,event_id:eventId});
-  await applySegmentCarryDone(segments);
+  await syncSegmentLinkedSales(eventId,old,segments);
 }
-async function applySegmentCarryDone(segments){
-  const doneIds=[...new Set(segments.filter(s=>s.segment_status==='done').flatMap(s=>arrish(s.sale_ids)).map(String).filter(Boolean))];
-  for(const id of doneIds){
+async function syncSegmentLinkedSales(eventId,oldSegments,newSegments){
+  const affected=[...new Set([...oldSegments,...newSegments].flatMap(s=>arrish(s.sale_ids)).map(String).filter(Boolean))];
+  if(!affected.length) return;
+  const otherSegments=raidEventSegments.filter(s=>String(s.event_id)!==String(eventId));
+  const finalSegments=[...otherSegments,...newSegments.map(s=>({...s,event_id:eventId}))];
+  const doneIds=new Set(finalSegments.filter(s=>s.segment_status==='done').flatMap(s=>arrish(s.sale_ids)).map(String).filter(Boolean));
+  for(const id of affected){
     const s=allSales().find(x=>String(x.id)===id);
-    if(s && s.done!==true) await sbUpd('sales',id,{done:true});
+    if(!s) continue;
+    const shouldDone=doneIds.has(id);
+    const patch={};
+    if(s.done!==shouldDone) patch.done=shouldDone;
+    if(!shouldDone && s.status==='pagado') patch.status='reservado';
+    if(Object.keys(patch).length) await sbUpd('sales',id,patch);
+  }
+}
+async function clearSegmentLinkedSalesForEvents(eventIds){
+  const ids=new Set(arrish(eventIds).map(String));
+  if(!ids.size) return;
+  const removed=raidEventSegments.filter(s=>ids.has(String(s.event_id)));
+  const affected=[...new Set(removed.flatMap(s=>arrish(s.sale_ids)).map(String).filter(Boolean))];
+  if(!affected.length) return;
+  const remaining=raidEventSegments.filter(s=>!ids.has(String(s.event_id)));
+  const doneIds=new Set(remaining.filter(s=>s.segment_status==='done').flatMap(s=>arrish(s.sale_ids)).map(String).filter(Boolean));
+  for(const id of affected){
+    if(doneIds.has(id)) continue;
+    const s=allSales().find(x=>String(x.id)===id);
+    if(!s) continue;
+    const patch={};
+    if(s.done===true) patch.done=false;
+    if(s.status==='pagado') patch.status='reservado';
+    if(Object.keys(patch).length) await sbUpd('sales',id,patch);
   }
 }
 async function concreteEventForSegmentSave(ev){
@@ -3385,6 +3455,7 @@ async function deleteRaidEvent(ev){
   if(!ev || ev._virtual) return toast('Abrí primero esa fecha recurrente si querés eliminarla.');
   if(!confirm('¿Eliminar el evento "'+ev.title+'" del '+fmtDate(ev.event_date)+'? Se borra también su attendance.')) return;
   try{
+    await clearSegmentLinkedSalesForEvents([ev.id]);
     await sbDel('raid_events',ev.id);
     logAction('borrar_raid_event','raid_event',ev.id,{target:ev.title,date:sameDayKey(ev.event_date)});
     if(String(attendanceEventId)===String(ev.id)) attendanceEventId='';
@@ -3413,7 +3484,7 @@ async function deleteCalendarScope(eventId,scope,selectedIds){
         const item=findAttendanceEvent(id,attendanceCandidateEvents()) || findAttendanceEvent(id);
         if(!item) continue;
         if(item._virtual) await materializeCancelOccurrence(item);
-        else await sbDel('raid_events',item.id);
+        else{ await clearSegmentLinkedSalesForEvents([item.id]); await sbDel('raid_events',item.id); }
       }
     }else if(scope==='week'){
       const start=calendarWeekStartDate(parseLocalDate(ev.event_date));
@@ -3423,18 +3494,18 @@ async function deleteCalendarScope(eventId,scope,selectedIds){
         const d=parseLocalDate(item.event_date);
         if(recurrenceGroup(item)===group && d>=start && d<=end){
           if(item._virtual) await materializeCancelOccurrence(item);
-          else await sbDel('raid_events',item.id);
+          else{ await clearSegmentLinkedSalesForEvents([item.id]); await sbDel('raid_events',item.id); }
         }
       }
     }else if(scope==='future'){
       const group=recurrenceGroup(ev), from=sameDayKey(ev.event_date);
       const template=raidEvents.find(x=>recurrenceGroup(x)===group && x.recurrence==='weekly');
       if(template) await sbUpd('raid_events',template.id,{recurrence_until:isoLocal(new Date(parseLocalDate(from).getTime()-86400000))});
-      for(const item of raidEvents.filter(x=>recurrenceGroup(x)===group && x.recurrence!=='weekly' && sameDayKey(x.event_date)>=from)) await sbDel('raid_events',item.id);
-      if(!template && !ev._virtual) await sbDel('raid_events',ev.id);
+      for(const item of raidEvents.filter(x=>recurrenceGroup(x)===group && x.recurrence!=='weekly' && sameDayKey(x.event_date)>=from)){ await clearSegmentLinkedSalesForEvents([item.id]); await sbDel('raid_events',item.id); }
+      if(!template && !ev._virtual){ await clearSegmentLinkedSalesForEvents([ev.id]); await sbDel('raid_events',ev.id); }
     }else if(scope==='all'){
       const group=recurrenceGroup(ev);
-      for(const item of raidEvents.filter(x=>recurrenceGroup(x)===group)) await sbDel('raid_events',item.id);
+      for(const item of raidEvents.filter(x=>recurrenceGroup(x)===group)){ await clearSegmentLinkedSalesForEvents([item.id]); await sbDel('raid_events',item.id); }
     }
     selectedCalendarEvents.clear();
     logAction('borrar_raid_event','raid_event',ev.id,{target:ev.title,scope});
