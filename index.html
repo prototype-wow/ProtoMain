@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-Ol2vc9eMLE9fgt/mX8vN1B6ckHDBFmGYN1hl0TZlbRI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-BOZY6zZy/c5qm8srXKUUDrF9TBUlA/+AmAKr0Q5Jc18='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -150,6 +150,11 @@
   .badge.senado{color:var(--blue); background:rgba(0,155,219,.12); border:1px solid rgba(0,155,219,.4)}
   .badge.pagado{color:var(--ok); background:rgba(47,191,113,.13); border:1px solid rgba(47,191,113,.4)}
   .badge.hecho{color:var(--purple); background:rgba(166,91,255,.12); border:1px solid rgba(166,91,255,.42)}
+  .badge.pending{color:var(--muted); background:rgba(130,155,175,.1); border:1px solid rgba(130,155,175,.28)}
+  .badge.progress{color:var(--warn); background:rgba(232,161,58,.12); border:1px solid rgba(232,161,58,.34)}
+  .badge.killed,.badge.done{color:var(--ok); background:rgba(47,191,113,.13); border:1px solid rgba(47,191,113,.4)}
+  .badge.reclear{color:var(--blue); background:rgba(0,155,219,.12); border:1px solid rgba(0,155,219,.38)}
+  .badge.postponed{color:var(--rose); background:rgba(232,85,107,.12); border:1px solid rgba(232,85,107,.36)}
   .doneToggle{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:9px; background:var(--bg); padding:9px 11px; min-height:40px}
   .doneToggle span{font-weight:700; font-size:13px}
   .doneToggle input{width:18px!important; height:18px; accent-color:var(--blue)}
@@ -216,6 +221,7 @@
   .scrim.on{display:grid}
   .modal{width:100%; max-width:520px; max-height:92vh; overflow:auto; border:1px solid var(--line); border-radius:16px; background:var(--bg-1); box-shadow:0 30px 80px -20px rgba(0,0,0,.85)}
   .modal.sm{max-width:400px}
+  .modal.wide{max-width:min(1180px,96vw)}
   .modal h3{font-family:var(--font-display); font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:15px; margin:0; padding:18px 20px 14px; border-bottom:1px solid var(--line-soft)}
   .mbody{padding:16px 20px}
   .field{margin-bottom:14px}
@@ -224,6 +230,17 @@
   .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--blue)}
   .field textarea{resize:vertical; min-height:54px}
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .segEditor{border:1px solid var(--line-soft); border-radius:12px; overflow:hidden; background:var(--bg)}
+  .segTools{display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft); background:var(--bg-1)}
+  .segGrid{display:grid; grid-template-columns:28px 1.15fr .85fr 1fr 1.1fr .8fr 1.1fr 64px; min-width:980px}
+  .segGrid.head{font-family:var(--font-display); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted-2); background:var(--bg-1)}
+  .segGrid>div{padding:8px 7px; border-bottom:1px solid var(--line-soft); min-width:0}
+  .segGrid select,.segGrid input{width:100%; min-width:0; border-radius:7px; border:1px solid var(--line); background:var(--bg-0); color:var(--text); padding:7px 8px; font-size:12px}
+  .segGrid .segOps{display:flex; gap:4px}
+  .segGrid .segOps button{width:24px; height:24px; padding:0; border-radius:7px}
+  .segmentScroller{overflow:auto}
+  .segSelected{box-shadow:inset 3px 0 0 var(--blue); background:rgba(0,155,219,.07)}
+  .dangerText{color:var(--rose); font-family:var(--font-display); text-transform:uppercase; letter-spacing:.08em; font-size:11px}
   .bosspick{display:flex; flex-direction:column; gap:6px}
   .bosspick .pkrow{display:flex; align-items:center; justify-content:space-between; gap:8px}
   .bosspick label.cb{display:flex; align-items:center; gap:9px; padding:8px 10px; border:1px solid var(--line-soft); border-radius:9px; cursor:pointer; font-size:13.5px; flex:1}
@@ -479,6 +496,12 @@
   .attendancePick b{display:block; font-size:13px}
   .attendancePick span{display:block; color:var(--muted); font-size:11px; margin-top:2px}
   .attToolbar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px}
+  .attMatrixWrap{margin-bottom:14px}
+  .attMatrix{border-collapse:collapse; min-width:980px; width:100%; font-size:12px}
+  .attMatrix th,.attMatrix td{border-bottom:1px solid var(--line-soft); padding:7px 8px; vertical-align:middle}
+  .attMatrix th{position:sticky; top:0; background:var(--bg-1); z-index:1; color:var(--muted-2); font-family:var(--font-display); font-size:10px; letter-spacing:.08em; text-transform:uppercase}
+  .attMatrix th:first-child,.attMatrix td:first-child{position:sticky; left:0; background:var(--bg-1); z-index:2}
+  .attMatrix select{min-width:118px; padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-size:12px}
   .calendarTools{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
   .calendarTitle{font-family:var(--font-display); font-size:16px; letter-spacing:.12em; text-transform:uppercase; margin-right:auto}
   .segBtn{border:1px solid var(--line); background:var(--bg); color:var(--text); border-radius:8px; padding:8px 10px; font-weight:800; cursor:pointer}
@@ -494,10 +517,16 @@
   .calDate.today b{color:var(--blue)}
   .calEvent{width:100%; text-align:left; border:1px solid var(--line-soft); background:var(--bg-2); color:var(--text); border-radius:8px; padding:7px 8px; cursor:pointer; display:grid; gap:3px; min-width:0}
   .calEvent:hover{border-color:var(--blue)}
+  .calEvent.sel{outline:1px solid var(--blue); box-shadow:0 0 0 2px rgba(0,155,219,.18)}
   .calEvent b{font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .calEvent span{font-family:var(--font-mono); font-size:10px; color:var(--muted)}
   .calEvent.closed{border-color:rgba(39,216,130,.35)}
   .calEvent.cancelled{opacity:.55; text-decoration:line-through}
+  .contextMenu{position:fixed; display:none; z-index:90; min-width:250px; border:1px solid var(--line); border-radius:12px; background:var(--bg-1); box-shadow:0 16px 40px rgba(0,0,0,.45); overflow:hidden}
+  .contextMenu.on{display:block}
+  .contextMenu button{display:block; width:100%; text-align:left; padding:10px 12px; border:0; border-bottom:1px solid var(--line-soft); background:transparent; color:var(--text); font-weight:700; cursor:pointer}
+  .contextMenu button:hover{background:var(--bg-2); color:var(--blue)}
+  .contextMenu button.danger:hover{color:var(--rose)}
   .eventDetail{display:grid; gap:10px}
   .eventSummary{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px}
   .eventMini{border:1px solid var(--line-soft); background:var(--bg); border-radius:8px; padding:8px}
@@ -507,6 +536,7 @@
   .attendancePct{font-family:var(--font-mono); font-weight:900}
   .att100{color:#0fa85f}.att75{color:#27d882}.att50{color:#ffd166}.att25{color:#ff9f1c}.att0{color:#ff4d6d}
   .adminGrid{display:grid; grid-template-columns:minmax(0,1.35fr) minmax(320px,.9fr); gap:16px; align-items:start}
+  .adminGrid.apiFocus{grid-template-columns:minmax(0,1fr)}
   .adminPanel .pbody{padding:14px}
   .permTable{width:100%; border-collapse:separate; border-spacing:0; font-size:12px}
   .permTable th,.permTable td{padding:8px 9px; border-bottom:1px solid var(--line-soft); text-align:center}
@@ -643,6 +673,7 @@
 </div>
 
 <div class="menu" id="userMenu"></div>
+<div class="contextMenu" id="calendarContextMenu"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -827,6 +858,7 @@ let recruits=[], recruitFilter={q:"",status:"open"}, recruitLoadError='', recrui
 let progView='general', progSearch='', progClass='all', progRole='all', progSort={col:'ilvl',dir:-1};
 let attendanceFilter={period:'30',from:'',to:''};
 let calendarMode='month', calendarCursor=new Date(), selectedRaidEventId='', attendanceEventId='';
+let selectedCalendarEvents=new Set();
 let singleCharId='', singleWclZone='46', singleWclMetric='dps', singleWclDifficulty='5', singleRioSpec='';
 let session = JSON.parse(sessionStorage.getItem('pt_secure_session')||'null');
 let view='semana', editingId=null, lastSig="", creating=false, forceLogin=false;
@@ -1012,7 +1044,7 @@ async function fetchAll(){
   if('raid_attendance' in data) raidAttendance=data.raid_attendance||[];
   if(cap('manageRecruits')){ try{ await fetchRecruits(); }catch(e){ recruits=[]; recruitLoadError=e&&e.message?e.message:String(e); } }
 }
-function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.recurrence,e.recurrence_group_id,e.recurrence_parent_id,e.recurrence_until,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
+function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.recurrence,e.recurrence_group_id,e.recurrence_parent_id,e.recurrence_until,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order,s.segment_status,s.sale_ids]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
 async function refresh(toastOnChange){
   if(!session||!session.token) return;
   try{ await fetchAll(); clearError(); setLive('ok','en vivo');
@@ -2452,7 +2484,8 @@ function sameDayKey(d){ return isoLocal(parseLocalDate(d)); }
 function minutesOf(t){ const m=String(t||'').match(/^(\d{1,2}):(\d{2})/); return m?(Number(m[1])*60+Number(m[2])):null; }
 function eventDurationMinutes(ev){ const s=minutesOf(ev.start_time), e=minutesOf(ev.end_time); if(s==null||e==null) return 180; return Math.max(1,e>s?e-s:e+1440-s); }
 function eventStartDate(ev){ const d=parseLocalDate(ev.event_date); const m=minutesOf(ev.start_time)||0; d.setHours(Math.floor(m/60),m%60,0,0); return d; }
-function eventDue(ev){ return !['closed','cancelled'].includes(ev.status) && eventStartDate(ev) <= new Date(); }
+function eventEndDate(ev){ const d=eventStartDate(ev); d.setMinutes(d.getMinutes()+eventDurationMinutes(ev)); return d; }
+function eventDue(ev){ return !['closed','cancelled'].includes(ev.status) && eventEndDate(ev) <= new Date(); }
 function recurrenceGroup(ev){ return String(ev&&ev.recurrence_group_id || ev&&ev.id || ''); }
 function eventSegments(ev){ const eventId=ev&&ev._template_id?ev._template_id:ev&&ev.id; return raidEventSegments.filter(s=>String(s.event_id)===String(eventId)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)); }
 function recurringTemplateActiveOn(ev,key){
@@ -2469,7 +2502,7 @@ function virtualEvent(template,key){
   return {...template, id:`virtual:${template.id}:${key}`, _virtual:true, _template_id:template.id, event_date:key, recurrence_parent_id:template.id, recurrence_group_id:recurrenceGroup(template)};
 }
 function calendarEventsForDay(key){
-  const physical=raidEvents.filter(ev=>sameDayKey(ev.event_date)===key);
+  const physical=raidEvents.filter(ev=>sameDayKey(ev.event_date)===key && ev.status!=='cancelled');
   const virtuals=raidEvents.filter(ev=>ev.recurrence==='weekly' && sameDayKey(ev.event_date)!==key && recurringTemplateActiveOn(ev,key))
     .filter(ev=>!materializedEventForGroupDate(recurrenceGroup(ev),key))
     .map(ev=>virtualEvent(ev,key));
@@ -2482,7 +2515,8 @@ function eventLabel(ev){
   return [zone,diff].filter(Boolean).join(' · ') || RAID_EVENT_TYPE[ev.event_type] || ev.event_type || 'Evento';
 }
 function eventCard(ev){
-  return `<button class="calEvent ${esc(ev.status||'planned')}" data-event="${esc(ev.id)}"><b>${esc(ev.title)}</b><span>${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))} · ${esc(eventLabel(ev))}</span></button>`;
+  const sel=selectedCalendarEvents.has(String(ev.id))?' sel':'';
+  return `<button class="calEvent ${esc(ev.status||'planned')}${sel}" data-event="${esc(ev.id)}"><b>${esc(ev.title)}</b><span>${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))} · ${esc(eventLabel(ev))}</span></button>`;
 }
 async function ensureDueAttendance(){
   if(!cap('manageAttendance')) return;
@@ -2498,7 +2532,7 @@ async function ensureDueAttendance(){
   for(const ev of targets){
     try{
       const real=ev._virtual ? await materializeRecurringEvent(ev) : ev;
-      await appRequest('ensure_attendance',{event_id:real.id});
+      await appRequest('close_event',{event_id:real.id});
     }catch(e){}
   }
   await refresh(true);
@@ -2526,9 +2560,45 @@ function attendanceStatusSummary(ev){
   const absent=rows.filter(({row})=>['absent_notice','absent_no_notice'].includes(row.status)).length;
   return `${done}/${total} completados${absent?` · ${absent} ausentes`:''}`;
 }
+function attendanceMatrixEvents(events){
+  return events.filter(ev=>!ev._virtual && ev.status!=='cancelled').sort((a,b)=>sameDayKey(a.event_date).localeCompare(sameDayKey(b.event_date)) || String(a.start_time||'').localeCompare(String(b.start_time||''))).slice(-12);
+}
+function attendanceRosterRows(){
+  return characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false && ['raider','trial'].includes(String(ch.roster_category||'raider'))).sort((a,b)=>String(a.role||'').localeCompare(String(b.role||'')) || String(a.class||'').localeCompare(String(b.class||'')) || String(a.name).localeCompare(String(b.name)));
+}
+function attendanceMatrixHtml(events){
+  const evs=attendanceMatrixEvents(events), roster=attendanceRosterRows();
+  if(!evs.length) return `<div class="panel attMatrixWrap"><div class="phead"><h2><span class="dia"></span>Planilla de attendance</h2><div class="sub">Sin eventos materializados todavía.</div></div></div>`;
+  const byKey=new Map(raidAttendance.map(a=>[String(a.event_id)+'::'+String(a.character_id),a]));
+  return `<div class="panel attMatrixWrap"><div class="phead"><h2><span class="dia"></span>Planilla de attendance</h2><div class="sub">Fila por personaje, columna por evento. Los eventos sin completar quedan vacíos hasta la hora final.</div></div>
+    <div class="pbody"><div class="tablewrap"><table class="attMatrix"><thead><tr><th>Personaje</th>${evs.map(ev=>`<th title="${esc(ev.title)}">${fmtDate(ev.event_date)}<br>${esc(ev.title)}</th>`).join('')}</tr></thead><tbody>
+      ${roster.map(ch=>`<tr><td>${classBadge(ch.class)} <b>${esc(ch.name)}</b><div class="mono">${esc(CHAR_ROLE_LABEL[ch.role]||ch.role||'')} · ${esc(ch.roster_category||'raider')}</div></td>${evs.map(ev=>{
+        const row=byKey.get(String(ev.id)+'::'+String(ch.id))||{};
+        return `<td><select class="attMatrixStatus" data-event="${esc(ev.id)}" data-char="${esc(ch.id)}">${attendanceStatusOptionsHtml(row.status)}</select></td>`;
+      }).join('')}</tr>`).join('')}
+    </tbody></table></div>${cap('manageAttendance')?'<div class="attToolbar"><button class="btn primary sm" id="attMatrixSave">Guardar planilla</button></div>':''}</div></div>`;
+}
+async function saveAttendanceMatrix(){
+  if(!cap('manageAttendance')) return toast('Sin permiso');
+  const cells=[...document.querySelectorAll('.attMatrixStatus')];
+  const eventIds=[...new Set(cells.map(c=>c.dataset.event).filter(Boolean))];
+  try{
+    for(const eventId of eventIds) await appRequest('ensure_attendance',{event_id:eventId});
+    await fetchAll();
+    const byKey=new Map(raidAttendance.map(a=>[String(a.event_id)+'::'+String(a.character_id),a]));
+    for(const c of cells){
+      const status=c.value||null, key=String(c.dataset.event)+'::'+String(c.dataset.char);
+      const existing=byKey.get(key);
+      if(existing) await sbUpd('raid_attendance',existing.id,{status});
+      else await sbIns('raid_attendance',{event_id:c.dataset.event,character_id:c.dataset.char,status});
+    }
+    logAction('editar_attendance_matriz','raid_event','matrix',{events:eventIds.length});
+    await refresh(true); toast('Planilla guardada');
+  }catch(e){ toast('No se pudo guardar la planilla'); }
+}
 function attendanceEditorHtml(ev){
   const rows=attendanceRowsForEvent(ev);
-  const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''}</span><span class="g">${(s.bosses||[]).length?esc((s.bosses||[]).join(', ')):'—'}</span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
+  const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''} ${(arrish(s.bosses)).length?`· ${esc(arrish(s.bosses).join(', '))}`:''}</span><span><span class="badge ${esc(s.segment_status||'pending')}">${esc(SEGMENT_STATUS[s.segment_status]||'Pendiente')}</span></span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
   return `<div class="eventDetail"><div class="eventSummary">
     <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))}</b></div>
     <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Lista</span><b>${esc(attendanceStatusSummary(ev))}</b></div>
@@ -2562,8 +2632,10 @@ function renderAttendance(){
     ? `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(ev.title)}</h2><div class="sub">${fmtDate(ev.event_date)} · ${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))}</div></div><div class="pbody"><div class="empty"><b>Ocurrencia recurrente</b>Esta fecha todavía no existe como evento real. Abrila para pasar lista sin crear todas las semanas futuras.</div>${cap('manageAttendance')?`<button class="btn primary" id="attOpenVirtual">Abrir attendance</button>`:''}</div></div>`
     : `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(ev.title)}</h2><div class="sub">${fmtDate(ev.event_date)} · ${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))} · ${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</div></div><div class="pbody">${attendanceEditorHtml(ev)}<div class="attToolbar">${cap('manageCalendar')?'<button class="btn ghost sm" id="attEditEvent">Editar evento</button><button class="btn ghost sm danger" id="attDeleteEvent">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSavePage">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClosePage">Cerrar evento</button>':''}</div></div></div>`;
   c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Attendance</div><div class="actions">${cap('manageCalendar')?'<button class="btn primary sm" id="attNewEvent">+ Evento</button>':''}</div></div>
+    ${attendanceMatrixHtml(events)}
     <div class="attendanceShell"><div class="panel"><div class="phead"><h2><span class="dia"></span>Eventos</h2><div class="sub">Pasar lista por raid</div></div><div class="pbody attendanceList">${list}</div></div>${right}</div>`;
   c.querySelectorAll('[data-att-event]').forEach(b=>b.onclick=()=>{ attendanceEventId=b.dataset.attEvent; renderAttendance(); });
+  const matrixSave=document.getElementById('attMatrixSave'); if(matrixSave) matrixSave.onclick=saveAttendanceMatrix;
   const nb=document.getElementById('attNewEvent'); if(nb) nb.onclick=()=>openRaidEventForm(null, isoLocal(new Date()));
   const ov=document.getElementById('attOpenVirtual'); if(ov) ov.onclick=()=>materializeAndOpenAttendance(ev);
   const edit=document.getElementById('attEditEvent'); if(edit) edit.onclick=()=>openRaidEventForm(ev.id,sameDayKey(ev.event_date));
@@ -2595,9 +2667,47 @@ function renderCalendario(){
   document.getElementById('calNext').onclick=()=>{ if(calendarMode==='month'){ calendarCursor.setDate(1); calendarCursor.setMonth(calendarCursor.getMonth()+1); } else calendarCursor.setDate(calendarCursor.getDate()+7); renderCalendario(); };
   document.getElementById('calToday').onclick=()=>{ calendarCursor=new Date(); renderCalendario(); };
   const nb=document.getElementById('calNew'); if(nb) nb.onclick=()=>openRaidEventForm(null, isoLocal(new Date()));
-  c.querySelectorAll('[data-event]').forEach(b=> b.onclick=()=>openRaidEventDetail(b.dataset.event));
+  c.querySelectorAll('[data-event]').forEach(b=>{
+    b.onclick=(e)=>handleCalendarClick(e,b.dataset.event);
+    b.oncontextmenu=(e)=>{ e.preventDefault(); showCalendarContext(e,b.dataset.event); };
+  });
   ensureDueAttendance().catch(()=>{});
 }
+function handleCalendarClick(e,eventId){
+  hideCalendarContext();
+  if(e.ctrlKey||e.metaKey){
+    const key=String(eventId);
+    if(selectedCalendarEvents.has(key)) selectedCalendarEvents.delete(key);
+    else selectedCalendarEvents.add(key);
+    renderCalendario();
+    return;
+  }
+  selectedCalendarEvents.clear();
+  openRaidEventDetail(eventId);
+}
+function showCalendarContext(e,eventId){
+  const menu=document.getElementById('calendarContextMenu');
+  if(!menu) return;
+  const selected=selectedCalendarEvents.size?[...selectedCalendarEvents]:[String(eventId)];
+  menu.innerHTML=`<button data-calctx="edit">Editar este evento</button>
+    <button data-calctx="attendance">Editar attendance</button>
+    <button class="danger" data-calctx="delete-one">Eliminar este día</button>
+    <button class="danger" data-calctx="delete-week">Eliminar semana seleccionada</button>
+    <button class="danger" data-calctx="delete-future">Eliminar serie hacia adelante</button>
+    <button class="danger" data-calctx="delete-all">ELIMINAR TODA LA SERIE HISTÓRICA</button>`;
+  menu.style.left=Math.min(e.clientX,window.innerWidth-270)+'px';
+  menu.style.top=Math.min(e.clientY,window.innerHeight-240)+'px';
+  menu.classList.add('on');
+  menu.onclick=async(ev)=>{
+    const act=ev.target&&ev.target.dataset&&ev.target.dataset.calctx;
+    if(!act) return;
+    hideCalendarContext();
+    if(act==='edit') return openRaidEventForm(eventId,sameDayKey(findAttendanceEvent(eventId)?.event_date||new Date()));
+    if(act==='attendance'){ attendanceEventId=eventId; view='attendance'; render(); return; }
+    await deleteCalendarScope(eventId,act.replace('delete-',''),selected);
+  };
+}
+function hideCalendarContext(){ const menu=document.getElementById('calendarContextMenu'); if(menu) menu.classList.remove('on'); }
 function calendarWeekStartDate(dt){
   const d=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate());
   const diff=(d.getDay()-calendarWeekStart()+7)%7;
@@ -2632,9 +2742,124 @@ function calendarWeekHtml(cur){
   setTimeout(()=>document.querySelectorAll('[data-newdate]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openRaidEventForm(null,b.dataset.newdate); }),0);
   return `<div class="calWeek">${calendarHeaderHtml()}${cells.join('')}</div>`;
 }
+function arrish(v){
+  if(Array.isArray(v)) return v;
+  if(v==null||v==='') return [];
+  if(typeof v==='string'){
+    if(v.startsWith('{')&&v.endsWith('}')) return v.slice(1,-1).split(',').map(x=>x.replace(/^"|"$/g,'').trim()).filter(Boolean);
+    return v.split(',').map(x=>x.trim()).filter(Boolean);
+  }
+  return [v];
+}
+function raidInstanceOptions(){
+  const base=[...wclZoneOptions().map(z=>z.name),...Object.values(RAIDS).map(r=>r.name),'Mythic+ Season 1'];
+  return [...new Set(base.filter(Boolean))];
+}
+function raidBossOptions(instance){
+  const key=Object.keys(RAIDS).find(k=>RAIDS[k].name===instance || String(instance||'').toLowerCase().includes(k));
+  if(key) return RAIDS[key].bosses;
+  if(String(instance||'').toLowerCase().includes('mythic+')) return ['Algeth’ar Academy','Magisters’ Terrace','Maisara Caverns','Nexus-Point Xenas','Pit of Saron','Seat of the Triumvirate','Skyreach','Windrunner Spire'];
+  return [];
+}
+function saleOptionLabel(s){
+  const w=state.weeks.find(x=>x.id===s.week_id);
+  return `${s.buyer||'Carry'} · ${w?w.label:fmtDate(s.run_date||w&&w.date||'')} · ${fmtGold(s.gold)}`;
+}
+function saleMatchesSegment(s,instance,boss){
+  if(s.done===true) return false;
+  if(boss && !(s.bosses||[]).includes(boss)) return false;
+  const k=Object.keys(RAIDS).find(key=>RAIDS[key].name===instance || RAIDS[key].bosses.includes(boss));
+  if(k && s.raid!==k) return false;
+  return true;
+}
+function segmentSaleOptions(instance,boss,selected){
+  const selectedSet=new Set(arrish(selected).map(String));
+  const opts=allSales().filter(s=>saleMatchesSegment(s,instance,boss) || selectedSet.has(String(s.id)));
+  return `<option value="">No</option>`+opts.map(s=>`<option value="${esc(s.id)}" ${selectedSet.has(String(s.id))?'selected':''}>${esc(saleOptionLabel(s))}</option>`).join('');
+}
+function segmentStatusOptions(value,hasSale){
+  const keys=hasSale?['pending','done','postponed']:['pending','progress','killed','reclear'];
+  return keys.map(k=>`<option value="${k}" ${String(value||'pending')===k?'selected':''}>${esc(SEGMENT_STATUS[k])}</option>`).join('');
+}
+function segmentRowHtml(seg,i){
+  const instance=seg.instance_name||raidInstanceOptions()[0]||'';
+  const boss=arrish(seg.bosses)[0]||'';
+  const saleIds=arrish(seg.sale_ids).map(String);
+  const hasSale=saleIds.length>0;
+  return `<div class="segGrid segRow" data-seg-row="${i}">
+    <div><input type="checkbox" class="segCheck"></div>
+    <div><input class="segInstance" list="segInstanceList" value="${esc(instance)}" placeholder="Instancia"></div>
+    <div><select class="segDifficulty">${wclActiveDiffs().map(d=>WCL_DIFF_LABEL[d]).filter(Boolean).map(label=>`<option value="${esc(label)}" ${label===seg.difficulty?'selected':''}>${esc(label)}</option>`).join('')}</select></div>
+    <div><input class="segBoss" list="segBossList" value="${esc(boss)}" placeholder="Boss / dungeon"></div>
+    <div><select class="segSales" multiple size="1">${segmentSaleOptions(instance,boss,saleIds)}</select></div>
+    <div><select class="segStatus">${segmentStatusOptions(seg.segment_status,hasSale)}</select></div>
+    <div><input class="segNote" value="${esc(seg.notes||'')}" placeholder="Nota"></div>
+    <div class="segOps"><button class="btn ghost sm segUp" type="button">↑</button><button class="btn ghost sm danger segDel" type="button">−</button></div>
+  </div>`;
+}
+function segmentEditorHtml(segs){
+  const seed=segs.length?segs:[{instance_name:'The Voidspire',difficulty:'Mythic',bosses:[],sale_ids:[],segment_status:'pending',notes:''}];
+  const instances=raidInstanceOptions();
+  const bosses=[...new Set(instances.flatMap(raidBossOptions))];
+  return `<div class="field"><label>Segmentos</label>
+    <div class="segEditor" id="segEditor">
+      <div class="segTools">
+        <button class="btn ghost sm" type="button" id="segAdd">+ Segmento</button>
+        <button class="btn ghost sm" type="button" id="segAddBosses">+ Bosses de instancia</button>
+        <button class="btn ghost sm" type="button" id="segBulkState">Cambiar estado selección</button>
+      </div>
+      <datalist id="segInstanceList">${instances.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist>
+      <datalist id="segBossList">${bosses.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist>
+      <div class="segmentScroller">
+        <div class="segGrid head"><div></div><div>Instancia</div><div>Dificultad</div><div>Boss</div><div>Venta</div><div>Estado</div><div>Nota</div><div></div></div>
+        <div id="segRows">${seed.map(segmentRowHtml).join('')}</div>
+      </div>
+    </div>
+  </div>`;
+}
+function bindSegmentEditor(){
+  const rows=document.getElementById('segRows');
+  if(!rows) return;
+  const refresh=()=>{ [...rows.querySelectorAll('.segRow')].forEach((row,i)=>{ row.dataset.segRow=i; row.classList.toggle('segSelected',!!row.querySelector('.segCheck')?.checked); }); };
+  rows.onchange=e=>{
+    const row=e.target.closest('.segRow');
+    if(!row) return;
+    if(e.target.classList.contains('segCheck')) refresh();
+    if(e.target.classList.contains('segInstance')||e.target.classList.contains('segBoss')||e.target.classList.contains('segSales')){
+      const instance=row.querySelector('.segInstance').value, boss=row.querySelector('.segBoss').value;
+      const sales=row.querySelector('.segSales');
+      const picked=[...sales.selectedOptions].map(o=>o.value).filter(Boolean);
+      sales.innerHTML=segmentSaleOptions(instance,boss,picked);
+      row.querySelector('.segStatus').innerHTML=segmentStatusOptions(row.querySelector('.segStatus').value,picked.length>0);
+    }
+  };
+  rows.onclick=e=>{
+    const row=e.target.closest('.segRow');
+    if(!row) return;
+    if(e.target.classList.contains('segDel')){ row.remove(); refresh(); }
+    if(e.target.classList.contains('segUp')){ const prev=row.previousElementSibling; if(prev) rows.insertBefore(row,prev); refresh(); }
+  };
+  const add=document.getElementById('segAdd'); if(add) add.onclick=()=>{ rows.insertAdjacentHTML('beforeend',segmentRowHtml({instance_name:'The Voidspire',difficulty:'Mythic',bosses:[],sale_ids:[],segment_status:'pending'},rows.children.length)); refresh(); };
+  const addBosses=document.getElementById('segAddBosses'); if(addBosses) addBosses.onclick=()=>{
+    const instance=prompt('Instancia para agregar bosses', 'The Voidspire');
+    if(!instance) return;
+    const diff=prompt('Dificultad', 'Mythic')||'Mythic';
+    const bosses=raidBossOptions(instance);
+    if(!bosses.length){ toast('No tengo bosses precargados para esa instancia'); return; }
+    bosses.forEach(b=>rows.insertAdjacentHTML('beforeend',segmentRowHtml({instance_name:instance,difficulty:diff,bosses:[b],sale_ids:[],segment_status:'pending'},rows.children.length)));
+    refresh();
+  };
+  const bulk=document.getElementById('segBulkState'); if(bulk) bulk.onclick=()=>{
+    const selected=[...rows.querySelectorAll('.segRow')].filter(r=>r.querySelector('.segCheck').checked);
+    if(!selected.length) return toast('Seleccioná segmentos primero');
+    const value=prompt('Estado: pending, progress, killed, reclear, done, postponed', 'killed');
+    if(!SEGMENT_STATUS[value]) return;
+    selected.forEach(r=>{ const sel=r.querySelector('.segStatus'); sel.innerHTML=segmentStatusOptions(value,r.querySelector('.segSales').selectedOptions.length>0); sel.value=value; });
+  };
+  refresh();
+}
 function raidEventFormHtml(ev, dateKey){
   const segs=ev?eventSegments(ev):[];
-  const segmentText=segs.length?segs.map(s=>[s.instance_name||'',s.difficulty||'',(s.bosses||[]).join(', '),s.notes||''].join(' | ')).join('\n'):'';
   const recurring=ev && (ev.recurrence==='weekly' || ev.recurrence_group_id || ev.recurrence_parent_id);
   return `<div class="row2"><div class="field"><label>Título</label><input id="ev_title" value="${esc(ev?ev.title:'Raid Main')}" placeholder="Raid Main"></div>
     <div class="field"><label>Tipo</label><select id="ev_type">${Object.entries(RAID_EVENT_TYPE).map(([k,l])=>`<option value="${k}" ${ev&&ev.event_type===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
@@ -2644,22 +2869,39 @@ function raidEventFormHtml(ev, dateKey){
     <div class="field"><label>Finalización</label><input id="ev_end" type="time" value="${esc(String(ev&&ev.end_time||'00:00').slice(0,5))}"></div></div>
     <div class="row2"><div class="field"><label>Recurrencia</label><select id="ev_recur"><option value="none">No repetir</option><option value="weekly" ${ev&&ev.recurrence==='weekly'?'selected':''}>Semanal (sin fecha final)</option></select></div>
     <div class="field"><label>Zona horaria</label><input id="ev_tz" value="${esc(ev&&ev.timezone_label||settings.calendar_timezone_label||'America/Buenos_Aires')}"></div></div>
-    ${recurring?`<div class="field"><label>Aplicar cambios</label><select id="ev_scope"><option value="one">Solo esta fecha</option><option value="future">Esta fecha y futuros materializados</option></select></div>`:''}
-    <div class="field"><label>Segmentos (uno por línea: instancia | dificultad | bosses opcionales | nota)</label><textarea id="ev_segments" placeholder="Voidsire | Mythic | Imperator, Vorasius">${esc(segmentText)}</textarea></div>
+    ${recurring?`<div class="field"><label>Aplicar cambios</label><select id="ev_scope"><option value="one">Solo esta fecha</option><option value="future">Esta fecha y futuros materializados</option><option value="series_future">Serie hacia adelante</option></select></div>`:''}
+    ${segmentEditorHtml(segs)}
     <div class="field"><label>Notas</label><textarea id="ev_notes">${esc(ev&&ev.notes||'')}</textarea></div>
     <div class="err" id="ev_err"></div>`;
 }
-function parseSegments(text){
-  return String(text||'').split(/\r?\n/).map((line,i)=>{
-    const parts=line.split('|').map(x=>x.trim());
-    if(!parts[0]) return null;
-    return { sort_order:i, instance_name:parts[0], difficulty:parts[1]||null, bosses:parts[2]?parts[2].split(',').map(x=>x.trim()).filter(Boolean):[], notes:parts[3]||null };
-  }).filter(Boolean);
+function parseSegmentsFromEditor(){
+  return [...document.querySelectorAll('#segRows .segRow')].map((row,i)=>{
+    const boss=row.querySelector('.segBoss').value.trim();
+    const saleIds=[...row.querySelector('.segSales').selectedOptions].map(o=>o.value).filter(Boolean);
+    const status=row.querySelector('.segStatus').value||'pending';
+    return {
+      sort_order:i,
+      instance_name:row.querySelector('.segInstance').value.trim(),
+      difficulty:row.querySelector('.segDifficulty').value||null,
+      bosses:boss?[boss]:[],
+      sale_ids:saleIds,
+      segment_status:status,
+      notes:row.querySelector('.segNote').value.trim()||null
+    };
+  }).filter(s=>s.instance_name);
 }
 async function saveEventSegments(eventId, segments){
   const old=eventSegments({id:eventId});
   for(const s of old) await sbDel('raid_event_segments',s.id);
   for(const seg of segments) await sbIns('raid_event_segments',{...seg,event_id:eventId});
+  await applySegmentCarryDone(segments);
+}
+async function applySegmentCarryDone(segments){
+  const doneIds=[...new Set(segments.filter(s=>s.segment_status==='done').flatMap(s=>arrish(s.sale_ids)).map(String).filter(Boolean))];
+  for(const id of doneIds){
+    const s=allSales().find(x=>String(x.id)===id);
+    if(s && s.done!==true) await sbUpd('sales',id,{done:true});
+  }
 }
 async function materializeRecurringEvent(ev){
   const template=ev._template_id ? raidEvents.find(x=>String(x.id)===String(ev._template_id)) : ev;
@@ -2684,7 +2926,7 @@ async function materializeRecurringEvent(ev){
   };
   const rows=mutationRows(await sbIns('raid_events',row));
   const created=rows[0];
-  if(created) await saveEventSegments(created.id,eventSegments(template).map(s=>({sort_order:s.sort_order||0,zone_id:s.zone_id||null,instance_name:s.instance_name||null,difficulty:s.difficulty||null,bosses:s.bosses||[],notes:s.notes||null})));
+  if(created) await saveEventSegments(created.id,eventSegments(template).map(s=>({sort_order:s.sort_order||0,zone_id:s.zone_id||null,instance_name:s.instance_name||null,difficulty:s.difficulty||null,bosses:arrish(s.bosses),sale_ids:arrish(s.sale_ids),segment_status:s.segment_status||'pending',notes:s.notes||null})));
   await fetchAll();
   return created||ev;
 }
@@ -2697,6 +2939,17 @@ async function updateFutureMaterializedEvents(ev,row,segments){
     await sbUpd('raid_events',fut.id,patch);
     await saveEventSegments(fut.id,segments);
   }
+}
+async function trimRecurringSeriesFrom(ev,row,segments){
+  const group=recurrenceGroup(ev), from=sameDayKey(ev.event_date);
+  const template=raidEvents.find(x=>recurrenceGroup(x)===group && x.recurrence==='weekly');
+  const target=template||ev;
+  await sbUpd('raid_events',target.id,{recurrence_until:isoLocal(new Date(parseLocalDate(from).getTime()-86400000))});
+  const nextRows=mutationRows(await sbIns('raid_events',{...row,recurrence:'weekly',recurrence_group_id:uuidv(),recurrence_parent_id:null,recurrence_until:null}));
+  const created=nextRows[0];
+  if(created) await saveEventSegments(created.id,segments);
+  const oldFutures=raidEvents.filter(x=>recurrenceGroup(x)===group && x.recurrence!=='weekly' && sameDayKey(x.event_date)>=from);
+  for(const fut of oldFutures) await sbDel('raid_events',fut.id);
 }
 async function openRaidEventForm(eventId, dateKey){
   if(!cap('manageCalendar')) return toast('No tenés permiso para editar calendario');
@@ -2724,13 +2977,14 @@ async function openRaidEventForm(eventId, dateKey){
     };
     if(!row.title||!row.event_date||!row.start_time||!row.end_time){ err.textContent='Completá título, fecha e inicio/finalización.'; return false; }
     try{
-      const segments=parseSegments(document.getElementById('ev_segments').value);
+      const segments=parseSegmentsFromEditor();
       if(ev){
         if(ev._virtual) ev=await materializeRecurringEvent(ev);
         const scope=document.getElementById('ev_scope')?.value||'one';
         await sbUpd('raid_events',ev.id,row);
         await saveEventSegments(ev.id,segments);
         if(scope==='future') await updateFutureMaterializedEvents(ev,row,segments);
+        if(scope==='series_future') await trimRecurringSeriesFrom(ev,row,segments);
       }else{
         const group=row.recurrence==='weekly'?uuidv():null;
         const rows=mutationRows(await sbIns('raid_events',{...row,recurrence_group_id:group}));
@@ -2739,7 +2993,8 @@ async function openRaidEventForm(eventId, dateKey){
       logAction(ev?'editar_raid_event':'crear_raid_event','raid_event',ev&&ev.id,{target:row.title});
       await refresh(true); toast('Evento guardado');
     }catch(e){ err.textContent='No se pudo guardar: '+(e&&e.message?e.message:'error desconocido'); return false; }
-  });
+  },{wide:true});
+  bindSegmentEditor();
 }
 function attendanceRowsForEvent(ev){
   const byChar=new Map(raidAttendance.filter(a=>String(a.event_id)===String(ev.id)).map(a=>[String(a.character_id),a]));
@@ -2757,7 +3012,7 @@ async function openRaidEventDetail(eventId){
   selectedRaidEventId=ev.id;
   if(eventDue(ev)&&cap('manageAttendance')){ try{ await appRequest('ensure_attendance',{event_id:ev.id}); await fetchAll(); }catch(e){} }
   const rows=attendanceRowsForEvent(ev);
-  const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''}</span><span class="g">${(s.bosses||[]).length?esc((s.bosses||[]).join(', ')):'—'}</span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
+  const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''} ${(arrish(s.bosses)).length?`· ${esc(arrish(s.bosses).join(', '))}`:''}</span><span><span class="badge ${esc(s.segment_status||'pending')}">${esc(SEGMENT_STATUS[s.segment_status]||'Pendiente')}</span></span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
   const table=`<div class="eventDetail"><div class="eventSummary">
     <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(String(ev.start_time).slice(0,5))}-${esc(String(ev.end_time).slice(0,5))}</b></div>
     <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Duración</span><b>${eventDurationMinutes(ev)} min</b></div>
@@ -2771,7 +3026,7 @@ async function openRaidEventDetail(eventId){
       <td><input class="attNote" value="${esc(row.note||'')}" placeholder="Otro / razón"></td></tr>`).join('')}
   </tbody></table></div></div>`;
   const actions=`<div class="actions" style="margin-top:12px">${cap('manageCalendar')?'<button class="btn ghost sm" id="evEdit">Editar evento</button><button class="btn ghost sm danger" id="evDelete">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSave">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClose">Cerrar evento</button>':''}</div>`;
-  openM2(ev.title, table+actions, async()=>true);
+  openM2(ev.title, table+actions, async()=>true,{wide:true});
   const eb=document.getElementById('evEdit'); if(eb) eb.onclick=()=>openRaidEventForm(ev.id,sameDayKey(ev.event_date));
   const db=document.getElementById('evDelete'); if(db) db.onclick=()=>deleteRaidEvent(ev);
   const sb=document.getElementById('attSave'); if(sb) sb.onclick=()=>saveAttendanceRows(ev);
@@ -2812,6 +3067,54 @@ async function deleteRaidEvent(ev){
     await refresh(true);
     toast('Evento eliminado');
   }catch(e){ toast('No se pudo eliminar el evento'); }
+}
+async function materializeCancelOccurrence(ev){
+  if(!ev._virtual) return ev;
+  const real=await materializeRecurringEvent(ev);
+  await sbUpd('raid_events',real.id,{status:'cancelled'});
+  return real;
+}
+async function deleteCalendarScope(eventId,scope,selectedIds){
+  if(!cap('manageCalendar')) return toast('Sin permiso');
+  const ev=findAttendanceEvent(eventId,attendanceCandidateEvents()) || findAttendanceEvent(eventId);
+  if(!ev) return toast('Evento no encontrado');
+  if(scope==='all'){
+    const ok=confirm('PELIGRO: esto elimina toda la serie histórica, incluidos eventos anteriores. ¿Seguro?');
+    if(!ok) return;
+  }else if(!confirm('¿Eliminar alcance "'+scope+'" para '+ev.title+'?')) return;
+  try{
+    if(scope==='one'){
+      for(const id of selectedIds||[eventId]){
+        const item=findAttendanceEvent(id,attendanceCandidateEvents()) || findAttendanceEvent(id);
+        if(!item) continue;
+        if(item._virtual) await materializeCancelOccurrence(item);
+        else await sbDel('raid_events',item.id);
+      }
+    }else if(scope==='week'){
+      const start=calendarWeekStartDate(parseLocalDate(ev.event_date));
+      const end=new Date(start); end.setDate(start.getDate()+6);
+      const group=recurrenceGroup(ev);
+      for(const item of attendanceCandidateEvents()){
+        const d=parseLocalDate(item.event_date);
+        if(recurrenceGroup(item)===group && d>=start && d<=end){
+          if(item._virtual) await materializeCancelOccurrence(item);
+          else await sbDel('raid_events',item.id);
+        }
+      }
+    }else if(scope==='future'){
+      const group=recurrenceGroup(ev), from=sameDayKey(ev.event_date);
+      const template=raidEvents.find(x=>recurrenceGroup(x)===group && x.recurrence==='weekly');
+      if(template) await sbUpd('raid_events',template.id,{recurrence_until:isoLocal(new Date(parseLocalDate(from).getTime()-86400000))});
+      for(const item of raidEvents.filter(x=>recurrenceGroup(x)===group && x.recurrence!=='weekly' && sameDayKey(x.event_date)>=from)) await sbDel('raid_events',item.id);
+      if(!template && !ev._virtual) await sbDel('raid_events',ev.id);
+    }else if(scope==='all'){
+      const group=recurrenceGroup(ev);
+      for(const item of raidEvents.filter(x=>recurrenceGroup(x)===group)) await sbDel('raid_events',item.id);
+    }
+    selectedCalendarEvents.clear();
+    logAction('borrar_raid_event','raid_event',ev.id,{target:ev.title,scope});
+    await refresh(true); toast('Evento eliminado');
+  }catch(e){ toast('No se pudo eliminar alcance'); }
 }
 
 /* ---------- AUDITORÍA ---------- */
@@ -3059,7 +3362,7 @@ function renderAdmin(){
   const diffChips=Object.entries(WCL_DIFF_LABEL).filter(([k])=>DEFAULT_WCL_DIFFS.includes(Number(k))).map(([k,label])=>`<label class="pickChip"><input class="adminDiff" type="checkbox" value="${k}" ${wclActiveDiffs().map(String).includes(String(k))?'checked':''}>${esc(label)}</label>`).join('');
   const metricChips=Object.entries(WCL_METRIC_LABEL).map(([k,label])=>`<label class="pickChip"><input class="adminMetric" type="checkbox" value="${k}" ${wclActiveMetrics().includes(k)?'checked':''}>${esc(label)}</label>`).join('');
   c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Panel Admin</div><div class="actions"><button class="btn ghost sm" id="adminDetectWcl">Detectar zonas WCL</button></div></div>
-    <div class="adminGrid">
+    <div class="adminGrid apiFocus">
       <div class="panel adminPanel"><div class="phead"><h2><span class="dia"></span>Permisos por rango</h2></div><div class="pbody">
         <p class="adminNote">Estos permisos controlan solapas visibles y acciones principales. El servidor usa la misma matriz para aceptar o rechazar escrituras.</p>
         ${permissionTableHtml()}
@@ -3239,10 +3542,10 @@ async function delSale(id){ const w=curWeek(); const s=w&&w.sales.find(x=>x.id==
   try{ await sbDel('sales',id); logAction('borrar_venta','sale',id,{buyer:s?s.buyer:'',gold:s?s.gold:0}); await refresh(); toast('Venta eliminada'); }catch(e){ toast('No se pudo borrar'); } }
 
 /* ---------- generic small modal ---------- */
-function openM2(title, bodyHtml, onOk){ document.getElementById('m2title').textContent=title; document.getElementById('m2body').innerHTML=bodyHtml; document.getElementById('scrim2').classList.add('on');
+function openM2(title, bodyHtml, onOk, opts={}){ document.getElementById('m2title').textContent=title; document.getElementById('m2body').innerHTML=bodyHtml; document.querySelector('#scrim2 .modal').classList.toggle('wide',!!opts.wide); document.getElementById('scrim2').classList.add('on');
   document.getElementById('m2ok').onclick=async()=>{ const ok=await onOk(); if(ok!==false){ document.getElementById('scrim2').classList.remove('on'); } };
   setTimeout(()=>{ const f=document.querySelector('#m2body input'); if(f) f.focus(); },50); }
-function closeM2(){ document.getElementById('scrim2').classList.remove('on'); }
+function closeM2(){ document.getElementById('scrim2').classList.remove('on'); document.querySelector('#scrim2 .modal').classList.remove('wide'); }
 function openChangePass(){ openM2('Cambiar mi contraseña',
   `<div class="field"><label>Contraseña actual</label><input type="password" id="cp_old"></div><div class="field"><label>Nueva contraseña</label><input type="password" id="cp_new"></div><div class="field"><label>Repetir nueva</label><input type="password" id="cp_new2"></div><div class="err" id="cp_err"></div>`,
   async()=>{ const o=document.getElementById('cp_old').value,n=document.getElementById('cp_new').value,n2=document.getElementById('cp_new2').value; const err=document.getElementById('cp_err'); err.textContent='';
@@ -3281,6 +3584,7 @@ document.getElementById('scrim').onclick=e=>{ if(e.target.id==='scrim') closeSal
 document.getElementById('pickAll').onclick=()=>{ document.querySelectorAll('#f_bosses input[type=checkbox]').forEach(cb=>{ cb.checked=true; cb.closest('label').classList.add('has'); }); };
 document.getElementById('m2cancel').onclick=closeM2;
 document.getElementById('scrim2').onclick=e=>{ if(e.target.id==='scrim2') closeM2(); };
+document.addEventListener('click',e=>{ if(!e.target.closest('#calendarContextMenu')) hideCalendarContext(); });
 document.getElementById('copyVacAll').onclick=copyVacancies;
 document.getElementById('lg_btn').onclick=doLogin;
 document.getElementById('lg_pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
