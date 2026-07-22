@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-YrtaE8AClBv4NDNsuEQHKkSmmxl8h3xIqmGc+wpNEoY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-WofRhMY6X30MJUE+RKc3ybUouMHctxgk1GkVu0AsJgE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -495,6 +495,9 @@
   .attendancePick:hover,.attendancePick.on{border-color:var(--blue); background:rgba(0,155,219,.07)}
   .attendancePick b{display:block; font-size:13px}
   .attendancePick span{display:block; color:var(--muted); font-size:11px; margin-top:2px}
+  .attendanceTabs{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0 0 12px}
+  .attendanceTab{border:1px solid var(--line); background:var(--bg); color:var(--text); border-radius:9px; padding:8px 12px; font-weight:900; cursor:pointer}
+  .attendanceTab.on{border-color:var(--blue); color:var(--blue); background:rgba(0,155,219,.12)}
   .attToolbar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px}
   .attMatrixWrap{margin-bottom:14px}
   .attMatrix{border-collapse:collapse; min-width:980px; width:100%; font-size:12px}
@@ -533,6 +536,9 @@
   .eventMini span{display:block; color:var(--muted-2); text-transform:uppercase; letter-spacing:.1em; font-size:9px}
   .eventMini b{display:block; margin-top:2px; font-family:var(--font-mono); color:var(--gold)}
   .attendanceTable select,.attendanceTable input{width:100%; min-width:0; padding:6px 7px; border-radius:7px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-size:11px}
+  .attTimeCell{display:grid; grid-template-columns:1fr auto; gap:5px; align-items:center}
+  .attQuick{border:1px solid var(--line-soft); background:var(--bg-2); color:var(--blue); border-radius:7px; padding:6px 7px; font-size:10px; font-weight:900; cursor:pointer}
+  .attQuick:hover{border-color:var(--blue)}
   .attendancePct{font-family:var(--font-mono); font-weight:900}
   .att100{color:#0fa85f}.att75{color:#27d882}.att50{color:#ffd166}.att25{color:#ff9f1c}.att0{color:#ff4d6d}
   .adminGrid{display:grid; grid-template-columns:minmax(0,1.35fr) minmax(320px,.9fr); gap:16px; align-items:start}
@@ -857,6 +863,7 @@ let raidEvents=[], raidEventSegments=[], raidAttendance=[];
 let recruits=[], recruitFilter={q:"",status:"open"}, recruitLoadError='', recruitPanelOpenId=''; let selectedRecruitId="";
 let progView='general', progSearch='', progClass='all', progRole='all', progSort={col:'ilvl',dir:-1};
 let attendanceFilter={period:'30',from:'',to:''};
+let attendanceSubView='basic';
 let calendarMode='month', calendarCursor=new Date(), selectedRaidEventId='', attendanceEventId='';
 let selectedCalendarEvents=new Set();
 let singleCharId='', singleWclZone='46', singleWclMetric='dps', singleWclDifficulty='5', singleRioSpec='';
@@ -976,6 +983,13 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;'
 function parseLocalDate(d){ if(d instanceof Date) return d; const s=String(d); const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m? new Date(+m[1],+m[2]-1,+m[3]) : new Date(s); }
 function isoLocal(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function fmtDate(d){ const dt=parseLocalDate(d); return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0'); }
+function fmtDateFull(d){ const dt=parseLocalDate(d); return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear(); }
+function parseDateInputValue(value){
+  const s=String(value||'').trim();
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/); if(m) return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  return '';
+}
 function fmtDM(d){ const dt=parseLocalDate(d); return dt.getDate()+'/'+(dt.getMonth()+1); }
 function fmtDateTime(d){ const dt=new Date(d); return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'); }
 function tuesdayOnOrBefore(dt){ const d=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()); const diff=(d.getDay()-2+7)%7; d.setDate(d.getDate()-diff); return d; }
@@ -2578,6 +2592,43 @@ function attendanceMatrixHtml(events){
       }).join('')}</tr>`).join('')}
     </tbody></table></div>${cap('manageAttendance')?'<div class="attToolbar"><button class="btn primary sm" id="attMatrixSave">Guardar planilla</button></div>':''}</div></div>`;
 }
+function attendanceTableHtml(ev){
+  const rows=attendanceRowsForEvent(ev);
+  return `<div class="tablewrap"><table class="utable attendanceTable" data-event-start="${esc(String(ev.start_time||'').slice(0,5))}" data-event-end="${esc(String(ev.end_time||'').slice(0,5))}"><thead><tr><th>Personaje</th><th>Categoría</th><th>Estado</th><th>Llega</th><th>Sale</th><th>Ausente min</th><th>Nota / justificación</th></tr></thead><tbody>
+    ${rows.map(({ch,row})=>`<tr data-att="${esc(row.id||'')}" data-char="${esc(ch.id)}"><td>${classBadge(ch.class)} <b>${esc(ch.name)}</b></td><td>${esc(ch.roster_category||'raider')}</td>
+      <td><select class="attStatus">${attendanceStatusOptionsHtml(row.status)}</select></td>
+      <td><div class="attTimeCell"><input class="attArrival" type="time" value="${esc(String(row.arrival_time||'').slice(0,5))}"><button class="attQuick attLateBtn" type="button" title="Cargar llegada tarde en minutos">Llega</button></div></td>
+      <td><div class="attTimeCell"><input class="attLeave" type="time" value="${esc(String(row.leave_time||'').slice(0,5))}"><button class="attQuick attLeaveBtn" type="button" title="Cargar salida antes en minutos">Sale</button></div></td>
+      <td><input class="attAway" type="number" min="0" step="1" value="${Number(row.away_minutes||0)}"></td>
+      <td><input class="attNote" value="${esc(row.note||'')}" placeholder="Otro / razón"></td></tr>`).join('') || `<tr><td colspan="7" class="singleEmpty">No hay raiders/trials activos para este evento.</td></tr>`}
+  </tbody></table></div>`;
+}
+function timeFromMinutes(total){
+  const m=((Math.round(total)%1440)+1440)%1440;
+  return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+}
+function bindAttendanceQuickTimes(root=document){
+  root.querySelectorAll('.attLateBtn').forEach(btn=>btn.onclick=()=>{
+    const tr=btn.closest('tr'), table=btn.closest('.attendanceTable');
+    const mins=Number(prompt('¿Cuántos minutos tarde llega?', '15'));
+    if(!Number.isFinite(mins)||mins<0) return;
+    const start=minutesOf(table?.dataset.eventStart)||0;
+    tr.querySelector('.attArrival').value=timeFromMinutes(start+mins);
+    tr.querySelector('.attStatus').value='late';
+    const note=tr.querySelector('.attNote');
+    if(note && !note.value.trim()) note.value=`Llega ${mins} min tarde`;
+  });
+  root.querySelectorAll('.attLeaveBtn').forEach(btn=>btn.onclick=()=>{
+    const tr=btn.closest('tr'), table=btn.closest('.attendanceTable');
+    const mins=Number(prompt('¿Cuántos minutos antes se va?', '15'));
+    if(!Number.isFinite(mins)||mins<0) return;
+    const end=minutesOf(table?.dataset.eventEnd)||0;
+    tr.querySelector('.attLeave').value=timeFromMinutes(end-mins);
+    tr.querySelector('.attStatus').value='left_early';
+    const note=tr.querySelector('.attNote');
+    if(note && !note.value.trim()) note.value=`Sale ${mins} min antes`;
+  });
+}
 async function saveAttendanceMatrix(){
   if(!cap('manageAttendance')) return toast('Sin permiso');
   const cells=[...document.querySelectorAll('.attMatrixStatus')];
@@ -2597,20 +2648,12 @@ async function saveAttendanceMatrix(){
   }catch(e){ toast('No se pudo guardar la planilla'); }
 }
 function attendanceEditorHtml(ev){
-  const rows=attendanceRowsForEvent(ev);
   const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''} ${(arrish(s.bosses)).length?`· ${esc(arrish(s.bosses).join(', '))}`:''}</span><span><span class="badge ${esc(s.segment_status||'pending')}">${esc(SEGMENT_STATUS[s.segment_status]||'Pendiente')}</span></span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
   return `<div class="eventDetail"><div class="eventSummary">
     <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))}</b></div>
     <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Lista</span><b>${esc(attendanceStatusSummary(ev))}</b></div>
   </div><div class="destbox">${segs}</div>
-  <div class="tablewrap"><table class="utable attendanceTable"><thead><tr><th>Personaje</th><th>Categoría</th><th>Estado</th><th>Llega</th><th>Sale</th><th>Ausente min</th><th>Nota / justificación</th></tr></thead><tbody>
-    ${rows.map(({ch,row})=>`<tr data-att="${esc(row.id||'')}" data-char="${esc(ch.id)}"><td>${classBadge(ch.class)} <b>${esc(ch.name)}</b></td><td>${esc(ch.roster_category||'raider')}</td>
-      <td><select class="attStatus">${attendanceStatusOptionsHtml(row.status)}</select></td>
-      <td><input class="attArrival" type="time" value="${esc(String(row.arrival_time||'').slice(0,5))}"></td>
-      <td><input class="attLeave" type="time" value="${esc(String(row.leave_time||'').slice(0,5))}"></td>
-      <td><input class="attAway" type="number" min="0" step="1" value="${Number(row.away_minutes||0)}"></td>
-      <td><input class="attNote" value="${esc(row.note||'')}" placeholder="Otro / razón"></td></tr>`).join('') || `<tr><td colspan="7" class="singleEmpty">No hay raiders/trials activos para este evento.</td></tr>`}
-  </tbody></table></div></div>`;
+  ${attendanceTableHtml(ev)}</div>`;
 }
 async function materializeAndOpenAttendance(ev){
   if(!cap('manageAttendance')) return toast('Sin permiso');
@@ -2631,9 +2674,12 @@ function renderAttendance(){
   const right=!ev ? '<div class="empty">Elegí un evento.</div>' : ev._virtual
     ? `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(ev.title)}</h2><div class="sub">${fmtDate(ev.event_date)} · ${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))}</div></div><div class="pbody"><div class="empty"><b>Ocurrencia recurrente</b>Esta fecha todavía no existe como evento real. Abrila para pasar lista sin crear todas las semanas futuras.</div>${cap('manageAttendance')?`<button class="btn primary" id="attOpenVirtual">Abrir attendance</button>`:''}</div></div>`
     : `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(ev.title)}</h2><div class="sub">${fmtDate(ev.event_date)} · ${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))} · ${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</div></div><div class="pbody">${attendanceEditorHtml(ev)}<div class="attToolbar">${cap('manageCalendar')?'<button class="btn ghost sm" id="attEditEvent">Editar evento</button><button class="btn ghost sm danger" id="attDeleteEvent">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSavePage">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClosePage">Cerrar evento</button>':''}</div></div></div>`;
+  const basic=attendanceMatrixHtml(events);
+  const advanced=`<div class="attendanceShell"><div class="panel"><div class="phead"><h2><span class="dia"></span>Eventos</h2><div class="sub">Pasar lista por raid</div></div><div class="pbody attendanceList">${list}</div></div>${right}</div>`;
   c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Attendance</div><div class="actions">${cap('manageCalendar')?'<button class="btn primary sm" id="attNewEvent">+ Evento</button>':''}</div></div>
-    ${attendanceMatrixHtml(events)}
-    <div class="attendanceShell"><div class="panel"><div class="phead"><h2><span class="dia"></span>Eventos</h2><div class="sub">Pasar lista por raid</div></div><div class="pbody attendanceList">${list}</div></div>${right}</div>`;
+    <div class="attendanceTabs"><button class="attendanceTab ${attendanceSubView==='basic'?'on':''}" data-att-tab="basic">Básica</button><button class="attendanceTab ${attendanceSubView==='advanced'?'on':''}" data-att-tab="advanced">Avanzada</button></div>
+    ${attendanceSubView==='advanced'?advanced:basic}`;
+  c.querySelectorAll('[data-att-tab]').forEach(b=>b.onclick=()=>{ attendanceSubView=b.dataset.attTab; renderAttendance(); });
   c.querySelectorAll('[data-att-event]').forEach(b=>b.onclick=()=>{ attendanceEventId=b.dataset.attEvent; renderAttendance(); });
   const matrixSave=document.getElementById('attMatrixSave'); if(matrixSave) matrixSave.onclick=saveAttendanceMatrix;
   const nb=document.getElementById('attNewEvent'); if(nb) nb.onclick=()=>openRaidEventForm(null, isoLocal(new Date()));
@@ -2642,6 +2688,7 @@ function renderAttendance(){
   const del=document.getElementById('attDeleteEvent'); if(del) del.onclick=()=>deleteRaidEvent(ev);
   const save=document.getElementById('attSavePage'); if(save) save.onclick=()=>saveAttendanceRows(ev);
   const close=document.getElementById('attClosePage'); if(close) close.onclick=()=>closeAttendanceEvent(ev);
+  bindAttendanceQuickTimes(c);
   ensureDueAttendance().catch(()=>{});
 }
 function renderCalendario(){
@@ -2861,9 +2908,10 @@ function bindSegmentEditor(){
 function raidEventFormHtml(ev, dateKey){
   const segs=ev?eventSegments(ev):[];
   const recurring=ev && (ev.recurrence==='weekly' || ev.recurrence_group_id || ev.recurrence_parent_id);
+  const dateValue=fmtDateFull(ev?sameDayKey(ev.event_date):dateKey);
   return `<div class="row2"><div class="field"><label>Título</label><input id="ev_title" value="${esc(ev?ev.title:'Raid Main')}" placeholder="Raid Main"></div>
     <div class="field"><label>Tipo</label><select id="ev_type">${Object.entries(RAID_EVENT_TYPE).map(([k,l])=>`<option value="${k}" ${ev&&ev.event_type===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
-    <div class="row2"><div class="field"><label>Fecha</label><input id="ev_date" type="date" value="${esc(ev?sameDayKey(ev.event_date):dateKey)}"></div>
+    <div class="row2"><div class="field"><label>Fecha</label><input id="ev_date" type="text" inputmode="numeric" value="${esc(dateValue)}" placeholder="dd/mm/aaaa"></div>
     <div class="field"><label>Estado</label><select id="ev_status">${Object.entries(RAID_EVENT_STATUS).map(([k,l])=>`<option value="${k}" ${ev&&ev.status===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
     <div class="row2"><div class="field"><label>Inicio</label><input id="ev_start" type="time" value="${esc(String(ev&&ev.start_time||'21:00').slice(0,5))}"></div>
     <div class="field"><label>Finalización</label><input id="ev_end" type="time" value="${esc(String(ev&&ev.end_time||'00:00').slice(0,5))}"></div></div>
@@ -2964,7 +3012,7 @@ async function openRaidEventForm(eventId, dateKey){
     const row={
       title:document.getElementById('ev_title').value.trim(),
       event_type:document.getElementById('ev_type').value,
-      event_date:document.getElementById('ev_date').value,
+      event_date:parseDateInputValue(document.getElementById('ev_date').value),
       start_time:document.getElementById('ev_start').value,
       end_time:document.getElementById('ev_end').value,
       status:document.getElementById('ev_status').value,
@@ -2975,7 +3023,7 @@ async function openRaidEventForm(eventId, dateKey){
       timezone_label:document.getElementById('ev_tz').value.trim()||settings.calendar_timezone_label||'America/Buenos_Aires',
       notes:document.getElementById('ev_notes').value.trim()||null
     };
-    if(!row.title||!row.event_date||!row.start_time||!row.end_time){ err.textContent='Completá título, fecha e inicio/finalización.'; return false; }
+    if(!row.title||!row.event_date||!row.start_time||!row.end_time){ err.textContent='Completá título, fecha válida e inicio/finalización.'; return false; }
     try{
       const segments=parseSegmentsFromEditor();
       if(ev){
@@ -3011,26 +3059,19 @@ async function openRaidEventDetail(eventId){
   if(ev._virtual && (eventDue(ev)||cap('manageAttendance'))) ev=await materializeRecurringEvent(ev);
   selectedRaidEventId=ev.id;
   if(eventDue(ev)&&cap('manageAttendance')){ try{ await appRequest('ensure_attendance',{event_id:ev.id}); await fetchAll(); }catch(e){} }
-  const rows=attendanceRowsForEvent(ev);
   const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''} ${(arrish(s.bosses)).length?`· ${esc(arrish(s.bosses).join(', '))}`:''}</span><span><span class="badge ${esc(s.segment_status||'pending')}">${esc(SEGMENT_STATUS[s.segment_status]||'Pendiente')}</span></span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
   const table=`<div class="eventDetail"><div class="eventSummary">
     <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(String(ev.start_time).slice(0,5))}-${esc(String(ev.end_time).slice(0,5))}</b></div>
     <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Duración</span><b>${eventDurationMinutes(ev)} min</b></div>
   </div><div class="destbox">${segs}</div>
-  <div class="tablewrap"><table class="utable attendanceTable"><thead><tr><th>Personaje</th><th>Categoría</th><th>Estado</th><th>Llega</th><th>Sale</th><th>Ausente min</th><th>Nota / justificación</th></tr></thead><tbody>
-    ${rows.map(({ch,row})=>`<tr data-att="${esc(row.id||'')}" data-char="${esc(ch.id)}"><td>${classBadge(ch.class)} <b>${esc(ch.name)}</b></td><td>${esc(ch.roster_category||'raider')}</td>
-      <td><select class="attStatus">${attendanceStatusOptionsHtml(row.status)}</select></td>
-      <td><input class="attArrival" type="time" value="${esc(String(row.arrival_time||'').slice(0,5))}"></td>
-      <td><input class="attLeave" type="time" value="${esc(String(row.leave_time||'').slice(0,5))}"></td>
-      <td><input class="attAway" type="number" min="0" step="1" value="${Number(row.away_minutes||0)}"></td>
-      <td><input class="attNote" value="${esc(row.note||'')}" placeholder="Otro / razón"></td></tr>`).join('')}
-  </tbody></table></div></div>`;
+  ${attendanceTableHtml(ev)}</div>`;
   const actions=`<div class="actions" style="margin-top:12px">${cap('manageCalendar')?'<button class="btn ghost sm" id="evEdit">Editar evento</button><button class="btn ghost sm danger" id="evDelete">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSave">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClose">Cerrar evento</button>':''}</div>`;
   openM2(ev.title, table+actions, async()=>true,{wide:true});
   const eb=document.getElementById('evEdit'); if(eb) eb.onclick=()=>openRaidEventForm(ev.id,sameDayKey(ev.event_date));
   const db=document.getElementById('evDelete'); if(db) db.onclick=()=>deleteRaidEvent(ev);
   const sb=document.getElementById('attSave'); if(sb) sb.onclick=()=>saveAttendanceRows(ev);
   const cb=document.getElementById('attClose'); if(cb) cb.onclick=()=>closeAttendanceEvent(ev);
+  bindAttendanceQuickTimes(document.getElementById('m2body'));
 }
 async function saveAttendanceRows(ev){
   if(!cap('manageAttendance')) return toast('Sin permiso');
