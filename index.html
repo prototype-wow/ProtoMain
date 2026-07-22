@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-mk337X3M3EoSRTLwcxt+/MrF9lo1zDJuriUwNgmh76c='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-Ol2vc9eMLE9fgt/mX8vN1B6ckHDBFmGYN1hl0TZlbRI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -149,6 +149,10 @@
   .badge.reservado{color:var(--warn); background:rgba(232,161,58,.12); border:1px solid rgba(232,161,58,.35)}
   .badge.senado{color:var(--blue); background:rgba(0,155,219,.12); border:1px solid rgba(0,155,219,.4)}
   .badge.pagado{color:var(--ok); background:rgba(47,191,113,.13); border:1px solid rgba(47,191,113,.4)}
+  .badge.hecho{color:var(--purple); background:rgba(166,91,255,.12); border:1px solid rgba(166,91,255,.42)}
+  .doneToggle{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:9px; background:var(--bg); padding:9px 11px; min-height:40px}
+  .doneToggle span{font-weight:700; font-size:13px}
+  .doneToggle input{width:18px!important; height:18px; accent-color:var(--blue)}
   .sale .note{font-size:12px; color:var(--muted); margin-top:6px; font-style:italic}
   .sale .ops{display:flex; gap:6px; margin-left:auto}
   .miniop{font-size:11px; color:var(--muted-2); cursor:pointer; padding:2px 6px; border-radius:6px}
@@ -468,6 +472,13 @@
   .progDiff,.progKills{font-family:var(--font-mono); font-size:14px; line-height:1; font-weight:900; text-align:right}
   .prog-m{color:#a335ee}.prog-h{color:#0070ff}.prog-n{color:#1eff00}.prog-l{color:#fff}.prog-none{color:#666}
   .calendarShell{display:grid; gap:14px}
+  .attendanceShell{display:grid; grid-template-columns:minmax(260px,.75fr) minmax(520px,1.55fr); gap:16px; align-items:start}
+  .attendanceList{display:flex; flex-direction:column; gap:8px}
+  .attendancePick{width:100%; text-align:left; border:1px solid var(--line-soft); border-radius:11px; background:var(--bg-1); color:var(--text); padding:11px 12px; cursor:pointer}
+  .attendancePick:hover,.attendancePick.on{border-color:var(--blue); background:rgba(0,155,219,.07)}
+  .attendancePick b{display:block; font-size:13px}
+  .attendancePick span{display:block; color:var(--muted); font-size:11px; margin-top:2px}
+  .attToolbar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px}
   .calendarTools{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
   .calendarTitle{font-family:var(--font-display); font-size:16px; letter-spacing:.12em; text-transform:uppercase; margin-right:auto}
   .segBtn{border:1px solid var(--line); background:var(--bg); color:var(--text); border-radius:8px; padding:8px 10px; font-weight:800; cursor:pointer}
@@ -609,9 +620,12 @@
       <div class="field"><label>Bosses que compra<button class="linkbtn" id="pickAll" type="button" style="float:right">Clear completo</button></label><div class="bosspick" id="f_bosses"></div></div>
       <div class="row2">
         <div class="field"><label>Gold (acepta 1.5m, 500k, 750000)</label><input type="text" id="f_gold" placeholder="0"></div>
-        <div class="field"><label>Estado</label><select id="f_status"></select></div>
+        <div class="field"><label>Cobro</label><select id="f_status"></select></div>
       </div>
-      <div class="field"><label>Fecha del carry (cuándo se hace / se hizo)</label><input type="date" id="f_rundate"></div>
+      <div class="row2">
+        <div class="field"><label>Estado del carry</label><label class="doneToggle"><span>Hecho</span><input type="checkbox" id="f_done"></label></div>
+        <div class="field"><label>Fecha del carry (cuándo se hace / se hizo)</label><input type="date" id="f_rundate"></div>
+      </div>
       <div class="field"><label>Destino del oro / cobrado por</label><input type="text" id="f_goldto" placeholder="Banco de la guild, char que cobró, split…"></div>
       <div class="field"><label>Notas (opcional)</label><textarea id="f_notes" placeholder="Acordado split, paga al terminar, etc."></textarea></div>
     </div>
@@ -746,15 +760,16 @@ function tierScore(t){ let sc=0; TIER_SLOTS.forEach(s=>{ const c=t.slots[s]; if(
 
 /* capacidades por rol: defaults locales, editables desde Admin cuando SQL 020 este aplicado */
 const DEFAULT_CAP = {
-  basico:  { viewSemana:true, viewCalendario:true, viewProgreso:false, viewResumen:false, viewRoster:false, viewPersonaje:false, viewAuditoria:false, viewReclutas:false, viewUsuarios:false, viewAdmin:false, addSale:false, editAny:false, editOwn:false, delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageRoster:false, manageUsers:false, manageRecruits:false, manageAbilities:false, syncExternal:false, manageAdmin:false, manageCalendar:false, manageAttendance:false, closeAttendance:false },
-  cargador:{ viewSemana:true, viewCalendario:true, viewProgreso:false, viewResumen:false, viewRoster:false, viewPersonaje:false, viewAuditoria:false, viewReclutas:false, viewUsuarios:false, viewAdmin:false, addSale:true,  editAny:false, editOwn:true,  delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageRoster:false, manageUsers:false, manageRecruits:false, manageAbilities:false, syncExternal:false, manageAdmin:false, manageCalendar:false, manageAttendance:false, closeAttendance:false },
-  officer: { viewSemana:true, viewCalendario:true, viewProgreso:true,  viewResumen:true,  viewRoster:true,  viewPersonaje:true,  viewAuditoria:true,  viewReclutas:true,  viewUsuarios:false, viewAdmin:false, addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageRoster:false, manageUsers:false, manageRecruits:true,  manageAbilities:false, syncExternal:true,  manageAdmin:false, manageCalendar:true, manageAttendance:true, closeAttendance:true },
-  admin:   { viewSemana:true, viewCalendario:true, viewProgreso:true,  viewResumen:true,  viewRoster:true,  viewPersonaje:true,  viewAuditoria:true,  viewReclutas:true,  viewUsuarios:true,  viewAdmin:true,  addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageRoster:true,  manageUsers:true,  manageRecruits:true,  manageAbilities:true,  syncExternal:true,  manageAdmin:true, manageCalendar:true, manageAttendance:true, closeAttendance:true }
+  basico:  { viewSemana:true, viewCalendario:true, viewAttendance:false, viewProgreso:false, viewResumen:false, viewRoster:false, viewPersonaje:false, viewAuditoria:false, viewReclutas:false, viewUsuarios:false, viewAdmin:false, addSale:false, editAny:false, editOwn:false, delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageRoster:false, manageUsers:false, manageRecruits:false, manageAbilities:false, syncExternal:false, manageAdmin:false, manageCalendar:false, manageAttendance:false, closeAttendance:false },
+  cargador:{ viewSemana:true, viewCalendario:true, viewAttendance:false, viewProgreso:false, viewResumen:false, viewRoster:false, viewPersonaje:false, viewAuditoria:false, viewReclutas:false, viewUsuarios:false, viewAdmin:false, addSale:true,  editAny:false, editOwn:true,  delSale:false, manageWeek:false, editSlots:false, setPaid:false, manageRoster:false, manageUsers:false, manageRecruits:false, manageAbilities:false, syncExternal:false, manageAdmin:false, manageCalendar:false, manageAttendance:false, closeAttendance:false },
+  officer: { viewSemana:true, viewCalendario:true, viewAttendance:true,  viewProgreso:true,  viewResumen:true,  viewRoster:true,  viewPersonaje:true,  viewAuditoria:true,  viewReclutas:true,  viewUsuarios:false, viewAdmin:false, addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageRoster:false, manageUsers:false, manageRecruits:true,  manageAbilities:false, syncExternal:true,  manageAdmin:false, manageCalendar:true, manageAttendance:true, closeAttendance:true },
+  admin:   { viewSemana:true, viewCalendario:true, viewAttendance:true,  viewProgreso:true,  viewResumen:true,  viewRoster:true,  viewPersonaje:true,  viewAuditoria:true,  viewReclutas:true,  viewUsuarios:true,  viewAdmin:true,  addSale:true,  editAny:true,  editOwn:true,  delSale:true,  manageWeek:true,  editSlots:true,  setPaid:true,  manageRoster:true,  manageUsers:true,  manageRecruits:true,  manageAbilities:true,  syncExternal:true,  manageAdmin:true, manageCalendar:true, manageAttendance:true, closeAttendance:true }
 };
 const ROLE_KEYS = Object.keys(ROLE_LABEL);
 const TAB_DEFS = [
   ['semana','Semana','viewSemana'],
   ['calendario','Calendario','viewCalendario'],
+  ['attendance','Attendance','viewAttendance'],
   ['progreso','Progreso','viewProgreso'],
   ['resumen','Resumen','viewResumen'],
   ['roster','Roster','viewRoster'],
@@ -811,7 +826,7 @@ let raidEvents=[], raidEventSegments=[], raidAttendance=[];
 let recruits=[], recruitFilter={q:"",status:"open"}, recruitLoadError='', recruitPanelOpenId=''; let selectedRecruitId="";
 let progView='general', progSearch='', progClass='all', progRole='all', progSort={col:'ilvl',dir:-1};
 let attendanceFilter={period:'30',from:'',to:''};
-let calendarMode='month', calendarCursor=new Date(), selectedRaidEventId='';
+let calendarMode='month', calendarCursor=new Date(), selectedRaidEventId='', attendanceEventId='';
 let singleCharId='', singleWclZone='46', singleWclMetric='dps', singleWclDifficulty='5', singleRioSpec='';
 let session = JSON.parse(sessionStorage.getItem('pt_secure_session')||'null');
 let view='semana', editingId=null, lastSig="", creating=false, forceLogin=false;
@@ -1137,6 +1152,7 @@ function render(){
   document.getElementById('copyVacAll').style.display = view==='semana' ? '' : 'none';
   if(view==='semana') renderSemana();
   else if(view==='calendario') renderCalendario();
+  else if(view==='attendance') renderAttendance();
   else if(view==='progreso') renderProgreso();
   else if(view==='resumen') renderResumen();
   else if(view==='roster') renderRosterComp();
@@ -1338,7 +1354,8 @@ function attendancePeriodRange(){
   return {from:isoLocal(from),to:today};
 }
 function attendanceFraction(ev,row){
-  const st=String(row.status||'present');
+  if(!row || row.status==null || row.status==='') return null;
+  const st=String(row.status);
   if(st==='not_required') return null;
   if(st==='present'||st==='bench') return 1;
   if(st==='absent_notice'||st==='absent_no_notice') return 0;
@@ -2359,6 +2376,7 @@ function renderSemana(){
   const prevWk=state.weeks[idx-1], nextWk=state.weeks[idx+1];
   const totalGold=w.sales.reduce((a,s)=>a+goldValue(s.gold),0);
   const paidGold=w.sales.filter(s=>s.status==='pagado').reduce((a,s)=>a+goldValue(s.gold),0);
+  const doneCount=w.sales.filter(s=>s.done===true).length;
   let openSlots=0; RAID_KEYS.forEach(k=>RAIDS[k].bosses.forEach(b=>{ openSlots+=Math.max(0,((w.slots[k]||{})[b]??DEFAULT_SLOTS)-soldFor(w,k,b)); }));
   let html=`<div class="wbar"><div class="weeknav">
       ${prevWk?`<div class="wkside" data-go="${prevWk.id}"><div class="lbl">${esc(prevWk.label)}</div><div class="dt">reset ${fmtDate(prevWk.date)}</div></div>`:`<div class="wkside empty">—</div>`}
@@ -2373,6 +2391,7 @@ function renderSemana(){
   <div class="summary">
     <div class="stat"><div class="k">Gold de la semana</div><div class="v gold">${fmtGold(totalGold)}</div></div>
     <div class="stat"><div class="k">Ya cobrado</div><div class="v ok">${fmtGold(paidGold)}</div></div>
+    <div class="stat"><div class="k">Hechos</div><div class="v blue">${doneCount}</div></div>
     <div class="stat"><div class="k">Ventas</div><div class="v">${w.sales.length}</div></div>
     <div class="stat"><div class="k">Vacantes abiertas</div><div class="v blue">${openSlots}</div></div>
   </div><div class="raids">`;
@@ -2408,7 +2427,7 @@ function renderRaid(k,w){
       const bossTags=(s.bosses||[]).length===R.bosses.length?'<span class="tag boss">CLEAR COMPLETO</span>':(s.bosses||[]).map(b=>`<span class="tag boss">${esc(b)}</span>`).join('');
       const ops = (canEditSale(s)||cap('delSale')) ? `<span class="ops">${canEditSale(s)?`<span class="miniop edit" data-id="${s.id}">editar</span>`:''}${cap('delSale')?`<span class="miniop del" data-id="${s.id}">borrar</span>`:''}</span>` : '';
       return `<div class="sale"><div class="r1"><span class="buyer">${esc(s.buyer)||'(sin nombre)'}</span><span class="price">${fmtGold(s.gold)}</span></div>
-        <div class="r2"><span class="badge ${s.status}">${STATUS_LABEL[s.status]||s.status}</span>
+        <div class="r2"><span class="badge ${s.status}">${STATUS_LABEL[s.status]||s.status}</span>${s.done?'<span class="badge hecho">Hecho</span>':''}
           ${s.btag?`<span class="btag" data-copy="${esc(s.btag)}">${esc(s.btag)}</span>`:''}
           ${bossTags}${s.gold_to?`<span class="tag dest">→ ${esc(s.gold_to)}</span>`:''}
           ${s.run_date?`<span class="tag run">carry: ${fmtDate(s.run_date)}</span>`:''}
@@ -2420,8 +2439,13 @@ function renderRaid(k,w){
 
 /* ---------- CALENDARIO ---------- */
 const RAID_EVENT_STATUS={planned:'Planificado',open:'Abierto',closed:'Cerrado',cancelled:'Cancelado'};
-const RAID_EVENT_TYPE={raid:'Raid',carry:'Carry',mplus:'M+',guild:'Guild',other:'Otro'};
+const RAID_EVENT_TYPE={raid:'Raid',carry:'Carry',mplus:'M+',guild:'Guild',daily:'Actividades Diarias',achievement:'Logros',other:'Otro'};
 const ATT_STATUS={present:'Presente',bench:'Banca',absent_notice:'Ausente avisó',absent_no_notice:'Ausente sin aviso',late:'Tarde',left_early:'Se fue antes',partial:'Parcial',not_required:'No requerido'};
+function attendanceStatusOptionsHtml(value){
+  const current=value==null?'':String(value);
+  return `<option value="" ${current===''?'selected':''}>Sin completar</option>`+
+    Object.entries(ATT_STATUS).map(([k,l])=>`<option value="${k}" ${current===k?'selected':''}>${l}</option>`).join('');
+}
 const WEEKDAY_SHORT=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 function calendarWeekStart(){ const n=Number(settings.calendar_week_start_dow); return Number.isInteger(n)&&n>=0&&n<=6?n:2; }
 function sameDayKey(d){ return isoLocal(parseLocalDate(d)); }
@@ -2478,6 +2502,75 @@ async function ensureDueAttendance(){
     }catch(e){}
   }
   await refresh(true);
+}
+function attendanceCandidateEvents(){
+  const out=[], seen=new Set(), today=new Date();
+  const start=new Date(today); start.setDate(start.getDate()-30);
+  for(let i=0;i<92;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    calendarEventsForDay(isoLocal(d)).forEach(ev=>{
+      if(seen.has(String(ev.id))) return;
+      seen.add(String(ev.id)); out.push(ev);
+    });
+  }
+  return out.filter(ev=>ev.event_type==='raid'||ev.event_type==='carry'||ev.event_type==='guild'||ev.event_type==='other')
+    .sort((a,b)=>sameDayKey(b.event_date).localeCompare(sameDayKey(a.event_date)) || String(b.start_time||'').localeCompare(String(a.start_time||'')));
+}
+function findAttendanceEvent(id, list){
+  return (list||attendanceCandidateEvents()).find(ev=>String(ev.id)===String(id)) || raidEvents.find(ev=>String(ev.id)===String(id));
+}
+function attendanceStatusSummary(ev){
+  const rows=attendanceRowsForEvent(ev);
+  const done=rows.filter(({row})=>row.status).length;
+  const total=rows.length;
+  const absent=rows.filter(({row})=>['absent_notice','absent_no_notice'].includes(row.status)).length;
+  return `${done}/${total} completados${absent?` · ${absent} ausentes`:''}`;
+}
+function attendanceEditorHtml(ev){
+  const rows=attendanceRowsForEvent(ev);
+  const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''}</span><span class="g">${(s.bosses||[]).length?esc((s.bosses||[]).join(', ')):'—'}</span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
+  return `<div class="eventDetail"><div class="eventSummary">
+    <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))}</b></div>
+    <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Lista</span><b>${esc(attendanceStatusSummary(ev))}</b></div>
+  </div><div class="destbox">${segs}</div>
+  <div class="tablewrap"><table class="utable attendanceTable"><thead><tr><th>Personaje</th><th>Categoría</th><th>Estado</th><th>Llega</th><th>Sale</th><th>Ausente min</th><th>Nota / justificación</th></tr></thead><tbody>
+    ${rows.map(({ch,row})=>`<tr data-att="${esc(row.id||'')}" data-char="${esc(ch.id)}"><td>${classBadge(ch.class)} <b>${esc(ch.name)}</b></td><td>${esc(ch.roster_category||'raider')}</td>
+      <td><select class="attStatus">${attendanceStatusOptionsHtml(row.status)}</select></td>
+      <td><input class="attArrival" type="time" value="${esc(String(row.arrival_time||'').slice(0,5))}"></td>
+      <td><input class="attLeave" type="time" value="${esc(String(row.leave_time||'').slice(0,5))}"></td>
+      <td><input class="attAway" type="number" min="0" step="1" value="${Number(row.away_minutes||0)}"></td>
+      <td><input class="attNote" value="${esc(row.note||'')}" placeholder="Otro / razón"></td></tr>`).join('') || `<tr><td colspan="7" class="singleEmpty">No hay raiders/trials activos para este evento.</td></tr>`}
+  </tbody></table></div></div>`;
+}
+async function materializeAndOpenAttendance(ev){
+  if(!cap('manageAttendance')) return toast('Sin permiso');
+  try{
+    const real=ev._virtual ? await materializeRecurringEvent(ev) : ev;
+    await appRequest('ensure_attendance',{event_id:real.id});
+    attendanceEventId=real.id;
+    await refresh(true);
+  }catch(e){ toast('No se pudo abrir attendance'); }
+}
+function renderAttendance(){
+  const c=document.getElementById('content');
+  const events=attendanceCandidateEvents();
+  if(!events.length){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin eventos</b>Creá raids desde Calendario para poder pasar attendance.</div>'; return; }
+  if(!attendanceEventId || !findAttendanceEvent(attendanceEventId,events)) attendanceEventId=(events.find(eventDue)||events[0]).id;
+  const ev=findAttendanceEvent(attendanceEventId,events);
+  const list=events.map(e=>`<button class="attendancePick ${String(e.id)===String(attendanceEventId)?'on':''}" data-att-event="${esc(e.id)}"><b>${esc(fmtDate(e.event_date))} · ${esc(e.title)}</b><span>${esc(String(e.start_time||'').slice(0,5))}-${esc(String(e.end_time||'').slice(0,5))} · ${esc(RAID_EVENT_STATUS[e.status]||e.status)} · ${esc(eventLabel(e))}${e._virtual?' · recurrente':''}</span></button>`).join('');
+  const right=!ev ? '<div class="empty">Elegí un evento.</div>' : ev._virtual
+    ? `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(ev.title)}</h2><div class="sub">${fmtDate(ev.event_date)} · ${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))}</div></div><div class="pbody"><div class="empty"><b>Ocurrencia recurrente</b>Esta fecha todavía no existe como evento real. Abrila para pasar lista sin crear todas las semanas futuras.</div>${cap('manageAttendance')?`<button class="btn primary" id="attOpenVirtual">Abrir attendance</button>`:''}</div></div>`
+    : `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(ev.title)}</h2><div class="sub">${fmtDate(ev.event_date)} · ${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))} · ${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</div></div><div class="pbody">${attendanceEditorHtml(ev)}<div class="attToolbar">${cap('manageCalendar')?'<button class="btn ghost sm" id="attEditEvent">Editar evento</button><button class="btn ghost sm danger" id="attDeleteEvent">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSavePage">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClosePage">Cerrar evento</button>':''}</div></div></div>`;
+  c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Attendance</div><div class="actions">${cap('manageCalendar')?'<button class="btn primary sm" id="attNewEvent">+ Evento</button>':''}</div></div>
+    <div class="attendanceShell"><div class="panel"><div class="phead"><h2><span class="dia"></span>Eventos</h2><div class="sub">Pasar lista por raid</div></div><div class="pbody attendanceList">${list}</div></div>${right}</div>`;
+  c.querySelectorAll('[data-att-event]').forEach(b=>b.onclick=()=>{ attendanceEventId=b.dataset.attEvent; renderAttendance(); });
+  const nb=document.getElementById('attNewEvent'); if(nb) nb.onclick=()=>openRaidEventForm(null, isoLocal(new Date()));
+  const ov=document.getElementById('attOpenVirtual'); if(ov) ov.onclick=()=>materializeAndOpenAttendance(ev);
+  const edit=document.getElementById('attEditEvent'); if(edit) edit.onclick=()=>openRaidEventForm(ev.id,sameDayKey(ev.event_date));
+  const del=document.getElementById('attDeleteEvent'); if(del) del.onclick=()=>deleteRaidEvent(ev);
+  const save=document.getElementById('attSavePage'); if(save) save.onclick=()=>saveAttendanceRows(ev);
+  const close=document.getElementById('attClosePage'); if(close) close.onclick=()=>closeAttendanceEvent(ev);
+  ensureDueAttendance().catch(()=>{});
 }
 function renderCalendario(){
   const c=document.getElementById('content');
@@ -2650,7 +2743,7 @@ async function openRaidEventForm(eventId, dateKey){
 }
 function attendanceRowsForEvent(ev){
   const byChar=new Map(raidAttendance.filter(a=>String(a.event_id)===String(ev.id)).map(a=>[String(a.character_id),a]));
-  return characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false && ['raider','trial'].includes(String(ch.roster_category||'raider'))).sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(ch=>({ch,row:byChar.get(String(ch.id))||{event_id:ev.id,character_id:ch.id,status:'present'}}));
+  return characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false && ['raider','trial'].includes(String(ch.roster_category||'raider'))).sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(ch=>({ch,row:byChar.get(String(ch.id))||{event_id:ev.id,character_id:ch.id,status:null}}));
 }
 async function openRaidEventDetail(eventId){
   let ev=raidEvents.find(x=>String(x.id)===String(eventId));
@@ -2671,15 +2764,16 @@ async function openRaidEventDetail(eventId){
   </div><div class="destbox">${segs}</div>
   <div class="tablewrap"><table class="utable attendanceTable"><thead><tr><th>Personaje</th><th>Categoría</th><th>Estado</th><th>Llega</th><th>Sale</th><th>Ausente min</th><th>Nota / justificación</th></tr></thead><tbody>
     ${rows.map(({ch,row})=>`<tr data-att="${esc(row.id||'')}" data-char="${esc(ch.id)}"><td>${classBadge(ch.class)} <b>${esc(ch.name)}</b></td><td>${esc(ch.roster_category||'raider')}</td>
-      <td><select class="attStatus">${Object.entries(ATT_STATUS).map(([k,l])=>`<option value="${k}" ${String(row.status||'present')===k?'selected':''}>${l}</option>`).join('')}</select></td>
+      <td><select class="attStatus">${attendanceStatusOptionsHtml(row.status)}</select></td>
       <td><input class="attArrival" type="time" value="${esc(String(row.arrival_time||'').slice(0,5))}"></td>
       <td><input class="attLeave" type="time" value="${esc(String(row.leave_time||'').slice(0,5))}"></td>
       <td><input class="attAway" type="number" min="0" step="1" value="${Number(row.away_minutes||0)}"></td>
       <td><input class="attNote" value="${esc(row.note||'')}" placeholder="Otro / razón"></td></tr>`).join('')}
   </tbody></table></div></div>`;
-  const actions=`<div class="actions" style="margin-top:12px">${cap('manageCalendar')?'<button class="btn ghost sm" id="evEdit">Editar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSave">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClose">Cerrar evento</button>':''}</div>`;
+  const actions=`<div class="actions" style="margin-top:12px">${cap('manageCalendar')?'<button class="btn ghost sm" id="evEdit">Editar evento</button><button class="btn ghost sm danger" id="evDelete">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSave">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClose">Cerrar evento</button>':''}</div>`;
   openM2(ev.title, table+actions, async()=>true);
   const eb=document.getElementById('evEdit'); if(eb) eb.onclick=()=>openRaidEventForm(ev.id,sameDayKey(ev.event_date));
+  const db=document.getElementById('evDelete'); if(db) db.onclick=()=>deleteRaidEvent(ev);
   const sb=document.getElementById('attSave'); if(sb) sb.onclick=()=>saveAttendanceRows(ev);
   const cb=document.getElementById('attClose'); if(cb) cb.onclick=()=>closeAttendanceEvent(ev);
 }
@@ -2687,10 +2781,14 @@ async function saveAttendanceRows(ev){
   if(!cap('manageAttendance')) return toast('Sin permiso');
   try{
     await appRequest('ensure_attendance',{event_id:ev.id});
+    await fetchAll();
+    const freshByChar=new Map(raidAttendance.filter(a=>String(a.event_id)===String(ev.id)).map(a=>[String(a.character_id),a]));
     const rows=[...document.querySelectorAll('.attendanceTable tbody tr')];
     for(const tr of rows){
-      const patch={ status:tr.querySelector('.attStatus').value, arrival_time:tr.querySelector('.attArrival').value||null, leave_time:tr.querySelector('.attLeave').value||null, away_minutes:Number(tr.querySelector('.attAway').value||0), note:tr.querySelector('.attNote').value.trim()||null };
-      if(tr.dataset.att) await sbUpd('raid_attendance',tr.dataset.att,patch);
+      const status=tr.querySelector('.attStatus').value||null;
+      const patch={ status, arrival_time:tr.querySelector('.attArrival').value||null, leave_time:tr.querySelector('.attLeave').value||null, away_minutes:Number(tr.querySelector('.attAway').value||0), note:tr.querySelector('.attNote').value.trim()||null };
+      const attId=tr.dataset.att || (freshByChar.get(String(tr.dataset.char))||{}).id || '';
+      if(attId) await sbUpd('raid_attendance',attId,patch);
       else await sbIns('raid_attendance',{...patch,event_id:ev.id,character_id:tr.dataset.char});
     }
     logAction('editar_attendance','raid_event',ev.id,{target:ev.title});
@@ -2701,6 +2799,19 @@ async function closeAttendanceEvent(ev){
   if(!confirm('¿Cerrar attendance de "'+ev.title+'"? Desde ahí ya cuenta para estadísticas.')) return;
   try{ await saveAttendanceRows(ev); await appRequest('close_event',{event_id:ev.id}); await refresh(true); toast('Evento cerrado'); }
   catch(e){ toast('No se pudo cerrar'); }
+}
+async function deleteRaidEvent(ev){
+  if(!cap('manageCalendar')) return toast('Sin permiso');
+  if(!ev || ev._virtual) return toast('Abrí primero esa fecha recurrente si querés eliminarla.');
+  if(!confirm('¿Eliminar el evento "'+ev.title+'" del '+fmtDate(ev.event_date)+'? Se borra también su attendance.')) return;
+  try{
+    await sbDel('raid_events',ev.id);
+    logAction('borrar_raid_event','raid_event',ev.id,{target:ev.title,date:sameDayKey(ev.event_date)});
+    if(String(attendanceEventId)===String(ev.id)) attendanceEventId='';
+    closeM2();
+    await refresh(true);
+    toast('Evento eliminado');
+  }catch(e){ toast('No se pudo eliminar el evento'); }
 }
 
 /* ---------- AUDITORÍA ---------- */
@@ -2720,11 +2831,12 @@ function filteredAudit(){ return allSales().filter(s=>{
   if(audFilter.q){ const q=audFilter.q.toLowerCase(); if(!((s.buyer||'').toLowerCase().includes(q)||(s.btag||'').toLowerCase().includes(q)||(s.gold_to||'').toLowerCase().includes(q)||(s.created_by||'').toLowerCase().includes(q))) return false; }
   return true;
 });}
-const ACTION_LABEL={ crear_venta:'cargó venta', editar_venta:'editó venta', borrar_venta:'borró venta', crear_semana:'creó semana', borrar_semana:'borró semana', renombrar_semana:'editó semana', editar_cupos:'cambió cupos', crear_usuario:'creó usuario', cambiar_rol:'cambió rol', borrar_usuario:'borró usuario', cambiar_pass:'cambió contraseña', cambiar_acceso:'cambió acceso', login:'inició sesión' };
+const ACTION_LABEL={ crear_venta:'cargó venta', editar_venta:'editó venta', borrar_venta:'borró venta', crear_semana:'creó semana', borrar_semana:'borró semana', renombrar_semana:'editó semana', editar_cupos:'cambió cupos', crear_usuario:'creó usuario', cambiar_rol:'cambió rol', borrar_usuario:'borró usuario', cambiar_pass:'cambió contraseña', cambiar_acceso:'cambió acceso', borrar_raid_event:'borró evento de raid', login:'inició sesión' };
 function renderAuditoria(){
   const c=document.getElementById('content'); const rows=filteredAudit();
   const total=rows.reduce((a,s)=>a+goldValue(s.gold),0);
   const paid=rows.filter(s=>s.status==='pagado').reduce((a,s)=>a+goldValue(s.gold),0); const pend=total-paid;
+  const done=rows.filter(s=>s.done===true).length;
   const kills=rows.reduce((a,s)=>a+((s.bosses||[]).length),0);
   const byDest={}; rows.forEach(s=>{ const d=(s.gold_to||'— sin destino —'); byDest[d]=(byDest[d]||0)+goldValue(s.gold); });
   const destRows=Object.entries(byDest).sort((a,b)=>b[1]-a[1]).map(([d,g])=>`<div class="destrow"><span>${esc(d)}</span><span class="g">${fmtGold(g)}</span></div>`).join('')||'<div class="destrow"><span>—</span></div>';
@@ -2736,7 +2848,7 @@ function renderAuditoria(){
      <select id="fa_period"><option value="all">Todo el historial</option><option value="thisweek" ${audFilter.period==='thisweek'?'selected':''}>Semana seleccionada</option><option value="thismonth" ${audFilter.period==='thismonth'?'selected':''}>Mes actual</option><option value="range" ${audFilter.period==='range'?'selected':''}>Personalizado</option></select>
      ${audFilter.period==='range'?`<input type="date" id="fa_from" value="${audFilter.from}"><input type="date" id="fa_to" value="${audFilter.to}">`:''}
      <select id="fa_raid"><option value="all">Todas las raids</option>${RAID_KEYS.map(k=>`<option value="${k}" ${audFilter.raid===k?'selected':''}>${esc(RAIDS[k].name)}</option>`).join('')}</select>
-     <select id="fa_status"><option value="all">Todos los estados</option>${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${audFilter.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}</select>
+     <select id="fa_status"><option value="all">Todos los cobros</option>${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${audFilter.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}</select>
      <input id="fa_q" placeholder="Buscar comprador, btag, cargador…" value="${esc(audFilter.q)}">
      <span class="spacer"></span><button class="btn ghost sm" id="exportCsv">Exportar CSV</button>
    </div>
@@ -2744,16 +2856,17 @@ function renderAuditoria(){
      <div class="stat"><div class="k">Total vendido</div><div class="v gold">${fmtGold(total)}</div></div>
      <div class="stat"><div class="k">Cobrado</div><div class="v ok">${fmtGold(paid)}</div></div>
      <div class="stat"><div class="k">Pendiente</div><div class="v warn">${fmtGold(pend)}</div></div>
+     <div class="stat"><div class="k">Hechos</div><div class="v blue">${done}</div></div>
      <div class="stat"><div class="k">Ventas</div><div class="v">${rows.length}</div></div>
      <div class="stat"><div class="k">Bosses vendidos (kills)</div><div class="v blue">${kills}</div></div>
    </div>
    <div class="sectitle">Ventas en el período</div>
-   <div class="tablewrap"><table class="aud"><thead><tr><th>Semana</th><th>Raid</th><th>Bosses</th><th>Comprador</th><th>Gold</th><th>Estado</th><th>Carry</th><th>Destino</th><th>Cargó</th><th>Últ. edición</th></tr></thead><tbody>
+   <div class="tablewrap"><table class="aud"><thead><tr><th>Semana</th><th>Raid</th><th>Bosses</th><th>Comprador</th><th>Gold</th><th>Cobro</th><th>Hecho</th><th>Carry</th><th>Destino</th><th>Cargó</th><th>Últ. edición</th></tr></thead><tbody>
    ${rows.length? rows.map(s=>{
       const bosses=(s.bosses||[]).length===RAIDS[s.raid].bosses.length?'Clear completo':(s.bosses||[]).join(', ');
       const upd=s.updated_by?`${esc(s.updated_by)} · ${s.updated_at?fmtDateTime(s.updated_at):''}`:'—';
-      return `<tr><td>${esc(s.weekLabel)}<div class="mono" style="font-size:10px">${fmtDate(s.weekDate)}</div></td><td>${esc(RAIDS[s.raid].name)}</td><td>${esc(bosses)}</td><td>${esc(s.buyer)||'—'}</td><td class="g">${fmtGold(s.gold)}</td><td><span class="badge ${s.status}">${STATUS_LABEL[s.status]||s.status}</span></td><td class="mono">${s.run_date?fmtDate(s.run_date):'—'}</td><td>${esc(s.gold_to)||'<span class="mono">—</span>'}</td><td class="mono">${esc(s.created_by)||'—'}</td><td class="mono">${upd}</td></tr>`;
-   }).join('') : `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted-2)">Sin resultados.</td></tr>`}
+      return `<tr><td>${esc(s.weekLabel)}<div class="mono" style="font-size:10px">${fmtDate(s.weekDate)}</div></td><td>${esc(RAIDS[s.raid].name)}</td><td>${esc(bosses)}</td><td>${esc(s.buyer)||'—'}</td><td class="g">${fmtGold(s.gold)}</td><td><span class="badge ${s.status}">${STATUS_LABEL[s.status]||s.status}</span></td><td>${s.done?'<span class="badge hecho">Hecho</span>':'<span class="mono">—</span>'}</td><td class="mono">${s.run_date?fmtDate(s.run_date):'—'}</td><td>${esc(s.gold_to)||'<span class="mono">—</span>'}</td><td class="mono">${esc(s.created_by)||'—'}</td><td class="mono">${upd}</td></tr>`;
+   }).join('') : `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted-2)">Sin resultados.</td></tr>`}
    </tbody></table></div>
    <div class="sectitle">A dónde fue el oro</div><div class="destbox">${destRows}</div>
    <div class="sectitle">Actividad (quién hizo qué)</div>
@@ -2768,8 +2881,8 @@ function renderAuditoria(){
   setP('exportCsv').onclick=exportAuditCSV;
 }
 function exportAuditCSV(){
-  const rows=[['Semana','Fecha','Raid','Bosses','Comprador','BattleTag','Gold','Estado','FechaCarry','Destino','Cargó','UltimaEdicionPor','UltimaEdicionFecha','Notas']];
-  filteredAudit().forEach(s=> rows.push([s.weekLabel,s.weekDate,RAIDS[s.raid].name,(s.bosses||[]).join(' | '),s.buyer||'',s.btag||'',goldValue(s.gold),s.status,s.run_date||'',s.gold_to||'',s.created_by||'',s.updated_by||'',s.updated_at||'',s.notes||'']));
+  const rows=[['Semana','Fecha','Raid','Bosses','Comprador','BattleTag','Gold','Cobro','Hecho','FechaCarry','Destino','Cargó','UltimaEdicionPor','UltimaEdicionFecha','Notas']];
+  filteredAudit().forEach(s=> rows.push([s.weekLabel,s.weekDate,RAIDS[s.raid].name,(s.bosses||[]).join(' | '),s.buyer||'',s.btag||'',goldValue(s.gold),s.status,s.done?'si':'no',s.run_date||'',s.gold_to||'',s.created_by||'',s.updated_by||'',s.updated_at||'',s.notes||'']));
   const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='auditoria-carries.csv'; a.click(); URL.revokeObjectURL(a.href); toast('CSV exportado');
 }
@@ -3100,13 +3213,14 @@ function openSale(id, preset){ if(!state.current){ toast('Primero tiene que exis
   const wkSel=document.getElementById('f_week'); wkSel.innerHTML=state.weeks.map(x=>`<option value="${x.id}">${esc(x.label)}</option>`).join('');
   document.getElementById('f_weekWrap').style.display=cap('editAny')?'':'none';
   document.getElementById('f_byWrap').style.display=cap('editAny')?'':'none';
-  let data={ raid:(preset&&preset.raid)||RAID_KEYS[0], buyer:'', btag:'', bosses:(preset&&preset.boss)?[preset.boss]:[], gold:0, status:opts[0], gold_to:'', notes:'', run_date:'', week_id:state.current, created_by:me() };
+  let data={ raid:(preset&&preset.raid)||RAID_KEYS[0], buyer:'', btag:'', bosses:(preset&&preset.boss)?[preset.boss]:[], gold:0, status:opts[0], done:false, gold_to:'', notes:'', run_date:'', week_id:state.current, created_by:me() };
   if(id){ const ex=w.sales.find(s=>s.id===id); if(ex) data={...ex}; }
   document.getElementById('modalTitle').textContent=id?'Editar venta':'Registrar venta';
   sel.value=data.raid; wkSel.value=data.week_id||state.current;
   document.getElementById('f_buyer').value=data.buyer||''; document.getElementById('f_btag').value=data.btag||'';
   document.getElementById('f_by').value=data.created_by||me();
   document.getElementById('f_gold').value=data.gold?data.gold:''; document.getElementById('f_status').value=opts.includes(data.status)?data.status:opts[0];
+  document.getElementById('f_done').checked=data.done===true;
   document.getElementById('f_goldto').value=data.gold_to||''; document.getElementById('f_notes').value=data.notes||'';
   document.getElementById('f_rundate').value=data.run_date?String(data.run_date).slice(0,10):'';
   buildBossPicker(data.raid,data.bosses||[]); sel.onchange=()=> buildBossPicker(sel.value,[]);
@@ -3116,7 +3230,7 @@ async function saveSaleFn(){ const raid=document.getElementById('f_raid').value;
   const val=id=>document.getElementById(id).value.trim(); const now=new Date().toISOString();
   const ex = editingId ? curWeek().sales.find(s=>s.id===editingId) : null;
   const week_id = cap('editAny') ? (document.getElementById('f_week').value||state.current) : (ex? ex.week_id : state.current);
-  const base={ week_id, raid, buyer:val('f_buyer'), btag:val('f_btag'), bosses, gold:parseGold(document.getElementById('f_gold').value), status:document.getElementById('f_status').value, gold_to:val('f_goldto'), notes:val('f_notes'), run_date:document.getElementById('f_rundate').value||null };
+  const base={ week_id, raid, buyer:val('f_buyer'), btag:val('f_btag'), bosses, gold:parseGold(document.getElementById('f_gold').value), status:document.getElementById('f_status').value, done:document.getElementById('f_done').checked, gold_to:val('f_goldto'), notes:val('f_notes'), run_date:document.getElementById('f_rundate').value||null };
   try{ if(editingId){ const patch={...base, updated_by:me(), updated_at:now}; if(cap('editAny')) patch.created_by = val('f_by')||(ex&&ex.created_by)||me(); await sbUpd('sales',editingId,patch); logAction('editar_venta','sale',editingId,{buyer:base.buyer,gold:base.gold}); }
     else{ const by = cap('editAny') ? (val('f_by')||me()) : me(); const rec={ id:uid(), ...base, created_by:by, updated_by:null, updated_at:null }; await sbIns('sales',rec); logAction('crear_venta','sale',rec.id,{buyer:base.buyer,gold:base.gold}); }
     closeSale(); await refresh(); toast(editingId?'Venta actualizada':'Venta registrada');
