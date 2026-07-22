@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-KToMEc1IXKyIn+zPiJhYHN1WAIinOERbgFWRAsRjm74='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-mk337X3M3EoSRTLwcxt+/MrF9lo1zDJuriUwNgmh76c='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -924,6 +924,7 @@ function syncCharacterSecondarySoon(ch){
 
 /* ---------- util ---------- */
 const uid=()=> (Date.now().toString(36)+Math.random().toString(36).slice(2,7));
+const uuidv=()=> (crypto&&crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{ const r=Math.random()*16|0,v=c==='x'?r:(r&3|8); return v.toString(16); }));
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function parseLocalDate(d){ if(d instanceof Date) return d; const s=String(d); const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m? new Date(+m[1],+m[2]-1,+m[3]) : new Date(s); }
 function isoLocal(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
@@ -996,7 +997,7 @@ async function fetchAll(){
   if('raid_attendance' in data) raidAttendance=data.raid_attendance||[];
   if(cap('manageRecruits')){ try{ await fetchRecruits(); }catch(e){ recruits=[]; recruitLoadError=e&&e.message?e.message:String(e); } }
 }
-function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
+function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.recurrence,e.recurrence_group_id,e.recurrence_parent_id,e.recurrence_until,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
 async function refresh(toastOnChange){
   if(!session||!session.token) return;
   try{ await fetchAll(); clearError(); setLive('ok','en vivo');
@@ -2428,8 +2429,28 @@ function minutesOf(t){ const m=String(t||'').match(/^(\d{1,2}):(\d{2})/); return
 function eventDurationMinutes(ev){ const s=minutesOf(ev.start_time), e=minutesOf(ev.end_time); if(s==null||e==null) return 180; return Math.max(1,e>s?e-s:e+1440-s); }
 function eventStartDate(ev){ const d=parseLocalDate(ev.event_date); const m=minutesOf(ev.start_time)||0; d.setHours(Math.floor(m/60),m%60,0,0); return d; }
 function eventDue(ev){ return !['closed','cancelled'].includes(ev.status) && eventStartDate(ev) <= new Date(); }
-function calendarEventsForDay(key){ return raidEvents.filter(ev=>sameDayKey(ev.event_date)===key).sort((a,b)=>String(a.start_time).localeCompare(String(b.start_time))); }
-function eventSegments(ev){ return raidEventSegments.filter(s=>String(s.event_id)===String(ev.id)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)); }
+function recurrenceGroup(ev){ return String(ev&&ev.recurrence_group_id || ev&&ev.id || ''); }
+function eventSegments(ev){ const eventId=ev&&ev._template_id?ev._template_id:ev&&ev.id; return raidEventSegments.filter(s=>String(s.event_id)===String(eventId)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)); }
+function recurringTemplateActiveOn(ev,key){
+  if(!ev || ev.recurrence!=='weekly' || ev.status==='cancelled') return false;
+  const start=sameDayKey(ev.event_date);
+  if(key<start) return false;
+  if(ev.recurrence_until && key>sameDayKey(ev.recurrence_until)) return false;
+  return parseLocalDate(key).getDay()===parseLocalDate(start).getDay();
+}
+function materializedEventForGroupDate(group,key){
+  return raidEvents.find(ev=>recurrenceGroup(ev)===group && sameDayKey(ev.event_date)===key && ev.recurrence!=='weekly');
+}
+function virtualEvent(template,key){
+  return {...template, id:`virtual:${template.id}:${key}`, _virtual:true, _template_id:template.id, event_date:key, recurrence_parent_id:template.id, recurrence_group_id:recurrenceGroup(template)};
+}
+function calendarEventsForDay(key){
+  const physical=raidEvents.filter(ev=>sameDayKey(ev.event_date)===key);
+  const virtuals=raidEvents.filter(ev=>ev.recurrence==='weekly' && sameDayKey(ev.event_date)!==key && recurringTemplateActiveOn(ev,key))
+    .filter(ev=>!materializedEventForGroupDate(recurrenceGroup(ev),key))
+    .map(ev=>virtualEvent(ev,key));
+  return [...physical,...virtuals].sort((a,b)=>String(a.start_time).localeCompare(String(b.start_time)));
+}
 function eventLabel(ev){
   const seg=eventSegments(ev)[0];
   const zone=seg&&(seg.instance_name||seg.zone_name);
@@ -2441,12 +2462,21 @@ function eventCard(ev){
 }
 async function ensureDueAttendance(){
   if(!cap('manageAttendance')) return;
-  const due=raidEvents.filter(eventDue).slice(0,3);
-  if(!due.length) return;
-  const key='pt_att_ensured_'+due.map(e=>e.id).join('_');
+  const today=isoLocal(new Date());
+  const due=[...raidEvents.filter(eventDue)];
+  raidEvents.filter(ev=>ev.recurrence==='weekly' && recurringTemplateActiveOn(ev,today) && eventStartDate({...ev,event_date:today})<=new Date())
+    .forEach(ev=>{ if(!materializedEventForGroupDate(recurrenceGroup(ev),today)) due.push(virtualEvent(ev,today)); });
+  const targets=due.slice(0,3);
+  if(!targets.length) return;
+  const key='pt_att_ensured_'+targets.map(e=>e.id).join('_');
   if(sessionStorage.getItem(key)) return;
   sessionStorage.setItem(key,'1');
-  for(const ev of due){ try{ await appRequest('ensure_attendance',{event_id:ev.id}); }catch(e){} }
+  for(const ev of targets){
+    try{
+      const real=ev._virtual ? await materializeRecurringEvent(ev) : ev;
+      await appRequest('ensure_attendance',{event_id:real.id});
+    }catch(e){}
+  }
   await refresh(true);
 }
 function renderCalendario(){
@@ -2512,14 +2542,16 @@ function calendarWeekHtml(cur){
 function raidEventFormHtml(ev, dateKey){
   const segs=ev?eventSegments(ev):[];
   const segmentText=segs.length?segs.map(s=>[s.instance_name||'',s.difficulty||'',(s.bosses||[]).join(', '),s.notes||''].join(' | ')).join('\n'):'';
+  const recurring=ev && (ev.recurrence==='weekly' || ev.recurrence_group_id || ev.recurrence_parent_id);
   return `<div class="row2"><div class="field"><label>Título</label><input id="ev_title" value="${esc(ev?ev.title:'Raid Main')}" placeholder="Raid Main"></div>
     <div class="field"><label>Tipo</label><select id="ev_type">${Object.entries(RAID_EVENT_TYPE).map(([k,l])=>`<option value="${k}" ${ev&&ev.event_type===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
     <div class="row2"><div class="field"><label>Fecha</label><input id="ev_date" type="date" value="${esc(ev?sameDayKey(ev.event_date):dateKey)}"></div>
     <div class="field"><label>Estado</label><select id="ev_status">${Object.entries(RAID_EVENT_STATUS).map(([k,l])=>`<option value="${k}" ${ev&&ev.status===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
     <div class="row2"><div class="field"><label>Inicio</label><input id="ev_start" type="time" value="${esc(String(ev&&ev.start_time||'21:00').slice(0,5))}"></div>
     <div class="field"><label>Finalización</label><input id="ev_end" type="time" value="${esc(String(ev&&ev.end_time||'00:00').slice(0,5))}"></div></div>
-    <div class="row2"><div class="field"><label>Recurrencia</label><select id="ev_recur"><option value="none">No repetir</option><option value="weekly" ${ev&&ev.recurrence==='weekly'?'selected':''}>Semanal (crear próximas 12)</option></select></div>
+    <div class="row2"><div class="field"><label>Recurrencia</label><select id="ev_recur"><option value="none">No repetir</option><option value="weekly" ${ev&&ev.recurrence==='weekly'?'selected':''}>Semanal (sin fecha final)</option></select></div>
     <div class="field"><label>Zona horaria</label><input id="ev_tz" value="${esc(ev&&ev.timezone_label||settings.calendar_timezone_label||'America/Buenos_Aires')}"></div></div>
+    ${recurring?`<div class="field"><label>Aplicar cambios</label><select id="ev_scope"><option value="one">Solo esta fecha</option><option value="future">Esta fecha y futuros materializados</option></select></div>`:''}
     <div class="field"><label>Segmentos (uno por línea: instancia | dificultad | bosses opcionales | nota)</label><textarea id="ev_segments" placeholder="Voidsire | Mythic | Imperator, Vorasius">${esc(segmentText)}</textarea></div>
     <div class="field"><label>Notas</label><textarea id="ev_notes">${esc(ev&&ev.notes||'')}</textarea></div>
     <div class="err" id="ev_err"></div>`;
@@ -2536,9 +2568,51 @@ async function saveEventSegments(eventId, segments){
   for(const s of old) await sbDel('raid_event_segments',s.id);
   for(const seg of segments) await sbIns('raid_event_segments',{...seg,event_id:eventId});
 }
+async function materializeRecurringEvent(ev){
+  const template=ev._template_id ? raidEvents.find(x=>String(x.id)===String(ev._template_id)) : ev;
+  if(!template || template.recurrence!=='weekly') return ev;
+  const key=sameDayKey(ev.event_date);
+  const existing=materializedEventForGroupDate(recurrenceGroup(template),key);
+  if(existing) return existing;
+  const row={
+    title:template.title,
+    event_type:template.event_type,
+    event_date:key,
+    start_time:String(template.start_time||'21:00').slice(0,5),
+    end_time:String(template.end_time||'00:00').slice(0,5),
+    timezone_mode:template.timezone_mode||settings.calendar_timezone_mode||'local',
+    timezone_offset_minutes:Number(template.timezone_offset_minutes??settings.calendar_timezone_offset_minutes??-180),
+    timezone_label:template.timezone_label||settings.calendar_timezone_label||'America/Buenos_Aires',
+    recurrence:'none',
+    recurrence_group_id:recurrenceGroup(template),
+    recurrence_parent_id:template.id,
+    status:template.status==='closed'?'planned':template.status,
+    notes:template.notes||null
+  };
+  const rows=mutationRows(await sbIns('raid_events',row));
+  const created=rows[0];
+  if(created) await saveEventSegments(created.id,eventSegments(template).map(s=>({sort_order:s.sort_order||0,zone_id:s.zone_id||null,instance_name:s.instance_name||null,difficulty:s.difficulty||null,bosses:s.bosses||[],notes:s.notes||null})));
+  await fetchAll();
+  return created||ev;
+}
+async function updateFutureMaterializedEvents(ev,row,segments){
+  const group=recurrenceGroup(ev);
+  const from=sameDayKey(ev.event_date);
+  const futures=raidEvents.filter(x=>recurrenceGroup(x)===group && sameDayKey(x.event_date)>=from && x.recurrence!=='weekly' && String(x.id)!==String(ev.id));
+  for(const fut of futures){
+    const patch={...row,event_date:sameDayKey(fut.event_date),recurrence:fut.recurrence||'none',recurrence_group_id:group,recurrence_parent_id:fut.recurrence_parent_id||ev.recurrence_parent_id||ev.id};
+    await sbUpd('raid_events',fut.id,patch);
+    await saveEventSegments(fut.id,segments);
+  }
+}
 async function openRaidEventForm(eventId, dateKey){
   if(!cap('manageCalendar')) return toast('No tenés permiso para editar calendario');
-  const ev=eventId?raidEvents.find(x=>String(x.id)===String(eventId)):null;
+  let ev=eventId?raidEvents.find(x=>String(x.id)===String(eventId)):null;
+  if(!ev && String(eventId||'').startsWith('virtual:')){
+    const [,templateId,key]=String(eventId).split(':');
+    const template=raidEvents.find(x=>String(x.id)===String(templateId));
+    if(template) ev=virtualEvent(template,key);
+  }
   openM2((ev?'Editar evento':'Nuevo evento'), raidEventFormHtml(ev,dateKey||isoLocal(new Date())), async()=>{
     const err=document.getElementById('ev_err'); err.textContent='';
     const row={
@@ -2549,6 +2623,7 @@ async function openRaidEventForm(eventId, dateKey){
       end_time:document.getElementById('ev_end').value,
       status:document.getElementById('ev_status').value,
       recurrence:document.getElementById('ev_recur').value,
+      recurrence_until:null,
       timezone_mode:settings.calendar_timezone_mode||'local',
       timezone_offset_minutes:Number(settings.calendar_timezone_offset_minutes)||-180,
       timezone_label:document.getElementById('ev_tz').value.trim()||settings.calendar_timezone_label||'America/Buenos_Aires',
@@ -2558,20 +2633,19 @@ async function openRaidEventForm(eventId, dateKey){
     try{
       const segments=parseSegments(document.getElementById('ev_segments').value);
       if(ev){
+        if(ev._virtual) ev=await materializeRecurringEvent(ev);
+        const scope=document.getElementById('ev_scope')?.value||'one';
         await sbUpd('raid_events',ev.id,row);
         await saveEventSegments(ev.id,segments);
+        if(scope==='future') await updateFutureMaterializedEvents(ev,row,segments);
       }else{
-        const repeat=row.recurrence==='weekly'?12:1, start=parseLocalDate(row.event_date);
-        const group=repeat>1?crypto.randomUUID():null;
-        for(let i=0;i<repeat;i++){
-          const d=new Date(start); d.setDate(start.getDate()+i*7);
-          const rows=mutationRows(await sbIns('raid_events',{...row,event_date:isoLocal(d),recurrence_group_id:group}));
-          const created=rows[0]; if(created) await saveEventSegments(created.id,segments);
-        }
+        const group=row.recurrence==='weekly'?uuidv():null;
+        const rows=mutationRows(await sbIns('raid_events',{...row,recurrence_group_id:group}));
+        const created=rows[0]; if(created) await saveEventSegments(created.id,segments);
       }
       logAction(ev?'editar_raid_event':'crear_raid_event','raid_event',ev&&ev.id,{target:row.title});
       await refresh(true); toast('Evento guardado');
-    }catch(e){ err.textContent='No se pudo guardar el evento. ¿Corriste la migración 002/SQL 022?'; return false; }
+    }catch(e){ err.textContent='No se pudo guardar: '+(e&&e.message?e.message:'error desconocido'); return false; }
   });
 }
 function attendanceRowsForEvent(ev){
@@ -2579,8 +2653,15 @@ function attendanceRowsForEvent(ev){
   return characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false && ['raider','trial'].includes(String(ch.roster_category||'raider'))).sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(ch=>({ch,row:byChar.get(String(ch.id))||{event_id:ev.id,character_id:ch.id,status:'present'}}));
 }
 async function openRaidEventDetail(eventId){
-  const ev=raidEvents.find(x=>String(x.id)===String(eventId)); if(!ev) return;
-  selectedRaidEventId=eventId;
+  let ev=raidEvents.find(x=>String(x.id)===String(eventId));
+  if(!ev && String(eventId||'').startsWith('virtual:')){
+    const [,templateId,key]=String(eventId).split(':');
+    const template=raidEvents.find(x=>String(x.id)===String(templateId));
+    if(template) ev=virtualEvent(template,key);
+  }
+  if(!ev) return;
+  if(ev._virtual && (eventDue(ev)||cap('manageAttendance'))) ev=await materializeRecurringEvent(ev);
+  selectedRaidEventId=ev.id;
   if(eventDue(ev)&&cap('manageAttendance')){ try{ await appRequest('ensure_attendance',{event_id:ev.id}); await fetchAll(); }catch(e){} }
   const rows=attendanceRowsForEvent(ev);
   const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''}</span><span class="g">${(s.bosses||[]).length?esc((s.bosses||[]).join(', ')):'—'}</span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
