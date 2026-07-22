@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-ysz6zRJrfqT7qLPtF9tVfpJjziPnmknr7zzhk5JVAFI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-V/g1HEh/Iqui8B7cEGC/bHrCm/qZkQdRSuZwG8L2DRQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -227,17 +227,26 @@
   .field{margin-bottom:14px}
   .field label{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted-2); margin-bottom:6px}
   .field input, .field select, .field textarea{width:100%; padding:10px 12px; border-radius:9px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:14px}
+  select{color-scheme:dark; background:var(--bg)!important; color:var(--text)!important; -webkit-text-fill-color:var(--text)}
+  select option, select optgroup{background:var(--bg-1)!important; color:var(--text)!important}
+  select option:checked{background:var(--blue)!important; color:#001018!important}
   .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--blue)}
   .field textarea{resize:vertical; min-height:54px}
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
   .segEditor{border:1px solid var(--line-soft); border-radius:12px; overflow:hidden; background:var(--bg)}
   .segTools{display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft); background:var(--bg-1)}
-  .segGrid{display:grid; grid-template-columns:28px 1.15fr .85fr 1fr 1.1fr .8fr 1.1fr 64px; min-width:980px}
+  .segGrid{display:grid; grid-template-columns:28px 1.15fr .85fr 1fr 1.1fr .9fr 1.1fr 92px; min-width:1080px}
   .segGrid.head{font-family:var(--font-display); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted-2); background:var(--bg-1)}
   .segGrid>div{padding:8px 7px; border-bottom:1px solid var(--line-soft); min-width:0}
-  .segGrid select,.segGrid input{width:100%; min-width:0; border-radius:7px; border:1px solid var(--line); background:var(--bg-0); color:var(--text); padding:7px 8px; font-size:12px}
+  .segGrid select,.segGrid input{width:100%; min-width:0; border-radius:7px; border:1px solid var(--line); background:var(--bg-0)!important; color:var(--text)!important; -webkit-text-fill-color:var(--text); padding:7px 8px; font-size:12px}
+  .segGrid select option{background:var(--bg-1)!important; color:var(--text)!important}
+  .segTools select{height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-0)!important; color:var(--text)!important; padding:0 8px; font-size:12px; font-weight:800}
   .segGrid .segOps{display:flex; gap:4px}
   .segGrid .segOps button{width:24px; height:24px; padding:0; border-radius:7px}
+  .segRow{cursor:grab}
+  .segRow:active{cursor:grabbing}
+  .segRow.dragging{opacity:.42; outline:1px dashed var(--blue); background:rgba(0,155,219,.12)}
+  .segDrag{cursor:grab; color:var(--blue)}
   .segmentScroller{overflow:auto}
   .segSelected{box-shadow:inset 3px 0 0 var(--blue); background:rgba(0,155,219,.07)}
   .dangerText{color:var(--rose); font-family:var(--font-display); text-transform:uppercase; letter-spacing:.08em; font-size:11px}
@@ -526,7 +535,8 @@
   .calEvent.closed{border-color:rgba(39,216,130,.35)}
   .calEvent.cancelled{opacity:.55; text-decoration:line-through}
   .dowGrid{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px}
-  .dowGrid label{display:flex; align-items:center; justify-content:center; gap:5px; min-height:34px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); font-family:var(--font-mono); font-size:11px; cursor:pointer}
+  .dowGrid label{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-height:46px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); font-family:var(--font-mono); font-size:11px; cursor:pointer}
+  .dowGrid span{font-size:10px; color:var(--text); font-weight:900}
   .dowGrid input{accent-color:var(--blue)}
   .contextMenu{position:fixed; display:none; z-index:90; min-width:250px; border:1px solid var(--line); border-radius:12px; background:var(--bg-1); box-shadow:0 16px 40px rgba(0,0,0,.45); overflow:hidden}
   .contextMenu.on{display:block}
@@ -2526,7 +2536,7 @@ function virtualEvent(template,key){
   return {...template, id:`virtual:${template.id}:${key}`, _virtual:true, _template_id:template.id, event_date:key, recurrence_parent_id:template.id, recurrence_group_id:recurrenceGroup(template)};
 }
 function calendarEventsForDay(key){
-  const physical=raidEvents.filter(ev=>sameDayKey(ev.event_date)===key && ev.status!=='cancelled' && (ev.recurrence!=='weekly' || recurrenceDays(ev).includes(parseLocalDate(key).getDay())));
+  const physical=raidEvents.filter(ev=>sameDayKey(ev.event_date)===key && ev.status!=='cancelled' && (ev.recurrence!=='weekly' || (recurrenceDays(ev).includes(parseLocalDate(key).getDay()) && !materializedEventForGroupDate(recurrenceGroup(ev),key))));
   const virtuals=raidEvents.filter(ev=>ev.recurrence==='weekly' && sameDayKey(ev.event_date)!==key && recurringTemplateActiveOn(ev,key))
     .filter(ev=>!materializedEventForGroupDate(recurrenceGroup(ev),key))
     .map(ev=>virtualEvent(ev,key));
@@ -2659,10 +2669,13 @@ async function saveAttendanceMatrix(){
 }
 function attendanceEditorHtml(ev){
   const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''} ${(arrish(s.bosses)).length?`· ${esc(arrish(s.bosses).join(', '))}`:''}</span><span><span class="badge ${esc(s.segment_status||'pending')}">${esc(SEGMENT_STATUS[s.segment_status]||'Pendiente')}</span></span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
+  const segmentBlock=cap('manageCalendar')
+    ? `<div class="field"><label>Segmentos / Carries</label></div>${segmentEditorHtml(eventSegments(ev))}<div class="attToolbar"><button class="btn ghost sm" id="attSaveSegments">Guardar segmentos</button></div>`
+    : `<div class="destbox">${segs}</div>`;
   return `<div class="eventDetail"><div class="eventSummary">
     <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))}</b></div>
     <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Lista</span><b>${esc(attendanceStatusSummary(ev))}</b></div>
-  </div><div class="destbox">${segs}</div>
+  </div>${segmentBlock}
   ${attendanceTableHtml(ev)}</div>`;
 }
 async function materializeAndOpenAttendance(ev){
@@ -2697,7 +2710,9 @@ function renderAttendance(){
   const edit=document.getElementById('attEditEvent'); if(edit) edit.onclick=()=>openRaidEventForm(ev.id,sameDayKey(ev.event_date));
   const del=document.getElementById('attDeleteEvent'); if(del) del.onclick=()=>deleteRaidEvent(ev);
   const save=document.getElementById('attSavePage'); if(save) save.onclick=()=>saveAttendanceRows(ev);
+  const saveSegments=document.getElementById('attSaveSegments'); if(saveSegments) saveSegments.onclick=()=>saveAttendanceSegments(ev,c);
   const close=document.getElementById('attClosePage'); if(close) close.onclick=()=>closeAttendanceEvent(ev);
+  if(c.querySelector('#segRows')) bindSegmentEditor(c);
   bindAttendanceQuickTimes(c);
   ensureDueAttendance().catch(()=>{});
 }
@@ -2809,14 +2824,30 @@ function arrish(v){
   return [v];
 }
 function raidInstanceOptions(){
-  const base=[...wclZoneOptions().map(z=>z.name),...Object.values(RAIDS).map(r=>r.name),'Mythic+ Season 1'];
+  const wclNames=wclZoneOptions().map(z=>z.name).filter(n=>n && !String(n).includes('/'));
+  const base=[...RAID_PROGRESSION_SECTIONS.map(s=>s.name),...Object.values(RAIDS).map(r=>r.name),...wclNames,'Mythic+ Season 1'];
   return [...new Set(base.filter(Boolean))];
 }
 function raidBossOptions(instance){
-  const key=Object.keys(RAIDS).find(k=>RAIDS[k].name===instance || String(instance||'').toLowerCase().includes(k));
+  const norm=progKey(instance);
+  const key=Object.keys(RAIDS).find(k=>progKey(RAIDS[k].name)===norm || norm.includes(progKey(k)));
   if(key) return RAIDS[key].bosses;
+  const section=RAID_PROGRESSION_SECTIONS.find(s=>progKey(s.name)===norm || (s.aliases||[]).some(a=>progKey(a)===norm));
+  if(section) return section.bosses;
   if(String(instance||'').toLowerCase().includes('mythic+')) return ['Algeth’ar Academy','Magisters’ Terrace','Maisara Caverns','Nexus-Point Xenas','Pit of Saron','Seat of the Triumvirate','Skyreach','Windrunner Spire'];
   return [];
+}
+function segmentDifficultyOptions(selected){
+  const labels=[...wclActiveDiffs().map(d=>WCL_DIFF_LABEL[d]).filter(Boolean),'Mythic','Heroic','Normal','LFR'];
+  const opts=[...new Set(labels.filter(Boolean))];
+  if(selected && !opts.includes(selected)) opts.unshift(selected);
+  return opts;
+}
+function optionsHtml(options,current,blankLabel){
+  const set=new Set(options.filter(Boolean));
+  if(current && !set.has(current)) options=[current,...options];
+  const blank=blankLabel==null?'':`<option value="">${esc(blankLabel)}</option>`;
+  return blank+options.map(x=>`<option value="${esc(x)}" ${String(current||'')===String(x)?'selected':''}>${esc(x)}</option>`).join('');
 }
 function saleOptionLabel(s){
   const w=state.weeks.find(x=>x.id===s.week_id);
@@ -2838,35 +2869,40 @@ function segmentStatusOptions(value,hasSale){
   const keys=hasSale?['pending','done','postponed']:['pending','progress','killed','reclear'];
   return keys.map(k=>`<option value="${k}" ${String(value||'pending')===k?'selected':''}>${esc(SEGMENT_STATUS[k])}</option>`).join('');
 }
+function segmentBulkStatusOptions(value){
+  return Object.entries(SEGMENT_STATUS).map(([k,label])=>`<option value="${k}" ${String(value||'killed')===k?'selected':''}>${esc(label)}</option>`).join('');
+}
 function segmentRowHtml(seg,i){
   const instance=seg.instance_name||raidInstanceOptions()[0]||'';
   const boss=arrish(seg.bosses)[0]||'';
   const saleIds=arrish(seg.sale_ids).map(String);
   const hasSale=saleIds.length>0;
-  return `<div class="segGrid segRow" data-seg-row="${i}">
+  const bosses=raidBossOptions(instance);
+  return `<div class="segGrid segRow" data-seg-row="${i}" draggable="true">
     <div><input type="checkbox" class="segCheck"></div>
-    <div><input class="segInstance" list="segInstanceList" value="${esc(instance)}" placeholder="Instancia"></div>
-    <div><select class="segDifficulty">${wclActiveDiffs().map(d=>WCL_DIFF_LABEL[d]).filter(Boolean).map(label=>`<option value="${esc(label)}" ${label===seg.difficulty?'selected':''}>${esc(label)}</option>`).join('')}</select></div>
-    <div><input class="segBoss" list="segBossList" value="${esc(boss)}" placeholder="Boss / dungeon"></div>
+    <div><select class="segInstance">${optionsHtml(raidInstanceOptions(),instance,null)}</select></div>
+    <div><select class="segDifficulty">${optionsHtml(segmentDifficultyOptions(seg.difficulty),seg.difficulty||'Mythic',null)}</select></div>
+    <div><select class="segBoss">${optionsHtml(bosses,boss,'Boss / dungeon')}</select></div>
     <div><select class="segSales" multiple size="1">${segmentSaleOptions(instance,boss,saleIds)}</select></div>
     <div><select class="segStatus">${segmentStatusOptions(seg.segment_status,hasSale)}</select></div>
     <div><input class="segNote" value="${esc(seg.notes||'')}" placeholder="Nota"></div>
-    <div class="segOps"><button class="btn ghost sm segUp" type="button">↑</button><button class="btn ghost sm danger segDel" type="button">−</button></div>
+    <div class="segOps"><button class="btn ghost sm segDrag" type="button" title="Arrastrar">↕</button><button class="btn ghost sm segUp" type="button">↑</button><button class="btn ghost sm danger segDel" type="button">−</button></div>
   </div>`;
 }
 function segmentEditorHtml(segs){
   const seed=segs.length?segs:[{instance_name:'The Voidspire',difficulty:'Mythic',bosses:[],sale_ids:[],segment_status:'pending',notes:''}];
-  const instances=raidInstanceOptions();
-  const bosses=[...new Set(instances.flatMap(raidBossOptions))];
+  const defaultInstance=seed[0].instance_name||raidInstanceOptions()[0]||'The Voidspire';
+  const defaultDifficulty=seed[0].difficulty||'Mythic';
   return `<div class="field"><label>Segmentos</label>
     <div class="segEditor" id="segEditor">
       <div class="segTools">
         <button class="btn ghost sm" type="button" id="segAdd">+ Segmento</button>
+        <select id="segBulkInstance" title="Instancia">${optionsHtml(raidInstanceOptions(),defaultInstance,null)}</select>
+        <select id="segBulkDifficulty" title="Dificultad">${optionsHtml(segmentDifficultyOptions(defaultDifficulty),defaultDifficulty,null)}</select>
         <button class="btn ghost sm" type="button" id="segAddBosses">+ Bosses de instancia</button>
+        <select id="segBulkStatus" title="Estado">${segmentBulkStatusOptions('killed')}</select>
         <button class="btn ghost sm" type="button" id="segBulkState">Cambiar estado selección</button>
       </div>
-      <datalist id="segInstanceList">${instances.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist>
-      <datalist id="segBossList">${bosses.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist>
       <div class="segmentScroller">
         <div class="segGrid head"><div></div><div>Instancia</div><div>Dificultad</div><div>Boss</div><div>Venta</div><div>Estado</div><div>Nota</div><div></div></div>
         <div id="segRows">${seed.map(segmentRowHtml).join('')}</div>
@@ -2874,15 +2910,53 @@ function segmentEditorHtml(segs){
     </div>
   </div>`;
 }
-function bindSegmentEditor(){
-  const rows=document.getElementById('segRows');
+function refreshSegmentBossSelect(row,preferred){
+  const instance=row.querySelector('.segInstance').value;
+  const boss=row.querySelector('.segBoss');
+  const current=preferred!=null?preferred:boss.value;
+  const options=raidBossOptions(instance);
+  boss.innerHTML=optionsHtml(options,options.includes(current)?current:'','Boss / dungeon');
+}
+function bindSegmentEditor(root=document){
+  const rows=root.querySelector('#segRows');
   if(!rows) return;
   const refresh=()=>{ [...rows.querySelectorAll('.segRow')].forEach((row,i)=>{ row.dataset.segRow=i; row.classList.toggle('segSelected',!!row.querySelector('.segCheck')?.checked); }); };
+  let draggedRow=null;
+  const rowAfterPointer=(y)=>{
+    const available=[...rows.querySelectorAll('.segRow:not(.dragging)')];
+    return available.reduce((closest,child)=>{
+      const box=child.getBoundingClientRect();
+      const offset=y-box.top-box.height/2;
+      if(offset<0 && offset>closest.offset) return {offset,element:child};
+      return closest;
+    },{offset:Number.NEGATIVE_INFINITY,element:null}).element;
+  };
+  rows.ondragstart=e=>{
+    const row=e.target.closest('.segRow');
+    if(!row) return;
+    if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName) && !e.target.classList.contains('segDrag')){ e.preventDefault(); return; }
+    draggedRow=row;
+    row.classList.add('dragging');
+    if(e.dataTransfer){ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',row.dataset.segRow||''); }
+  };
+  rows.ondragover=e=>{
+    if(!draggedRow) return;
+    e.preventDefault();
+    const after=rowAfterPointer(e.clientY);
+    if(after==null) rows.appendChild(draggedRow);
+    else rows.insertBefore(draggedRow,after);
+  };
+  rows.ondragend=()=>{
+    if(draggedRow) draggedRow.classList.remove('dragging');
+    draggedRow=null;
+    refresh();
+  };
   rows.onchange=e=>{
     const row=e.target.closest('.segRow');
     if(!row) return;
     if(e.target.classList.contains('segCheck')) refresh();
     if(e.target.classList.contains('segInstance')||e.target.classList.contains('segBoss')||e.target.classList.contains('segSales')){
+      if(e.target.classList.contains('segInstance')) refreshSegmentBossSelect(row,'');
       const instance=row.querySelector('.segInstance').value, boss=row.querySelector('.segBoss').value;
       const sales=row.querySelector('.segSales');
       const picked=[...sales.selectedOptions].map(o=>o.value).filter(Boolean);
@@ -2896,38 +2970,51 @@ function bindSegmentEditor(){
     if(e.target.classList.contains('segDel')){ row.remove(); refresh(); }
     if(e.target.classList.contains('segUp')){ const prev=row.previousElementSibling; if(prev) rows.insertBefore(row,prev); refresh(); }
   };
-  const add=document.getElementById('segAdd'); if(add) add.onclick=()=>{ rows.insertAdjacentHTML('beforeend',segmentRowHtml({instance_name:'The Voidspire',difficulty:'Mythic',bosses:[],sale_ids:[],segment_status:'pending'},rows.children.length)); refresh(); };
-  const addBosses=document.getElementById('segAddBosses'); if(addBosses) addBosses.onclick=()=>{
-    const instance=prompt('Instancia para agregar bosses', 'The Voidspire');
-    if(!instance) return;
-    const diff=prompt('Dificultad', 'Mythic')||'Mythic';
+  const add=root.querySelector('#segAdd'); if(add) add.onclick=()=>{
+    const instance=root.querySelector('#segBulkInstance')?.value||'The Voidspire';
+    const diff=root.querySelector('#segBulkDifficulty')?.value||'Mythic';
+    rows.insertAdjacentHTML('beforeend',segmentRowHtml({instance_name:instance,difficulty:diff,bosses:[],sale_ids:[],segment_status:'pending'},rows.children.length)); refresh();
+  };
+  const addBosses=root.querySelector('#segAddBosses'); if(addBosses) addBosses.onclick=()=>{
+    const instance=root.querySelector('#segBulkInstance')?.value||'The Voidspire';
+    const diff=root.querySelector('#segBulkDifficulty')?.value||'Mythic';
     const bosses=raidBossOptions(instance);
     if(!bosses.length){ toast('No tengo bosses precargados para esa instancia'); return; }
     bosses.forEach(b=>rows.insertAdjacentHTML('beforeend',segmentRowHtml({instance_name:instance,difficulty:diff,bosses:[b],sale_ids:[],segment_status:'pending'},rows.children.length)));
     refresh();
   };
-  const bulk=document.getElementById('segBulkState'); if(bulk) bulk.onclick=()=>{
+  const bulk=root.querySelector('#segBulkState'); if(bulk) bulk.onclick=()=>{
     const selected=[...rows.querySelectorAll('.segRow')].filter(r=>r.querySelector('.segCheck').checked);
     if(!selected.length) return toast('Seleccioná segmentos primero');
-    const value=prompt('Estado: pending, progress, killed, reclear, done, postponed', 'killed');
+    const value=root.querySelector('#segBulkStatus')?.value||'killed';
     if(!SEGMENT_STATUS[value]) return;
     selected.forEach(r=>{ const sel=r.querySelector('.segStatus'); sel.innerHTML=segmentStatusOptions(value,r.querySelector('.segSales').selectedOptions.length>0); sel.value=value; });
   };
   refresh();
 }
 function bindEventForm(){
-  bindSegmentEditor();
+  bindSegmentEditor(document.getElementById('m2body')||document);
   const recur=document.getElementById('ev_recur');
   const days=document.getElementById('ev_days_wrap');
   const sync=()=>{ if(days) days.style.display=recur&&recur.value==='weekly'?'':'none'; };
   if(recur){ recur.onchange=sync; sync(); }
+  const mode=document.getElementById('ev_tz_mode');
+  const label=document.getElementById('ev_tz');
+  if(mode&&label){
+    mode.onchange=()=>{
+      if(mode.value==='server') label.value=settings.calendar_timezone_label||'CST';
+      if(mode.value==='fixed' && !/^GMT/i.test(label.value.trim())) label.value='GMT'+(Number(settings.calendar_timezone_offset_minutes||0)>=0?'+':'')+(Number(settings.calendar_timezone_offset_minutes||0)/60);
+    };
+  }
 }
 function raidEventFormHtml(ev, dateKey){
   const segs=ev?eventSegments(ev):[];
   const recurring=ev && (ev.recurrence==='weekly' || ev.recurrence_group_id || ev.recurrence_parent_id);
   const dateValue=fmtDateFull(ev?sameDayKey(ev.event_date):dateKey);
   const selectedDays=new Set((ev&&ev.recurrence==='weekly'?recurrenceDays(ev):[parseLocalDate(ev?ev.event_date:dateKey||new Date()).getDay()]).map(Number));
-  const dayOptions=WEEKDAY_SHORT.map((label,dow)=>`<label><input type="checkbox" class="evDow" value="${dow}" ${selectedDays.has(dow)?'checked':''}>${esc(label)}</label>`).join('');
+  const dayOptions=WEEKDAY_SHORT.map((label,dow)=>`<label><span>${esc(label)}</span><input type="checkbox" class="evDow" value="${dow}" ${selectedDays.has(dow)?'checked':''}></label>`).join('');
+  const tzMode=ev&&ev.timezone_mode?ev.timezone_mode:(settings.calendar_timezone_mode||'local');
+  const tzLabel=ev&&ev.timezone_label?ev.timezone_label:(settings.calendar_timezone_label||'America/Buenos_Aires');
   return `<div class="row2"><div class="field"><label>Título</label><input id="ev_title" value="${esc(ev?ev.title:'Raid Main')}" placeholder="Raid Main"></div>
     <div class="field"><label>Tipo</label><select id="ev_type">${Object.entries(RAID_EVENT_TYPE).map(([k,l])=>`<option value="${k}" ${ev&&ev.event_type===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
     <div class="row2"><div class="field"><label>Fecha</label><input id="ev_date" type="text" inputmode="numeric" value="${esc(dateValue)}" placeholder="dd/mm/aaaa"></div>
@@ -2935,7 +3022,8 @@ function raidEventFormHtml(ev, dateKey){
     <div class="row2"><div class="field"><label>Inicio</label><input id="ev_start" type="time" value="${esc(String(ev&&ev.start_time||'21:00').slice(0,5))}"></div>
     <div class="field"><label>Finalización</label><input id="ev_end" type="time" value="${esc(String(ev&&ev.end_time||'00:00').slice(0,5))}"></div></div>
     <div class="row2"><div class="field"><label>Recurrencia</label><select id="ev_recur"><option value="none">No repetir</option><option value="weekly" ${ev&&ev.recurrence==='weekly'?'selected':''}>Semanal (sin fecha final)</option></select></div>
-    <div class="field"><label>Zona horaria</label><input id="ev_tz" value="${esc(ev&&ev.timezone_label||settings.calendar_timezone_label||'America/Buenos_Aires')}"></div></div>
+    <div class="field"><label>Modo horario</label><select id="ev_tz_mode"><option value="local" ${tzMode==='local'?'selected':''}>Horario local</option><option value="server" ${tzMode==='server'?'selected':''}>Server time${settings.calendar_timezone_label?` · ${esc(settings.calendar_timezone_label)}`:''}</option><option value="fixed" ${tzMode==='fixed'?'selected':''}>GMT fijo</option></select></div></div>
+    <div class="field"><label>Etiqueta horaria</label><input id="ev_tz" value="${esc(tzLabel)}" placeholder="CST / Server time / America/Buenos_Aires / GMT-3"></div>
     <div class="field" id="ev_days_wrap"><label>Días de repetición</label><div class="dowGrid">${dayOptions}</div><div class="hint">Si marcás varios días, se repite semanalmente en todos esos días desde la fecha elegida.</div></div>
     ${recurring?`<div class="field"><label>Aplicar cambios</label><select id="ev_scope"><option value="one">Solo esta fecha</option><option value="future">Esta fecha y futuros materializados</option><option value="series_future">Serie hacia adelante</option></select></div>`:''}
     ${segmentEditorHtml(segs)}
@@ -2947,14 +3035,14 @@ function selectedEventRecurrenceDays(eventDate, recurrence){
   const picked=[...document.querySelectorAll('.evDow:checked')].map(x=>Number(x.value)).filter(n=>Number.isInteger(n)&&n>=0&&n<=6);
   return [...new Set(picked.length?picked:[parseLocalDate(eventDate).getDay()])].sort((a,b)=>a-b);
 }
-function parseSegmentsFromEditor(){
-  return [...document.querySelectorAll('#segRows .segRow')].map((row,i)=>{
-    const boss=row.querySelector('.segBoss').value.trim();
+function parseSegmentsFromEditor(root=document){
+  return [...root.querySelectorAll('#segRows .segRow')].map((row,i)=>{
+    const boss=row.querySelector('.segBoss').value;
     const saleIds=[...row.querySelector('.segSales').selectedOptions].map(o=>o.value).filter(Boolean);
     const status=row.querySelector('.segStatus').value||'pending';
     return {
       sort_order:i,
-      instance_name:row.querySelector('.segInstance').value.trim(),
+      instance_name:row.querySelector('.segInstance').value,
       difficulty:row.querySelector('.segDifficulty').value||null,
       bosses:boss?[boss]:[],
       sale_ids:saleIds,
@@ -3046,7 +3134,7 @@ async function openRaidEventForm(eventId, dateKey){
       status:document.getElementById('ev_status').value,
       recurrence:document.getElementById('ev_recur').value,
       recurrence_until:null,
-      timezone_mode:settings.calendar_timezone_mode||'local',
+      timezone_mode:document.getElementById('ev_tz_mode').value||settings.calendar_timezone_mode||'local',
       timezone_offset_minutes:Number(settings.calendar_timezone_offset_minutes)||-180,
       timezone_label:document.getElementById('ev_tz').value.trim()||settings.calendar_timezone_label||'America/Buenos_Aires',
       notes:document.getElementById('ev_notes').value.trim()||null
@@ -3054,13 +3142,13 @@ async function openRaidEventForm(eventId, dateKey){
     row.recurrence_days=selectedEventRecurrenceDays(row.event_date,row.recurrence);
     if(!row.title||!row.event_date||!row.start_time||!row.end_time){ err.textContent='Completá título, fecha válida e inicio/finalización.'; return false; }
     try{
-      const segments=parseSegmentsFromEditor();
+      const segments=parseSegmentsFromEditor(document.getElementById('m2body')||document);
       if(ev){
         const scope=document.getElementById('ev_scope')?.value||'one';
         if(scope==='series_future'){
           await trimRecurringSeriesFrom(ev,row,segments);
         }else{
-          if(ev._virtual) ev=await materializeRecurringEvent(ev);
+          if(ev._virtual || (scope==='one' && ev.recurrence==='weekly')) ev=await materializeRecurringEvent(ev);
           const saveRow=scope==='one' ? {...row,recurrence:'none',recurrence_days:null,recurrence_until:null} : row;
           await sbUpd('raid_events',ev.id,saveRow);
           await saveEventSegments(ev.id,segments);
@@ -3097,17 +3185,30 @@ async function openRaidEventDetail(eventId){
   selectedRaidEventId=ev.id;
   if(eventDue(ev)&&cap('manageAttendance')){ try{ await appRequest('ensure_attendance',{event_id:ev.id}); await fetchAll(); }catch(e){} }
   const segs=eventSegments(ev).map(s=>`<div class="destrow"><span>${esc(s.instance_name||'—')} ${s.difficulty?`· ${esc(s.difficulty)}`:''} ${(arrish(s.bosses)).length?`· ${esc(arrish(s.bosses).join(', '))}`:''}</span><span><span class="badge ${esc(s.segment_status||'pending')}">${esc(SEGMENT_STATUS[s.segment_status]||'Pendiente')}</span></span></div>`).join('')||'<div class="singleEmpty">Sin segmentos definidos.</div>';
+  const segmentBlock=cap('manageCalendar')
+    ? `${segmentEditorHtml(eventSegments(ev))}<div class="attToolbar"><button class="btn ghost sm" id="detailSaveSegments">Guardar segmentos</button></div>`
+    : `<div class="destbox">${segs}</div>`;
   const table=`<div class="eventDetail"><div class="eventSummary">
     <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(String(ev.start_time).slice(0,5))}-${esc(String(ev.end_time).slice(0,5))}</b></div>
     <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Duración</span><b>${eventDurationMinutes(ev)} min</b></div>
-  </div><div class="destbox">${segs}</div>
+  </div>${segmentBlock}
   ${attendanceTableHtml(ev)}</div>`;
   const actions=`<div class="actions" style="margin-top:12px">${cap('manageCalendar')?'<button class="btn ghost sm" id="evEdit">Editar evento</button><button class="btn ghost sm danger" id="evDelete">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSave">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClose">Cerrar evento</button>':''}</div>`;
   openM2(ev.title, table+actions, async()=>true,{wide:true});
   const eb=document.getElementById('evEdit'); if(eb) eb.onclick=()=>openRaidEventForm(ev.id,sameDayKey(ev.event_date));
   const db=document.getElementById('evDelete'); if(db) db.onclick=()=>deleteRaidEvent(ev);
   const sb=document.getElementById('attSave'); if(sb) sb.onclick=()=>saveAttendanceRows(ev);
+  const ds=document.getElementById('detailSaveSegments'); if(ds) ds.onclick=async()=>{
+    const root=document.getElementById('m2body')||document;
+    try{
+      await saveEventSegments(ev.id,parseSegmentsFromEditor(root));
+      await refresh(true);
+      toast('Segmentos guardados');
+      openRaidEventDetail(ev.id);
+    }catch(e){ toast('No se pudieron guardar segmentos'); }
+  };
   const cb=document.getElementById('attClose'); if(cb) cb.onclick=()=>closeAttendanceEvent(ev);
+  if(document.getElementById('m2body')?.querySelector('#segRows')) bindSegmentEditor(document.getElementById('m2body'));
   bindAttendanceQuickTimes(document.getElementById('m2body'));
 }
 async function saveAttendanceRows(ev){
@@ -3127,6 +3228,18 @@ async function saveAttendanceRows(ev){
     logAction('editar_attendance','raid_event',ev.id,{target:ev.title});
     await refresh(true); toast('Attendance guardado');
   }catch(e){ toast('No se pudo guardar attendance'); }
+}
+async function saveAttendanceSegments(ev,root=document){
+  if(!cap('manageCalendar')) return toast('Sin permiso');
+  if(!ev || ev._virtual) return toast('Abrí primero esa fecha recurrente.');
+  try{
+    await saveEventSegments(ev.id,parseSegmentsFromEditor(root));
+    logAction('editar_segmentos_attendance','raid_event',ev.id,{target:ev.title});
+    await refresh(true);
+    toast('Segmentos guardados');
+  }catch(e){
+    toast('No se pudieron guardar segmentos');
+  }
 }
 async function closeAttendanceEvent(ev){
   if(!confirm('¿Cerrar attendance de "'+ev.title+'"? Desde ahí ya cuenta para estadísticas.')) return;
