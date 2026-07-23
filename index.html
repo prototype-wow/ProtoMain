@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-8zcOZupMJAlP1YStXZkUyGu800xETANhvLJTefNPQ1U='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-AdPx4I/YBrmy+WUSTAtJagiRnVltUeJ3sLZksM47vJU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -2525,9 +2525,24 @@ function calendarWeekStart(){ const n=Number(settings.calendar_week_start_dow); 
 function sameDayKey(d){ return isoLocal(parseLocalDate(d)); }
 function minutesOf(t){ const m=String(t||'').match(/^(\d{1,2}):(\d{2})/); return m?(Number(m[1])*60+Number(m[2])):null; }
 function eventDurationMinutes(ev){ const s=minutesOf(ev.start_time), e=minutesOf(ev.end_time); if(s==null||e==null) return 180; return Math.max(1,e>s?e-s:e+1440-s); }
-function eventStartDate(ev){ const d=parseLocalDate(ev.event_date); const m=minutesOf(ev.start_time)||0; d.setHours(Math.floor(m/60),m%60,0,0); return d; }
+function eventTimezoneMode(ev){ return String(ev&&ev.timezone_mode||settings.calendar_timezone_mode||'local'); }
+function eventTimezoneOffset(ev){ return Number((ev&&ev.timezone_offset_minutes)??settings.calendar_timezone_offset_minutes??-180); }
+function eventTimezoneLabel(ev){ return String((ev&&ev.timezone_label)||settings.calendar_timezone_label||(eventTimezoneMode(ev)==='server'?'Server time':'Hora local')); }
+function eventWallClockDate(ev,time){
+  const day=parseLocalDate(ev.event_date);
+  const m=minutesOf(time)||0;
+  const h=Math.floor(m/60), min=m%60;
+  if(eventTimezoneMode(ev)==='local'){
+    const d=new Date(day.getFullYear(),day.getMonth(),day.getDate());
+    d.setHours(h,min,0,0);
+    return d;
+  }
+  return new Date(Date.UTC(day.getFullYear(),day.getMonth(),day.getDate(),h,min,0,0)-eventTimezoneOffset(ev)*60000);
+}
+function eventStartDate(ev){ return eventWallClockDate(ev,ev.start_time); }
 function eventEndDate(ev){ const d=eventStartDate(ev); d.setMinutes(d.getMinutes()+eventDurationMinutes(ev)); return d; }
 function eventDue(ev){ return !['closed','cancelled'].includes(ev.status) && eventEndDate(ev) <= new Date(); }
+function eventTimeText(ev){ return `${String(ev.start_time||'').slice(0,5)}-${String(ev.end_time||'').slice(0,5)} · ${eventTimezoneLabel(ev)}`; }
 function recurrenceGroup(ev){ return String(ev&&ev.recurrence_group_id || ev&&ev.id || ''); }
 function eventSegments(ev){ const eventId=ev&&ev._template_id?ev._template_id:ev&&ev.id; return raidEventSegments.filter(s=>String(s.event_id)===String(eventId)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)); }
 function addDays(dt,n){ const d=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()); d.setDate(d.getDate()+n); return d; }
@@ -2566,13 +2581,13 @@ function eventLabel(ev){
 }
 function eventCard(ev){
   const sel=selectedCalendarEvents.has(String(ev.id))?' sel':'';
-  return `<button class="calEvent ${esc(ev.status||'planned')}${sel}" data-event="${esc(ev.id)}"><b>${esc(ev.title)}</b><span>${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))} · ${esc(eventLabel(ev))}</span></button>`;
+  return `<button class="calEvent ${esc(ev.status||'planned')}${sel}" data-event="${esc(ev.id)}"><b>${esc(ev.title)}</b><span>${esc(eventTimeText(ev))} · ${esc(eventLabel(ev))}</span></button>`;
 }
 async function ensureDueAttendance(){
   if(!cap('manageAttendance')) return;
   const today=isoLocal(new Date());
   const due=[...raidEvents.filter(eventDue)];
-  raidEvents.filter(ev=>ev.recurrence==='weekly' && recurringTemplateActiveOn(ev,today) && eventStartDate({...ev,event_date:today})<=new Date())
+  raidEvents.filter(ev=>ev.recurrence==='weekly' && recurringTemplateActiveOn(ev,today) && eventDue({...ev,event_date:today}))
     .forEach(ev=>{ if(!materializedEventForGroupDate(recurrenceGroup(ev),today)) due.push(virtualEvent(ev,today)); });
   const targets=due.slice(0,3);
   if(!targets.length) return;
@@ -2749,7 +2764,7 @@ function attendanceEditorHtml(ev){
     ? `<div class="field"><label>Segmentos / Carries</label></div>${segmentEditorHtml(eventSegments(ev))}<div class="attToolbar"><button class="btn ghost sm" id="attSaveSegments">Guardar segmentos</button></div>`
     : `<div class="destbox">${segs}</div>`;
   return `<div class="eventDetail"><div class="eventSummary">
-    <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))}</b></div>
+    <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(eventTimeText(ev))}</b></div>
     <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Lista</span><b>${esc(attendanceStatusSummary(ev))}</b></div>
   </div>${segmentBlock}
   ${attendanceTableHtml(ev)}</div>`;
@@ -3385,7 +3400,7 @@ async function openRaidEventDetail(eventId){
     ? `${segmentEditorHtml(eventSegments(ev))}<div class="attToolbar"><button class="btn ghost sm" id="detailSaveSegments">Guardar segmentos</button></div>`
     : `<div class="destbox">${segs}</div>`;
   const table=`<div class="eventDetail"><div class="eventSummary">
-    <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(String(ev.start_time).slice(0,5))}-${esc(String(ev.end_time).slice(0,5))}</b></div>
+    <div class="eventMini"><span>Fecha</span><b>${fmtDate(ev.event_date)}</b></div><div class="eventMini"><span>Horario</span><b>${esc(eventTimeText(ev))}</b></div>
     <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Duración</span><b>${eventDurationMinutes(ev)} min</b></div>
   </div>${segmentBlock}
   ${attendanceTableHtml(ev)}</div>`;
@@ -3446,6 +3461,7 @@ async function saveAttendanceSegments(ev,root=document){
   }
 }
 async function closeAttendanceEvent(ev){
+  if(!eventDue(ev) && !confirm('Este evento todavía no llegó a su hora de finalización ('+eventTimeText(ev)+'). Si cerrás ahora, los sin completar pasan a Presente igual. ¿Cerrar de todos modos?')) return;
   if(!confirm('¿Cerrar attendance de "'+ev.title+'"? Desde ahí ya cuenta para estadísticas.')) return;
   try{ await saveAttendanceRows(ev); await appRequest('close_event',{event_id:ev.id}); await refresh(true); toast('Evento cerrado'); }
   catch(e){ toast('No se pudo cerrar'); }
@@ -3747,9 +3763,9 @@ function calendarConfigHtml(){
     <div class="adminFieldGrid">
       <div class="field"><label>Inicio de semana</label><select id="adminCalWeekStart">${days.map(([v,l])=>`<option value="${v}" ${String(settings.calendar_week_start_dow??2)===v?'selected':''}>${l}</option>`).join('')}</select></div>
       <div class="field"><label>Modo horario</label><select id="adminCalTzMode"><option value="local" ${String(settings.calendar_timezone_mode||'local')==='local'?'selected':''}>Horario local</option><option value="server" ${String(settings.calendar_timezone_mode||'local')==='server'?'selected':''}>Server time</option><option value="fixed" ${String(settings.calendar_timezone_mode||'local')==='fixed'?'selected':''}>GMT fijo</option></select></div>
-      <div class="field"><label>GMT offset minutos</label><input id="adminCalTzOffset" type="number" step="1" value="${Number(settings.calendar_timezone_offset_minutes??-180)}"></div>
+      <div class="field"><label>Offset GMT minutos</label><input id="adminCalTzOffset" type="number" step="1" value="${Number(settings.calendar_timezone_offset_minutes??-180)}"><div class="hint">Argentina: -180. Server/CST si 19:30 = 22:30 Argentina: -360.</div></div>
     </div>
-    <div class="field" style="margin-top:10px"><label>Etiqueta horaria</label><input id="adminCalTzLabel" value="${esc(settings.calendar_timezone_label||'America/Buenos_Aires')}" placeholder="America/Buenos_Aires / Server time / GMT-3"></div>
+    <div class="field" style="margin-top:10px"><label>Etiqueta horaria</label><input id="adminCalTzLabel" value="${esc(settings.calendar_timezone_label||'America/Buenos_Aires')}" placeholder="CST / Server time / America/Buenos_Aires / GMT-3"></div>
   </div>`;
 }
 function renderAdmin(){
@@ -3780,6 +3796,19 @@ function renderAdmin(){
   document.getElementById('adminSaveApis').onclick=saveAdminApiConfig;
   document.getElementById('adminDetectWcl').onclick=detectWclZones;
   document.getElementById('adminApplyBackend').onclick=applyBackendConfig;
+  const adminTzMode=document.getElementById('adminCalTzMode');
+  if(adminTzMode) adminTzMode.onchange=()=>{
+    const offset=document.getElementById('adminCalTzOffset');
+    const label=document.getElementById('adminCalTzLabel');
+    if(adminTzMode.value==='server'){
+      if(offset && (!offset.value || Number(offset.value)===Number(DEFAULT_CALENDAR_SETTINGS.calendar_timezone_offset_minutes))) offset.value='-360';
+      if(label && (!label.value || label.value==='America/Buenos_Aires')) label.value='CST / Server time';
+    }
+    if(adminTzMode.value==='local'){
+      if(offset && (!offset.value || Number(offset.value)===-360)) offset.value=String(DEFAULT_CALENDAR_SETTINGS.calendar_timezone_offset_minutes);
+      if(label && (!label.value || label.value==='CST / Server time')) label.value=DEFAULT_CALENDAR_SETTINGS.calendar_timezone_label;
+    }
+  };
 }
 async function saveAdminPermissions(){
   if(!cap('manageAdmin')) return toast('No tenés permiso para cambiar Admin');
