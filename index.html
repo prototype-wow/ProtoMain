@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-bnT6MeiXJHBjn/u+Tp+0VYCYfuhAQYYY2swd4Z0bowY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-jFsRxqQVyNbdEBivqmtziq9fwDJe5YeGtvISXXIkhX8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -30,6 +30,8 @@
   .brand .txt p{margin:5px 0 0; color:var(--muted); font-size:11px; letter-spacing:.22em; text-transform:uppercase; font-weight:500}
   .brand .txt p b{color:var(--blue); font-weight:600}
   .hright{display:flex; align-items:center; gap:12px}
+  .serverClock{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:10px; padding:5px 9px; background:var(--bg-1); color:var(--gold); font-family:var(--font-mono); font-size:11px; font-weight:700}
+  .serverClock:before{content:'SERVER'; color:var(--muted); font-family:var(--font-display); font-size:9px; letter-spacing:.12em}
   .live{display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--muted-2); font-family:var(--font-mono)}
   .live .dot{width:8px; height:8px; border-radius:50%; background:var(--muted-2); transition:.2s}
   .live.ok .dot{background:var(--ok); box-shadow:0 0 8px var(--ok)}
@@ -648,6 +650,7 @@
       <div class="txt"><h1>Prototype</h1><p><b>US-Quel'Thalas</b> · Registro de Carries</p></div>
     </div>
     <div class="hright">
+      <span class="serverClock" id="serverClock" title="Server time"></span>
       <span class="live" id="live"><span class="dot"></span><span id="liveTxt">conectando…</span></span>
       <div id="userArea"></div>
     </div>
@@ -1039,6 +1042,12 @@ function blankSlots(){ const s={}; RAID_KEYS.forEach(k=>{ s[k]={}; RAIDS[k].boss
 function curWeek(){ return state.weeks.find(w=>w.id===state.current); }
 function soldFor(w,k,b){ return w.sales.filter(s=>s.raid===k && (s.bosses||[]).includes(b)).length; }
 function setLive(cls,txt){ const el=document.getElementById('live'); el.className='live '+cls; document.getElementById('liveTxt').textContent=txt; if(cls==='ok'){ el.classList.add('pulse'); setTimeout(()=>el.classList.remove('pulse'),600);} }
+function serverClockParts(){
+  const d=new Date(Date.now()+CALENDAR_TZ_OFFSETS['CST / Server time']*60000);
+  const pad=n=>String(n).padStart(2,'0');
+  return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth()+1)} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())} CST`;
+}
+function updateServerClock(){ const el=document.getElementById('serverClock'); if(el) el.textContent=serverClockParts(); }
 function showError(m){ const b=document.getElementById('banner'); b.classList.add('on'); b.innerHTML=m; }
 function clearError(){ document.getElementById('banner').classList.remove('on'); }
 let toastT; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),1900); }
@@ -1098,7 +1107,7 @@ async function fetchAll(){
 function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.recurrence,e.recurrence_group_id,e.recurrence_parent_id,e.recurrence_until,e.recurrence_days,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order,s.segment_status,s.sale_ids]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
 async function refresh(toastOnChange){
   if(!session||!session.token) return;
-  try{ await fetchAll(); clearError(); setLive('ok','en vivo');
+  try{ await fetchAll(); await materializeUpcomingRecurringEvents(); clearError(); setLive('ok','en vivo');
     if(session){ const u=users.find(x=>x.id===session.id); if(!u){ doLogout(true); return; } if(u.role!==session.role){ session.role=u.role; sessionStorage.setItem('pt_secure_session',JSON.stringify(session)); } }
     const sig=dataSig(); if(sig!==lastSig){ lastSig=sig; render(); if(toastOnChange) toast('Actualizado'); }
   }catch(e){ setLive('err','sin conexión'); showError('No se pudo conectar. ¿Corriste el SQL nuevo (tablas <code>users</code>, <code>app_settings</code>, <code>audit_log</code>)? <code>'+esc(String(e.message).slice(0,150))+'</code>'); }
@@ -2565,7 +2574,11 @@ function eventEndDate(ev){ const d=eventStartDate(ev); d.setMinutes(d.getMinutes
 function eventDue(ev){ return !['closed','cancelled'].includes(ev.status) && eventEndDate(ev) <= new Date(); }
 function eventTimeText(ev){ return `${String(ev.start_time||'').slice(0,5)}-${String(ev.end_time||'').slice(0,5)} · ${eventTimezoneLabel(ev)}`; }
 function recurrenceGroup(ev){ return String(ev&&ev.recurrence_group_id || ev&&ev.id || ''); }
-function eventSegments(ev){ const eventId=ev&&ev._template_id?ev._template_id:ev&&ev.id; return raidEventSegments.filter(s=>String(s.event_id)===String(eventId)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)); }
+function eventSegments(ev){
+  if(ev&&ev._virtual) return [];
+  const eventId=ev&&ev.id;
+  return raidEventSegments.filter(s=>String(s.event_id)===String(eventId)).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+}
 function addDays(dt,n){ const d=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()); d.setDate(d.getDate()+n); return d; }
 function addMonths(dt,n){ const d=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()); d.setMonth(d.getMonth()+n); return d; }
 function recurrenceDays(ev){
@@ -2585,7 +2598,7 @@ function materializedEventForGroupDate(group,key){
   return raidEvents.find(ev=>recurrenceGroup(ev)===group && sameDayKey(ev.event_date)===key && ev.recurrence!=='weekly');
 }
 function virtualEvent(template,key){
-  return {...template, id:`virtual:${template.id}:${key}`, _virtual:true, _template_id:template.id, event_date:key, recurrence_parent_id:template.id, recurrence_group_id:recurrenceGroup(template)};
+  return {...template, id:`virtual:${template.id}:${key}`, _virtual:true, _template_id:template.id, event_date:key, recurrence_parent_id:template.id, recurrence_group_id:recurrenceGroup(template), status:'planned', notes:null};
 }
 function calendarEventsForDay(key){
   const physical=raidEvents.filter(ev=>sameDayKey(ev.event_date)===key && ev.status!=='cancelled' && (ev.recurrence!=='weekly' || (recurrenceDays(ev).includes(parseLocalDate(key).getDay()) && !materializedEventForGroupDate(recurrenceGroup(ev),key))));
@@ -3297,7 +3310,7 @@ async function saveSegmentsFromEditorForEvent(ev,root=document){
   await saveEventSegments(real.id,parseSegmentsFromEditor(root));
   return real;
 }
-async function materializeRecurringEvent(ev){
+async function materializeRecurringEvent(ev,opts={}){
   const template=ev._template_id ? raidEvents.find(x=>String(x.id)===String(ev._template_id)) : ev;
   if(!template || template.recurrence!=='weekly') return ev;
   const key=sameDayKey(ev.event_date);
@@ -3318,14 +3331,52 @@ async function materializeRecurringEvent(ev){
     recurrence_group_id:recurrenceGroup(template),
     recurrence_parent_id:template.id,
     recurrence_days:null,
-    status:template.status==='closed'?'planned':template.status,
-    notes:template.notes||null
+    status:'planned',
+    notes:null
   };
   const rows=mutationRows(await sbIns('raid_events',row));
   const created=rows[0];
-  if(created) await saveEventSegments(created.id,eventSegments(template).map(s=>({sort_order:s.sort_order||0,zone_id:s.zone_id||null,instance_name:s.instance_name||null,difficulty:s.difficulty||null,bosses:arrish(s.bosses),sale_ids:arrish(s.sale_ids),segment_status:s.segment_status||'pending',notes:s.notes||null})));
-  await fetchAll();
+  if(opts.refresh!==false) await fetchAll();
   return created||ev;
+}
+let materializeUpcomingBusy=false, materializeUpcomingLast=0;
+function upcomingRecurringVirtualEvents(days=14){
+  const start=parseLocalDate(isoLocal(new Date()));
+  const out=[];
+  for(const template of raidEvents.filter(ev=>ev.recurrence==='weekly' && ev.status!=='cancelled')){
+    for(let i=0;i<=days;i++){
+      const key=isoLocal(addDays(start,i));
+      if(key===sameDayKey(template.event_date)) continue;
+      if(!recurringTemplateActiveOn(template,key)) continue;
+      if(materializedEventForGroupDate(recurrenceGroup(template),key)) continue;
+      out.push(virtualEvent(template,key));
+    }
+  }
+  return out.sort((a,b)=>sameDayKey(a.event_date).localeCompare(sameDayKey(b.event_date)) || String(a.start_time||'').localeCompare(String(b.start_time||'')));
+}
+async function materializeUpcomingRecurringEvents(){
+  if(!cap('manageCalendar') || materializeUpcomingBusy) return;
+  const now=Date.now();
+  if(now-materializeUpcomingLast<60000) return;
+  materializeUpcomingLast=now;
+  const targets=upcomingRecurringVirtualEvents(14).slice(0,20);
+  const today=parseLocalDate(isoLocal(new Date()));
+  const from=isoLocal(today);
+  const to=isoLocal(addDays(today,14));
+  const recurringGroups=new Set(raidEvents.filter(ev=>ev.recurrence==='weekly').map(recurrenceGroup));
+  const wronglyClosed=raidEvents.filter(ev=>{
+    const key=sameDayKey(ev.event_date);
+    return ev.recurrence!=='weekly' && ev.status==='closed' && recurringGroups.has(recurrenceGroup(ev)) && key>=from && key<=to && eventEndDate(ev)>new Date();
+  });
+  if(!targets.length && !wronglyClosed.length) return;
+  materializeUpcomingBusy=true;
+  let changed=false;
+  try{
+    for(const ev of targets){ await materializeRecurringEvent(ev,{refresh:false}); changed=true; }
+    for(const ev of wronglyClosed){ await sbUpd('raid_events',ev.id,{status:'planned'}); changed=true; }
+    if(changed) await fetchAll();
+  }catch(e){ console.warn('upcoming recurring materialize failed',e); }
+  finally{ materializeUpcomingBusy=false; }
 }
 async function updateFutureMaterializedEvents(ev,row,segments){
   const group=recurrenceGroup(ev);
@@ -4053,9 +4104,11 @@ async function boot(){
   }
   if(!session){ gate(); setLive('ok','listo'); return; }
   try{ await fetchAll(); }catch(e){ if(e.status===401){ await doLogout(true); return; } document.getElementById('app').style.display=''; setLive('err','sin conexión'); showError('No se pudo conectar con el gateway seguro. Verificá SQL 019 y las funciones <code>app-auth</code>/<code>app-api</code>.'); return; }
-  await ensureFirstWeek(); await fetchAll();
+  await ensureFirstWeek(); await fetchAll(); await materializeUpcomingRecurringEvents();
   lastSig=dataSig(); gate();
   setInterval(()=>{ const busy=document.hidden||document.getElementById('scrim').classList.contains('on')||document.getElementById('scrim2').classList.contains('on')||document.getElementById('login').classList.contains('on')||(document.activeElement&&['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)); if(!busy) refresh(true); },60000);
 }
+updateServerClock();
+setInterval(updateServerClock,1000);
 initApiBaseUrl().finally(()=>boot());
 </script>
