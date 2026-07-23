@@ -233,17 +233,17 @@
   .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--blue)}
   .field textarea{resize:vertical; min-height:54px}
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-  .segEditor{border:1px solid var(--line-soft); border-radius:12px; overflow:hidden; background:var(--bg)}
-  .segTools{display:flex; flex-wrap:nowrap; gap:8px; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft); background:var(--bg-1); overflow:auto}
-  .segGrid{display:grid; grid-template-columns:28px 1.15fr .85fr 1fr 1.1fr .9fr 1.1fr 92px; min-width:1080px}
+  .segEditor{position:relative; z-index:3; border:1px solid var(--line-soft); border-radius:12px; overflow:visible; background:var(--bg)}
+  .segTools{position:relative; z-index:5; display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px; border-bottom:1px solid var(--line-soft); background:var(--bg-1); overflow:visible}
+  .segGrid{display:grid; grid-template-columns:28px minmax(130px,1.05fr) minmax(92px,.72fr) minmax(120px,.95fr) minmax(140px,1fr) minmax(108px,.82fr) minmax(128px,1fr) 78px; min-width:920px}
   .segGrid.head{font-family:var(--font-display); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted-2); background:var(--bg-1)}
   .segGrid>div{padding:8px 7px; border-bottom:1px solid var(--line-soft); min-width:0}
   .segGrid select,.segGrid input{width:100%; min-width:0; border-radius:7px; border:1px solid var(--line); background:var(--bg-0)!important; color:var(--text)!important; -webkit-text-fill-color:var(--text); padding:7px 8px; font-size:12px}
   .segGrid select option{background:var(--bg-1)!important; color:var(--text)!important}
   .segTools select{width:auto!important; min-width:150px; max-width:260px; flex:0 0 auto; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-0)!important; color:var(--text)!important; padding:0 8px; font-size:12px; font-weight:800}
   .segTools button{flex:0 0 auto; white-space:nowrap}
-  .segBossDropdown{position:relative; flex:0 0 auto}
-  .segBossMenu{position:absolute; z-index:80; top:calc(100% + 6px); left:0; min-width:270px; max-height:320px; overflow:auto; display:none; border:1px solid var(--line); border-radius:12px; background:var(--bg-1); box-shadow:0 20px 50px -16px rgba(0,0,0,.85); padding:6px}
+  .segBossDropdown{position:relative; z-index:10; flex:0 0 auto}
+  .segBossMenu{position:absolute; z-index:120; top:calc(100% + 6px); left:0; width:320px; max-width:min(320px,78vw); max-height:320px; overflow:auto; display:none; border:1px solid var(--line); border-radius:12px; background:var(--bg-1); box-shadow:0 20px 50px -16px rgba(0,0,0,.85); padding:6px}
   .segBossDropdown.on .segBossMenu{display:block}
   .segBossMenu label{display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px; cursor:pointer; color:var(--text); font-size:12px; text-transform:none; letter-spacing:0; margin:0}
   .segBossMenu label:hover{background:var(--bg-2)}
@@ -255,7 +255,7 @@
   .segRow:active{cursor:grabbing}
   .segRow.dragging{opacity:.42; outline:1px dashed var(--blue); background:rgba(0,155,219,.12)}
   .segDrag{cursor:grab; color:var(--blue)}
-  .segmentScroller{overflow:auto}
+  .segmentScroller{position:relative; z-index:1; overflow-x:auto; overflow-y:visible}
   .segSelected{box-shadow:inset 3px 0 0 var(--blue); background:rgba(0,155,219,.07)}
   .dangerText{color:var(--rose); font-family:var(--font-display); text-transform:uppercase; letter-spacing:.08em; font-size:11px}
   .bosspick{display:flex; flex-direction:column; gap:6px}
