@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-RSRmbclmiogf3HXo39lep0ECSUYFgmvKI2XGEOklwGQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-HyiIsUmE6HmBSVPzsv/r51uhkNQKsgRW/Hq5MVFGVl8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -547,7 +547,15 @@
   .calEvent.sel{outline:1px solid var(--blue); box-shadow:0 0 0 2px rgba(0,155,219,.18)}
   .calEvent b{font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .calEvent span{font-family:var(--font-mono); font-size:10px; color:var(--muted)}
+  .calEventTop{display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0}
+  .calEventTop b{min-width:0}
+  .calEventStatus{flex:0 0 auto; border:1px solid var(--line); border-radius:999px; padding:1px 6px; font-family:var(--font-mono); font-size:8px; line-height:1.4; text-transform:uppercase; letter-spacing:.06em; color:var(--muted-2); background:rgba(255,255,255,.03)}
+  .calEvent.open .calEventStatus{border-color:rgba(0,155,219,.45); color:var(--blue)}
+  .calEvent.closed .calEventStatus{border-color:rgba(39,216,130,.45); color:var(--ok)}
+  .calEvent.postponed .calEventStatus{border-color:rgba(255,191,48,.55); color:var(--gold)}
+  .calEvent.cancelled .calEventStatus{border-color:rgba(232,85,107,.55); color:var(--rose)}
   .calEvent.closed{border-color:rgba(39,216,130,.35)}
+  .calEvent.postponed{border-color:rgba(255,191,48,.45); background:rgba(255,191,48,.08)}
   .calEvent.cancelled{opacity:.55; text-decoration:line-through}
   .dowGrid{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px}
   .dowGrid label{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-height:46px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); font-family:var(--font-mono); font-size:11px; cursor:pointer}
@@ -2572,7 +2580,7 @@ function renderRaid(k,w){
 }
 
 /* ---------- CALENDARIO ---------- */
-const RAID_EVENT_STATUS={planned:'Planificado',open:'Abierto',closed:'Cerrado',cancelled:'Cancelado'};
+const RAID_EVENT_STATUS={planned:'Planificado',open:'Abierto',closed:'Cerrado',postponed:'Pospuesto',cancelled:'Cancelado'};
 const RAID_EVENT_TYPE={raid:'Raid',carry:'Carry',mplus:'M+',guild:'Guild',daily:'Actividades Diarias',achievement:'Logros',other:'Otro'};
 const SEGMENT_STATUS={pending:'Pendiente',progress:'En progreso',killed:'Kill',reclear:'Reclear',done:'Hecho',postponed:'Postergado'};
 const ATT_STATUS={present:'Presente',bench:'Banca',absent_notice:'Ausente avisó',absent_no_notice:'Ausente sin aviso',late:'Tarde',left_early:'Se fue antes',partial:'Parcial',not_required:'No requerido'};
@@ -2613,7 +2621,7 @@ function eventWallClockDate(ev,time){
 }
 function eventStartDate(ev){ return eventWallClockDate(ev,ev.start_time); }
 function eventEndDate(ev){ const d=eventStartDate(ev); d.setMinutes(d.getMinutes()+eventDurationMinutes(ev)); return d; }
-function eventDue(ev){ return !['closed','cancelled'].includes(ev.status) && eventEndDate(ev) <= new Date(); }
+function eventDue(ev){ return !['closed','cancelled','postponed'].includes(ev.status) && eventEndDate(ev) <= new Date(); }
 function eventTimeText(ev){ return `${String(ev.start_time||'').slice(0,5)}-${String(ev.end_time||'').slice(0,5)} · ${eventTimezoneLabel(ev)}`; }
 function recurrenceGroup(ev){ return String(ev&&ev.recurrence_group_id || ev&&ev.id || ''); }
 function eventSegments(ev){
@@ -2630,7 +2638,7 @@ function recurrenceDays(ev){
   return [calendarWeekStart()];
 }
 function recurringTemplateActiveOn(ev,key){
-  if(!ev || ev.recurrence!=='weekly' || ev.status==='cancelled') return false;
+  if(!ev || ev.recurrence!=='weekly' || ['cancelled','postponed'].includes(ev.status)) return false;
   const start=sameDayKey(ev.event_date);
   if(key<start) return false;
   if(ev.recurrence_until && key>sameDayKey(ev.recurrence_until)) return false;
@@ -2643,7 +2651,7 @@ function virtualEvent(template,key){
   return {...template, id:`virtual:${template.id}:${key}`, _virtual:true, _template_id:template.id, event_date:key, recurrence_parent_id:template.id, recurrence_group_id:recurrenceGroup(template), status:'planned', notes:null};
 }
 function calendarEventsForDay(key){
-  const physical=raidEvents.filter(ev=>sameDayKey(ev.event_date)===key && ev.status!=='cancelled' && (ev.recurrence!=='weekly' || (recurrenceDays(ev).includes(parseLocalDate(key).getDay()) && !materializedEventForGroupDate(recurrenceGroup(ev),key))));
+  const physical=raidEvents.filter(ev=>sameDayKey(ev.event_date)===key && (ev.recurrence!=='weekly' || (recurrenceDays(ev).includes(parseLocalDate(key).getDay()) && !materializedEventForGroupDate(recurrenceGroup(ev),key))));
   const virtuals=raidEvents.filter(ev=>ev.recurrence==='weekly' && sameDayKey(ev.event_date)!==key && recurringTemplateActiveOn(ev,key))
     .filter(ev=>!materializedEventForGroupDate(recurrenceGroup(ev),key))
     .map(ev=>virtualEvent(ev,key));
@@ -2657,7 +2665,8 @@ function eventLabel(ev){
 }
 function eventCard(ev){
   const sel=selectedCalendarEvents.has(String(ev.id))?' sel':'';
-  return `<button class="calEvent ${esc(ev.status||'planned')}${sel}" data-event="${esc(ev.id)}"><b>${esc(ev.title)}</b><span>${esc(eventTimeText(ev))} · ${esc(eventLabel(ev))}</span></button>`;
+  const status=ev.status||'planned';
+  return `<button class="calEvent ${esc(status)}${sel}" data-event="${esc(ev.id)}"><div class="calEventTop"><b>${esc(ev.title)}</b><em class="calEventStatus">${esc(RAID_EVENT_STATUS[status]||status)}</em></div><span>${esc(eventTimeText(ev))} · ${esc(eventLabel(ev))}</span></button>`;
 }
 async function ensureDueAttendance(){
   if(!cap('manageAttendance')) return;
@@ -2706,10 +2715,12 @@ function attendanceFilterBounds(){
 function eventMatchesAttendanceFilters(ev){
   const key=sameDayKey(ev.event_date), now=new Date();
   const status=attendanceViewFilter.status||'all';
-  if(status==='pending' && (ev.status==='closed'||ev.status==='cancelled'||eventEndDate(ev)<now)) return false;
-  if(status==='past' && !(ev.status==='closed'||eventEndDate(ev)<now)) return false;
+  if(status==='pending' && (ev.status==='closed'||ev.status==='cancelled'||ev.status==='postponed'||eventEndDate(ev)<now)) return false;
+  if(status==='past' && !(ev.status==='closed'||ev.status==='cancelled'||ev.status==='postponed'||eventEndDate(ev)<now)) return false;
   if(status==='closed' && ev.status!=='closed') return false;
   if(status==='open' && ev.status!=='open') return false;
+  if(status==='postponed' && ev.status!=='postponed') return false;
+  if(status==='cancelled' && ev.status!=='cancelled') return false;
   const {from,to}=attendanceFilterBounds();
   if(from && key<from) return false;
   if(to && key>to) return false;
@@ -2731,7 +2742,7 @@ function attendanceFilterBarHtml(events){
   if(attendanceViewFilter.boss!=='all' && !bossSource.includes(attendanceViewFilter.boss)) attendanceViewFilter.boss='all';
   const types=[...new Set(events.map(e=>e.event_type).filter(Boolean))];
   return `<div class="attendanceFilters">
-    <div class="field"><label>Estado fecha</label><select data-att-filter="status">${labeledOptionsHtml([['all','Todos'],['pending','Pendientes'],['past','Pasados'],['open','Abiertos'],['closed','Cerrados']],attendanceViewFilter.status)}</select></div>
+    <div class="field"><label>Estado fecha</label><select data-att-filter="status">${labeledOptionsHtml([['all','Todos'],['pending','Pendientes'],['past','Pasados'],['open','Abiertos'],['closed','Cerrados'],['postponed','Pospuestos'],['cancelled','Cancelados']],attendanceViewFilter.status)}</select></div>
     <div class="field"><label>Rango</label><select data-att-filter="range">${labeledOptionsHtml([['all','Todo'],['this_week','Esta semana'],['next2','Próx. 2 semanas'],['next3','Próx. 3 semanas'],['month1','Próx. 1 mes'],['month2','Próx. 2 meses'],['month3','Próx. 3 meses'],['custom','Fechas específicas']],attendanceViewFilter.range)}</select></div>
     <div class="field"><label>Desde</label><input type="date" data-att-filter="from" value="${esc(attendanceViewFilter.from||'')}"></div>
     <div class="field"><label>Hasta</label><input type="date" data-att-filter="to" value="${esc(attendanceViewFilter.to||'')}"></div>
@@ -2762,7 +2773,7 @@ function attendanceStatusSummary(ev){
   return `${done}/${total} completados${absent?` · ${absent} ausentes`:''}`;
 }
 function attendanceMatrixEvents(events){
-  return events.filter(ev=>!ev._virtual && ev.status!=='cancelled').sort((a,b)=>sameDayKey(a.event_date).localeCompare(sameDayKey(b.event_date)) || String(a.start_time||'').localeCompare(String(b.start_time||'')));
+  return events.filter(ev=>!ev._virtual && !['cancelled','postponed'].includes(ev.status)).sort((a,b)=>sameDayKey(a.event_date).localeCompare(sameDayKey(b.event_date)) || String(a.start_time||'').localeCompare(String(b.start_time||'')));
 }
 function attendanceRosterRows(){
   return characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false && ['raider','trial'].includes(String(ch.roster_category||'raider'))).sort((a,b)=>String(a.role||'').localeCompare(String(b.role||'')) || String(a.class||'').localeCompare(String(b.class||'')) || String(a.name).localeCompare(String(b.name)));
@@ -2874,7 +2885,7 @@ function renderAttendance(){
   const list=events.map(e=>`<button class="attendancePick ${String(e.id)===String(attendanceEventId)?'on':''}" data-att-event="${esc(e.id)}"><b>${esc(fmtDate(e.event_date))} · ${esc(e.title)}</b><span>${esc(String(e.start_time||'').slice(0,5))}-${esc(String(e.end_time||'').slice(0,5))} · ${esc(RAID_EVENT_STATUS[e.status]||e.status)} · ${esc(eventLabel(e))}${e._virtual?' · recurrente':''}</span></button>`).join('');
   const right=!ev ? '<div class="empty">Elegí un evento.</div>' : ev._virtual
     ? `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(ev.title)}</h2><div class="sub">${fmtDate(ev.event_date)} · ${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))}</div></div><div class="pbody"><div class="empty"><b>Ocurrencia recurrente</b>Esta fecha todavía no existe como evento real. Abrila para pasar lista sin crear todas las semanas futuras.</div>${cap('manageAttendance')?`<button class="btn primary" id="attOpenVirtual">Abrir attendance</button>`:''}</div></div>`
-    : `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(ev.title)}</h2><div class="sub">${fmtDate(ev.event_date)} · ${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))} · ${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</div></div><div class="pbody">${attendanceEditorHtml(ev)}<div class="attToolbar">${cap('manageCalendar')?'<button class="btn ghost sm" id="attEditEvent">Editar evento</button><button class="btn ghost sm danger" id="attDeleteEvent">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSavePage">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClosePage">Cerrar evento</button>':''}</div></div></div>`;
+    : `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(ev.title)}</h2><div class="sub">${fmtDate(ev.event_date)} · ${esc(String(ev.start_time||'').slice(0,5))}-${esc(String(ev.end_time||'').slice(0,5))} · ${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</div></div><div class="pbody">${attendanceEditorHtml(ev)}<div class="attToolbar">${cap('manageCalendar')?'<button class="btn ghost sm" id="attEditEvent">Editar evento</button><button class="btn ghost sm danger" id="attDeleteEvent">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSavePage">Guardar attendance</button>':''}${cap('closeAttendance')&&!['closed','cancelled','postponed'].includes(ev.status)?'<button class="btn ghost sm" id="attClosePage">Cerrar evento</button>':''}</div></div></div>`;
   const basic=attendanceMatrixHtml(events);
   const advanced=`<div class="attendanceShell"><div class="panel"><div class="phead"><h2><span class="dia"></span>Eventos</h2><div class="sub">Pasar lista por raid</div></div><div class="pbody attendanceList">${list}</div></div>${right}</div>`;
   c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Attendance</div><div class="actions">${cap('manageCalendar')?'<button class="btn primary sm" id="attNewEvent">+ Evento</button>':''}</div></div>
@@ -2943,8 +2954,8 @@ function showCalendarContext(e,eventId){
   const selected=selectedCalendarEvents.size?[...selectedCalendarEvents]:[String(eventId)];
   menu.innerHTML=`<button data-calctx="edit">Editar este evento</button>
     <button data-calctx="attendance">Editar attendance</button>
-    <button class="danger" data-calctx="delete-one">Eliminar este día</button>
-    <button class="danger" data-calctx="delete-week">Eliminar semana seleccionada</button>
+    <button class="danger" data-calctx="delete-one">Cancelar/eliminar este día</button>
+    <button class="danger" data-calctx="delete-week">Cancelar/eliminar semana seleccionada</button>
     <button class="danger" data-calctx="delete-future">Eliminar serie hacia adelante</button>
     <button class="danger" data-calctx="delete-all">ELIMINAR TODA LA SERIE HISTÓRICA</button>`;
   menu.style.left=Math.min(e.clientX,window.innerWidth-270)+'px';
@@ -3523,7 +3534,7 @@ async function openRaidEventDetail(eventId){
     <div class="eventMini"><span>Estado</span><b>${esc(RAID_EVENT_STATUS[ev.status]||ev.status)}</b></div><div class="eventMini"><span>Duración</span><b>${eventDurationMinutes(ev)} min</b></div>
   </div>${segmentBlock}
   ${attendanceTableHtml(ev)}</div>`;
-  const actions=`<div class="actions" style="margin-top:12px">${cap('manageCalendar')?'<button class="btn ghost sm" id="evEdit">Editar evento</button><button class="btn ghost sm danger" id="evDelete">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSave">Guardar attendance</button>':''}${cap('closeAttendance')&&ev.status!=='closed'?'<button class="btn ghost sm" id="attClose">Cerrar evento</button>':''}</div>`;
+  const actions=`<div class="actions" style="margin-top:12px">${cap('manageCalendar')?'<button class="btn ghost sm" id="evEdit">Editar evento</button><button class="btn ghost sm danger" id="evDelete">Eliminar evento</button>':''}${cap('manageAttendance')?'<button class="btn primary sm" id="attSave">Guardar attendance</button>':''}${cap('closeAttendance')&&!['closed','cancelled','postponed'].includes(ev.status)?'<button class="btn ghost sm" id="attClose">Cerrar evento</button>':''}</div>`;
   openM2(ev.title, table+actions, async()=>{
     const root=document.getElementById('m2body')||document;
     let real=ev;
@@ -3580,31 +3591,48 @@ async function saveAttendanceSegments(ev,root=document){
   }
 }
 async function closeAttendanceEvent(ev){
+  if(['cancelled','postponed'].includes(ev.status)) return toast('Ese evento no computa attendance.');
   if(!eventDue(ev) && !confirm('Este evento todavía no llegó a su hora de finalización ('+eventTimeText(ev)+'). Si cerrás ahora, los sin completar pasan a Presente igual. ¿Cerrar de todos modos?')) return;
   if(!confirm('¿Cerrar attendance de "'+ev.title+'"? Desde ahí ya cuenta para estadísticas.')) return;
   try{ await saveAttendanceRows(ev); await appRequest('close_event',{event_id:ev.id,force:true}); await refresh(true); toast('Evento cerrado'); }
   catch(e){ toast('No se pudo cerrar'); }
 }
-async function deleteRaidEvent(ev){
-  if(!cap('manageCalendar')) return toast('Sin permiso');
-  if(!ev || ev._virtual) return toast('Abrí primero esa fecha recurrente si querés eliminarla.');
-  if(!confirm('¿Eliminar el evento "'+ev.title+'" del '+fmtDate(ev.event_date)+'? Se borra también su attendance.')) return;
-  try{
-    await clearSegmentLinkedSalesForEvents([ev.id]);
-    await sbDel('raid_events',ev.id);
-    logAction('borrar_raid_event','raid_event',ev.id,{target:ev.title,date:sameDayKey(ev.event_date)});
-    if(String(attendanceEventId)===String(ev.id)) attendanceEventId='';
-    closeM2();
-    await refresh(true);
-    toast('Evento eliminado');
-  }catch(e){ toast('No se pudo eliminar el evento'); }
+function isRecurringOccurrence(ev){
+  if(!ev) return false;
+  return !!(ev._virtual || ev.recurrence==='weekly' || ev.recurrence_parent_id || (ev.recurrence_group_id && String(ev.recurrence_group_id)!==String(ev.id)));
 }
-async function materializeCancelOccurrence(ev){
-  if(!ev._virtual) return ev;
-  const real=await materializeRecurringEvent(ev);
+async function cancelRaidEventOccurrence(ev){
+  let real=ev;
+  if(ev._virtual || ev.recurrence==='weekly') real=await materializeRecurringEvent(ev,{refresh:false});
+  await clearSegmentLinkedSalesForEvents([real.id]);
   await sbUpd('raid_events',real.id,{status:'cancelled'});
   return real;
 }
+async function removeOrCancelRaidEvent(ev){
+  if(!ev) return null;
+  if(isRecurringOccurrence(ev)) return cancelRaidEventOccurrence(ev);
+  await clearSegmentLinkedSalesForEvents([ev.id]);
+  await sbDel('raid_events',ev.id);
+  return ev;
+}
+async function deleteRaidEvent(ev){
+  if(!cap('manageCalendar')) return toast('Sin permiso');
+  if(!ev) return toast('Evento no encontrado');
+  const recurring=isRecurringOccurrence(ev);
+  const msg=recurring
+    ? '¿Cancelar solo esta fecha de "'+ev.title+'" del '+fmtDate(ev.event_date)+'? No cuenta attendance y no vuelve a aparecer por la recurrencia.'
+    : '¿Eliminar el evento "'+ev.title+'" del '+fmtDate(ev.event_date)+'? Se borra también su attendance.';
+  if(!confirm(msg)) return;
+  try{
+    const real=await removeOrCancelRaidEvent(ev);
+    logAction(recurring?'cancelar_raid_event':'borrar_raid_event','raid_event',real&&real.id||ev.id,{target:ev.title,date:sameDayKey(ev.event_date)});
+    if(String(attendanceEventId)===String(real&&real.id||ev.id)) attendanceEventId='';
+    closeM2();
+    await refresh(true);
+    toast(recurring?'Evento cancelado':'Evento eliminado');
+  }catch(e){ toast('No se pudo eliminar el evento'); }
+}
+async function materializeCancelOccurrence(ev){ return cancelRaidEventOccurrence(ev); }
 async function deleteCalendarScope(eventId,scope,selectedIds){
   if(!cap('manageCalendar')) return toast('Sin permiso');
   const ev=findAttendanceEvent(eventId,attendanceCandidateEvents()) || findAttendanceEvent(eventId);
@@ -3612,14 +3640,13 @@ async function deleteCalendarScope(eventId,scope,selectedIds){
   if(scope==='all'){
     const ok=confirm('PELIGRO: esto elimina toda la serie histórica, incluidos eventos anteriores. ¿Seguro?');
     if(!ok) return;
-  }else if(!confirm('¿Eliminar alcance "'+scope+'" para '+ev.title+'?')) return;
+  }else if(!confirm('¿Eliminar alcance "'+scope+'" para '+ev.title+'? Las fechas recurrentes se cancelan para que no reaparezcan.')) return;
   try{
     if(scope==='one'){
       for(const id of selectedIds||[eventId]){
         const item=findAttendanceEvent(id,attendanceCandidateEvents()) || findAttendanceEvent(id);
         if(!item) continue;
-        if(item._virtual) await materializeCancelOccurrence(item);
-        else{ await clearSegmentLinkedSalesForEvents([item.id]); await sbDel('raid_events',item.id); }
+        await removeOrCancelRaidEvent(item);
       }
     }else if(scope==='week'){
       const start=calendarWeekStartDate(parseLocalDate(ev.event_date));
@@ -3628,8 +3655,7 @@ async function deleteCalendarScope(eventId,scope,selectedIds){
       for(const item of attendanceCandidateEvents()){
         const d=parseLocalDate(item.event_date);
         if(recurrenceGroup(item)===group && d>=start && d<=end){
-          if(item._virtual) await materializeCancelOccurrence(item);
-          else{ await clearSegmentLinkedSalesForEvents([item.id]); await sbDel('raid_events',item.id); }
+          await removeOrCancelRaidEvent(item);
         }
       }
     }else if(scope==='future'){
