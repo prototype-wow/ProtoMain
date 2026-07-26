@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-WIK1vsbjWABWngCH6zS/zfZbhUUvFIKkk4qXuZTKOJo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-Q9pItLfpRkekSoweEFjd2YlPapPPU5TM0qeeKBgRTkk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -522,11 +522,16 @@
   .attendanceFilters input,.attendanceFilters select{height:34px; padding:7px 9px; font-size:12px}
   .attendanceRulesPanel{margin-top:4px}
   .attendanceRulesToolbar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
+  .attendanceRulesFilters{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .attendanceRulesFilters select{height:32px; padding:6px 9px; font-size:12px; min-width:160px}
   .attendanceRulesList{display:grid; gap:8px}
   .attendanceRuleRow{display:grid; grid-template-columns:minmax(160px,1fr) 140px 160px minmax(180px,1fr) auto; align-items:center; gap:10px; border:1px solid var(--line-soft); background:var(--bg-0); border-radius:10px; padding:9px 10px}
+  .attendanceRuleRow.cancelled{opacity:.68}
+  .attendanceRuleRow.expired{border-color:rgba(255,184,26,.22)}
   .attendanceRuleRow b{font-size:12px}
   .attendanceRuleRow span{display:block; color:var(--muted); font-family:var(--font-mono); font-size:10px; margin-top:2px}
   .attendanceRuleStatus{font-family:var(--font-mono); color:var(--gold); font-weight:900}
+  .attendanceRuleMeta{font-family:var(--font-mono); color:var(--muted); font-size:10px}
   .attendanceRuleOps{display:flex; justify-content:flex-end; gap:7px}
   @media(max-width:900px){.attendanceRuleRow{grid-template-columns:1fr 1fr}.attendanceRuleOps{justify-content:flex-start}}
   @media(max-width:1100px){.attendanceFilters{grid-template-columns:repeat(3,minmax(130px,1fr))}}
@@ -921,6 +926,7 @@ let progView='general', progSearch='', progClass='all', progRole='all', progSort
 let attendanceFilter={period:'30',from:'',to:''};
 let attendanceSubView='basic';
 let attendanceViewFilter={status:'all',range:'month1',from:'',to:'',type:'all',instance:'all',difficulty:'all',boss:'all',sort:'asc'};
+let attendanceRuleFilter='active';
 let calendarMode='month', calendarCursor=new Date(), selectedRaidEventId='', attendanceEventId='';
 let selectedCalendarEvents=new Set();
 let singleCharId='', singleWclZone='46', singleWclMetric='dps', singleWclDifficulty='5', singleRioSpec='';
@@ -2618,25 +2624,50 @@ function attendanceRuleSummary(rule){
   return bits.join(' · ') || 'Sin nota';
 }
 function characterById(id){ return characters.find(ch=>String(ch.id)===String(id)); }
-function activeAttendanceRules(){
-  return (raidAttendanceRules||[]).filter(r=>r.active!==false).sort((a,b)=>String(a.date_from||'').localeCompare(String(b.date_from||'')) || String(characterById(a.character_id)?.name||'').localeCompare(String(characterById(b.character_id)?.name||'')));
+function attendanceRuleState(rule){
+  if(rule.active===false) return 'cancelled';
+  const today=isoLocal(new Date());
+  if(String(rule.date_to||'') && String(rule.date_to).slice(0,10)<today) return 'expired';
+  return 'active';
+}
+function attendanceRuleStateLabel(state){
+  return ({active:'Activa',expired:'Vencida',cancelled:'Cancelada'})[state]||state;
+}
+function attendanceRuleRows(){
+  return (raidAttendanceRules||[])
+    .map(rule=>({...rule,_state:attendanceRuleState(rule)}))
+    .filter(rule=>attendanceRuleFilter==='all'||rule._state===attendanceRuleFilter)
+    .sort((a,b)=>String(a.date_from||'').localeCompare(String(b.date_from||'')) || String(characterById(a.character_id)?.name||'').localeCompare(String(characterById(b.character_id)?.name||'')));
+}
+function attendanceRuleCounts(){
+  const counts={active:0,expired:0,cancelled:0,all:(raidAttendanceRules||[]).length};
+  (raidAttendanceRules||[]).forEach(rule=>{ const s=attendanceRuleState(rule); counts[s]=(counts[s]||0)+1; });
+  return counts;
 }
 function attendanceRulesPanelHtml(){
   if(!cap('viewAttendance')&&!cap('manageAttendance')) return '';
-  const rows=activeAttendanceRules();
-  return `<section class="panel attendanceRulesPanel"><div class="phead"><h2><span class="dia"></span>Ausencias / Demoras programadas</h2><div class="sub">Reglas por personaje y rango de fechas. Al abrir/cerrar attendance se aplican solo si ese jugador todavía está sin completar.</div></div>
+  const rows=attendanceRuleRows();
+  const counts=attendanceRuleCounts();
+  const filterOptions=[['active','Activas'],['expired','Vencidas'],['cancelled','Canceladas'],['all','Todo el historial']].map(([v,l])=>`<option value="${v}" ${attendanceRuleFilter===v?'selected':''}>${l} (${counts[v]||0})</option>`).join('');
+  return `<section class="panel attendanceRulesPanel"><div class="phead"><h2><span class="dia"></span>Ausencias / Demoras programadas</h2><div class="sub">Historial de avisos por personaje y rango de fechas. Las canceladas no se aplican, pero quedan auditables.</div></div>
     <div class="pbody">
-      <div class="attendanceRulesToolbar"><span class="mono">${rows.length} regla${rows.length===1?'':'s'} activa${rows.length===1?'':'s'}</span>${cap('manageAttendance')?'<button class="btn primary sm" id="attendanceRuleNew">+ Regla</button>':''}</div>
+      <div class="attendanceRulesToolbar"><div class="attendanceRulesFilters"><span class="mono">${rows.length} / ${counts.all||0} regla${counts.all===1?'':'s'}</span><select id="attendanceRuleFilter">${filterOptions}</select></div>${cap('manageAttendance')?'<button class="btn primary sm" id="attendanceRuleNew">+ Regla</button>':''}</div>
       <div class="attendanceRulesList">${rows.length?rows.map(rule=>{
         const ch=characterById(rule.character_id)||{};
-        return `<div class="attendanceRuleRow">
+        const state=rule._state||attendanceRuleState(rule);
+        const ops=cap('manageAttendance')
+          ? state==='cancelled'
+            ? `<button class="btn ghost sm" data-att-rule-restore="${esc(rule.id)}">Restaurar</button><button class="btn ghost sm danger" data-att-rule-hard-del="${esc(rule.id)}">Borrar definitivo</button>`
+            : `<button class="btn ghost sm" data-att-rule-edit="${esc(rule.id)}">Editar</button><button class="btn ghost sm danger" data-att-rule-del="${esc(rule.id)}">Cancelar</button>`
+          : '';
+        return `<div class="attendanceRuleRow ${esc(state)}">
           <div>${classBadge(ch.class)} <b>${esc(ch.name||'Personaje eliminado')}</b><span>${esc(ch.realm_slug||'')} ${esc(ch.region||'')}</span></div>
           <div class="attendanceRuleStatus">${esc(ATT_STATUS[rule.status]||rule.status)}</div>
           <div><b>${esc(fmtDateFull(rule.date_from))} → ${esc(fmtDateFull(rule.date_to))}</b><span>${esc(attendanceRuleSummary(rule))}</span></div>
-          <div><span>${esc(rule.created_by?`creó ${rule.created_by}`:'')}</span><span>${esc(rule.updated_by?`actualizó ${rule.updated_by}`:'')}</span></div>
-          <div class="attendanceRuleOps">${cap('manageAttendance')?`<button class="btn ghost sm" data-att-rule-edit="${esc(rule.id)}">Editar</button><button class="btn ghost sm danger" data-att-rule-del="${esc(rule.id)}">Borrar</button>`:''}</div>
+          <div><b class="attendanceRuleMeta">${esc(attendanceRuleStateLabel(state))}</b><span>${esc(rule.created_by?`creó ${rule.created_by}`:'')}</span><span>${esc(rule.updated_by?`actualizó ${rule.updated_by}`:'')}</span></div>
+          <div class="attendanceRuleOps">${ops}</div>
         </div>`;
-      }).join(''):'<div class="singleEmpty">Sin reglas programadas.</div>'}</div>
+      }).join(''):'<div class="singleEmpty">Sin reglas para este filtro.</div>'}</div>
     </div></section>`;
 }
 function attendanceRuleFormHtml(rule){
@@ -2655,8 +2686,12 @@ function attendanceRuleFormHtml(rule){
 function bindAttendanceRulesPanel(root=document){
   const add=root.querySelector('#attendanceRuleNew');
   if(add) add.onclick=()=>openAttendanceRuleForm(null);
+  const filter=root.querySelector('#attendanceRuleFilter');
+  if(filter) filter.onchange=()=>{ attendanceRuleFilter=filter.value||'active'; renderCalendario(); };
   root.querySelectorAll('[data-att-rule-edit]').forEach(btn=>btn.onclick=()=>openAttendanceRuleForm(btn.dataset.attRuleEdit));
   root.querySelectorAll('[data-att-rule-del]').forEach(btn=>btn.onclick=()=>deleteAttendanceRule(btn.dataset.attRuleDel));
+  root.querySelectorAll('[data-att-rule-restore]').forEach(btn=>btn.onclick=()=>restoreAttendanceRule(btn.dataset.attRuleRestore));
+  root.querySelectorAll('[data-att-rule-hard-del]').forEach(btn=>btn.onclick=()=>hardDeleteAttendanceRule(btn.dataset.attRuleHardDel));
 }
 function openAttendanceRuleForm(id){
   if(!cap('manageAttendance')) return toast('Sin permiso');
@@ -2679,7 +2714,7 @@ function openAttendanceRuleForm(id){
       leave_time:document.getElementById('ar_leave').value||null,
       away_minutes:Number(document.getElementById('ar_away').value||0),
       note:document.getElementById('ar_note').value.trim()||null,
-      active:true
+      active:rule?rule.active!==false:true
     };
     try{
       if(rule) await sbUpd('raid_attendance_rules',rule.id,row);
@@ -2694,12 +2729,34 @@ async function deleteAttendanceRule(id){
   const rule=raidAttendanceRules.find(r=>String(r.id)===String(id));
   if(!rule) return toast('Regla no encontrada');
   const ch=characterById(rule.character_id);
-  if(!confirm('¿Borrar la regla de '+(ch&&ch.name||'este personaje')+' del '+fmtDateFull(rule.date_from)+' al '+fmtDateFull(rule.date_to)+'?')) return;
+  if(!confirm('¿Cancelar la regla de '+(ch&&ch.name||'este personaje')+' del '+fmtDateFull(rule.date_from)+' al '+fmtDateFull(rule.date_to)+'? Queda en historial y deja de aplicarse.')) return;
+  try{
+    await sbUpd('raid_attendance_rules',id,{active:false});
+    logAction('cancelar_attendance_rule','raid_attendance_rule',id,{target:ch&&ch.name||rule.character_id});
+    await refresh(true); renderCalendario(); toast('Regla cancelada');
+  }catch(e){ toast('No se pudo cancelar la regla'); }
+}
+async function restoreAttendanceRule(id){
+  if(!cap('manageAttendance')) return toast('Sin permiso');
+  const rule=raidAttendanceRules.find(r=>String(r.id)===String(id));
+  if(!rule) return toast('Regla no encontrada');
+  try{
+    await sbUpd('raid_attendance_rules',id,{active:true});
+    logAction('restaurar_attendance_rule','raid_attendance_rule',id,{target:rule.character_id});
+    await refresh(true); attendanceRuleFilter='active'; renderCalendario(); toast('Regla restaurada');
+  }catch(e){ toast('No se pudo restaurar la regla'); }
+}
+async function hardDeleteAttendanceRule(id){
+  if(!cap('manageAttendance')) return toast('Sin permiso');
+  const rule=raidAttendanceRules.find(r=>String(r.id)===String(id));
+  if(!rule) return toast('Regla no encontrada');
+  const ch=characterById(rule.character_id);
+  if(!confirm('¿Borrar definitivamente la regla histórica de '+(ch&&ch.name||'este personaje')+'? Esto sí la elimina del historial.')) return;
   try{
     await sbDel('raid_attendance_rules',id);
-    logAction('borrar_attendance_rule','raid_attendance_rule',id,{target:ch&&ch.name||rule.character_id});
-    await refresh(true); renderCalendario(); toast('Regla borrada');
-  }catch(e){ toast('No se pudo borrar la regla'); }
+    logAction('borrar_definitivo_attendance_rule','raid_attendance_rule',id,{target:ch&&ch.name||rule.character_id});
+    await refresh(true); renderCalendario(); toast('Regla eliminada');
+  }catch(e){ toast('No se pudo borrar definitivamente'); }
 }
 const WEEKDAY_SHORT=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 function calendarWeekStart(){ const n=Number(settings.calendar_week_start_dow); return Number.isInteger(n)&&n>=0&&n<=6?n:2; }
