@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-HyiIsUmE6HmBSVPzsv/r51uhkNQKsgRW/Hq5MVFGVl8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-WIK1vsbjWABWngCH6zS/zfZbhUUvFIKkk4qXuZTKOJo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -520,6 +520,15 @@
   .attendanceFilters{display:grid; grid-template-columns:repeat(6,minmax(130px,1fr)); gap:8px; margin:0 0 12px}
   .attendanceFilters .field{margin:0}
   .attendanceFilters input,.attendanceFilters select{height:34px; padding:7px 9px; font-size:12px}
+  .attendanceRulesPanel{margin-top:4px}
+  .attendanceRulesToolbar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
+  .attendanceRulesList{display:grid; gap:8px}
+  .attendanceRuleRow{display:grid; grid-template-columns:minmax(160px,1fr) 140px 160px minmax(180px,1fr) auto; align-items:center; gap:10px; border:1px solid var(--line-soft); background:var(--bg-0); border-radius:10px; padding:9px 10px}
+  .attendanceRuleRow b{font-size:12px}
+  .attendanceRuleRow span{display:block; color:var(--muted); font-family:var(--font-mono); font-size:10px; margin-top:2px}
+  .attendanceRuleStatus{font-family:var(--font-mono); color:var(--gold); font-weight:900}
+  .attendanceRuleOps{display:flex; justify-content:flex-end; gap:7px}
+  @media(max-width:900px){.attendanceRuleRow{grid-template-columns:1fr 1fr}.attendanceRuleOps{justify-content:flex-start}}
   @media(max-width:1100px){.attendanceFilters{grid-template-columns:repeat(3,minmax(130px,1fr))}}
   @media(max-width:680px){.attendanceFilters{grid-template-columns:1fr}}
   .attToolbar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px}
@@ -906,7 +915,7 @@ function rolePerms(){ return normalizePerms(settings.role_permissions); }
 let state={ weeks:[], current:null };
 let users=[], settings={ require_login:false, role_permissions:null, wcl_active_zone_ids:DEFAULT_WCL_ZONE_IDS, wcl_mplus_zone_id:DEFAULT_WCL_MPLUS_ZONE_ID, wcl_active_difficulties:DEFAULT_WCL_DIFFS, wcl_active_metrics:DEFAULT_WCL_METRICS, raiderio_season:'current', ...DEFAULT_SYNC_SETTINGS, ...DEFAULT_CALENDAR_SETTINGS }, auditLog=[];
 let characters=[], characterProgress=[], realms=[], trackedAbilities=[], wclRankings=[], wclZones=[], raiderProfiles=[];
-let raidEvents=[], raidEventSegments=[], raidAttendance=[];
+let raidEvents=[], raidEventSegments=[], raidAttendance=[], raidAttendanceRules=[];
 let recruits=[], recruitFilter={q:"",status:"open"}, recruitLoadError='', recruitPanelOpenId=''; let selectedRecruitId="";
 let progView='general', progSearch='', progClass='all', progRole='all', progSort={col:'ilvl',dir:-1};
 let attendanceFilter={period:'30',from:'',to:''};
@@ -1110,9 +1119,10 @@ async function fetchAll(){
   if('raid_events' in data) raidEvents=data.raid_events||[];
   if('raid_event_segments' in data) raidEventSegments=data.raid_event_segments||[];
   if('raid_attendance' in data) raidAttendance=data.raid_attendance||[];
+  if('raid_attendance_rules' in data) raidAttendanceRules=data.raid_attendance_rules||[];
   if(cap('manageRecruits')){ try{ await fetchRecruits(); }catch(e){ recruits=[]; recruitLoadError=e&&e.message?e.message:String(e); } }
 }
-function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.recurrence,e.recurrence_group_id,e.recurrence_parent_id,e.recurrence_until,e.recurrence_days,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order,s.segment_status,s.sale_ids]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
+function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.recurrence,e.recurrence_group_id,e.recurrence_parent_id,e.recurrence_until,e.recurrence_days,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order,s.segment_status,s.sale_ids]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), raidAttendanceRules.map(r=>[r.id,r.character_id,r.status,r.date_from,r.date_to,r.arrival_time,r.leave_time,r.away_minutes,r.active,r.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
 async function refresh(toastOnChange){
   if(!session||!session.token) return;
   try{ await fetchAll(); await materializeUpcomingRecurringEvents(); clearError(); setLive('ok','en vivo');
@@ -2589,6 +2599,108 @@ function attendanceStatusOptionsHtml(value){
   return `<option value="" ${current===''?'selected':''}>Sin completar</option>`+
     Object.entries(ATT_STATUS).map(([k,l])=>`<option value="${k}" ${current===k?'selected':''}>${l}</option>`).join('');
 }
+function attendanceRuleStatusOptionsHtml(value){
+  const current=String(value||'absent_notice');
+  return Object.entries(ATT_STATUS).filter(([k])=>k!=='present').map(([k,l])=>`<option value="${k}" ${current===k?'selected':''}>${l}</option>`).join('');
+}
+function attendanceRuleCharacterOptionsHtml(value){
+  const current=String(value||'');
+  return attendanceRosterRows().map(ch=>`<option value="${esc(ch.id)}" ${current===String(ch.id)?'selected':''}>${esc(ch.name)} · ${esc(ch.class||'Clase')} · ${esc(ch.roster_category||'raider')}</option>`).join('');
+}
+function attendanceRuleDateValue(value){ return String(value||'').slice(0,10); }
+function attendanceRuleTimeValue(value){ return String(value||'').slice(0,5); }
+function attendanceRuleSummary(rule){
+  const bits=[];
+  if(rule.status==='late' && rule.arrival_time) bits.push('llega '+attendanceRuleTimeValue(rule.arrival_time));
+  if(rule.status==='left_early' && rule.leave_time) bits.push('sale '+attendanceRuleTimeValue(rule.leave_time));
+  if(Number(rule.away_minutes||0)>0) bits.push(Number(rule.away_minutes||0)+' min');
+  if(rule.note) bits.push(rule.note);
+  return bits.join(' · ') || 'Sin nota';
+}
+function characterById(id){ return characters.find(ch=>String(ch.id)===String(id)); }
+function activeAttendanceRules(){
+  return (raidAttendanceRules||[]).filter(r=>r.active!==false).sort((a,b)=>String(a.date_from||'').localeCompare(String(b.date_from||'')) || String(characterById(a.character_id)?.name||'').localeCompare(String(characterById(b.character_id)?.name||'')));
+}
+function attendanceRulesPanelHtml(){
+  if(!cap('viewAttendance')&&!cap('manageAttendance')) return '';
+  const rows=activeAttendanceRules();
+  return `<section class="panel attendanceRulesPanel"><div class="phead"><h2><span class="dia"></span>Ausencias / Demoras programadas</h2><div class="sub">Reglas por personaje y rango de fechas. Al abrir/cerrar attendance se aplican solo si ese jugador todavía está sin completar.</div></div>
+    <div class="pbody">
+      <div class="attendanceRulesToolbar"><span class="mono">${rows.length} regla${rows.length===1?'':'s'} activa${rows.length===1?'':'s'}</span>${cap('manageAttendance')?'<button class="btn primary sm" id="attendanceRuleNew">+ Regla</button>':''}</div>
+      <div class="attendanceRulesList">${rows.length?rows.map(rule=>{
+        const ch=characterById(rule.character_id)||{};
+        return `<div class="attendanceRuleRow">
+          <div>${classBadge(ch.class)} <b>${esc(ch.name||'Personaje eliminado')}</b><span>${esc(ch.realm_slug||'')} ${esc(ch.region||'')}</span></div>
+          <div class="attendanceRuleStatus">${esc(ATT_STATUS[rule.status]||rule.status)}</div>
+          <div><b>${esc(fmtDateFull(rule.date_from))} → ${esc(fmtDateFull(rule.date_to))}</b><span>${esc(attendanceRuleSummary(rule))}</span></div>
+          <div><span>${esc(rule.created_by?`creó ${rule.created_by}`:'')}</span><span>${esc(rule.updated_by?`actualizó ${rule.updated_by}`:'')}</span></div>
+          <div class="attendanceRuleOps">${cap('manageAttendance')?`<button class="btn ghost sm" data-att-rule-edit="${esc(rule.id)}">Editar</button><button class="btn ghost sm danger" data-att-rule-del="${esc(rule.id)}">Borrar</button>`:''}</div>
+        </div>`;
+      }).join(''):'<div class="singleEmpty">Sin reglas programadas.</div>'}</div>
+    </div></section>`;
+}
+function attendanceRuleFormHtml(rule){
+  const today=isoLocal(new Date());
+  const status=rule&&rule.status?rule.status:'absent_notice';
+  return `<div class="row2"><div class="field"><label>Personaje</label><select id="ar_char">${attendanceRuleCharacterOptionsHtml(rule&&rule.character_id)}</select></div>
+    <div class="field"><label>Estado</label><select id="ar_status">${attendanceRuleStatusOptionsHtml(status)}</select></div></div>
+    <div class="row2"><div class="field"><label>Desde</label><input id="ar_from" type="date" value="${esc(attendanceRuleDateValue(rule&&rule.date_from)||today)}"></div>
+    <div class="field"><label>Hasta</label><input id="ar_to" type="date" value="${esc(attendanceRuleDateValue(rule&&rule.date_to)||today)}"></div></div>
+    <div class="row2"><div class="field"><label>Llega</label><input id="ar_arrival" type="time" value="${esc(attendanceRuleTimeValue(rule&&rule.arrival_time))}"><div class="hint">Usalo si el estado es Tarde.</div></div>
+    <div class="field"><label>Sale</label><input id="ar_leave" type="time" value="${esc(attendanceRuleTimeValue(rule&&rule.leave_time))}"><div class="hint">Usalo si se va antes.</div></div></div>
+    <div class="field"><label>Minutos fuera / ausente parcial</label><input id="ar_away" type="number" min="0" step="1" value="${Number(rule&&rule.away_minutes||0)}"></div>
+    <div class="field"><label>Justificación / nota</label><textarea id="ar_note" placeholder="Ej: viaje, trabajo, llega 20 min tarde">${esc(rule&&rule.note||'')}</textarea></div>
+    <div class="err" id="ar_err"></div>`;
+}
+function bindAttendanceRulesPanel(root=document){
+  const add=root.querySelector('#attendanceRuleNew');
+  if(add) add.onclick=()=>openAttendanceRuleForm(null);
+  root.querySelectorAll('[data-att-rule-edit]').forEach(btn=>btn.onclick=()=>openAttendanceRuleForm(btn.dataset.attRuleEdit));
+  root.querySelectorAll('[data-att-rule-del]').forEach(btn=>btn.onclick=()=>deleteAttendanceRule(btn.dataset.attRuleDel));
+}
+function openAttendanceRuleForm(id){
+  if(!cap('manageAttendance')) return toast('Sin permiso');
+  const rule=id?raidAttendanceRules.find(r=>String(r.id)===String(id)):null;
+  if(id&&!rule) return toast('Regla no encontrada');
+  openM2(rule?'Editar regla de attendance':'Nueva regla de attendance',attendanceRuleFormHtml(rule),async()=>{
+    const err=document.getElementById('ar_err'); err.textContent='';
+    const character_id=document.getElementById('ar_char').value;
+    const status=document.getElementById('ar_status').value;
+    const date_from=document.getElementById('ar_from').value;
+    const date_to=document.getElementById('ar_to').value;
+    if(!character_id||!status||!date_from||!date_to){ err.textContent='Completá personaje, estado y fechas.'; return false; }
+    if(date_to<date_from){ err.textContent='La fecha Hasta no puede ser anterior a Desde.'; return false; }
+    const row={
+      character_id,
+      status,
+      date_from,
+      date_to,
+      arrival_time:document.getElementById('ar_arrival').value||null,
+      leave_time:document.getElementById('ar_leave').value||null,
+      away_minutes:Number(document.getElementById('ar_away').value||0),
+      note:document.getElementById('ar_note').value.trim()||null,
+      active:true
+    };
+    try{
+      if(rule) await sbUpd('raid_attendance_rules',rule.id,row);
+      else await sbIns('raid_attendance_rules',row);
+      logAction(rule?'editar_attendance_rule':'crear_attendance_rule','raid_attendance_rule',rule&&rule.id||character_id,{status,date_from,date_to});
+      await refresh(true); toast('Regla guardada'); renderCalendario();
+    }catch(e){ err.textContent='No se pudo guardar. ¿Corriste la migración nueva?'; return false; }
+  },{wide:true});
+}
+async function deleteAttendanceRule(id){
+  if(!cap('manageAttendance')) return toast('Sin permiso');
+  const rule=raidAttendanceRules.find(r=>String(r.id)===String(id));
+  if(!rule) return toast('Regla no encontrada');
+  const ch=characterById(rule.character_id);
+  if(!confirm('¿Borrar la regla de '+(ch&&ch.name||'este personaje')+' del '+fmtDateFull(rule.date_from)+' al '+fmtDateFull(rule.date_to)+'?')) return;
+  try{
+    await sbDel('raid_attendance_rules',id);
+    logAction('borrar_attendance_rule','raid_attendance_rule',id,{target:ch&&ch.name||rule.character_id});
+    await refresh(true); renderCalendario(); toast('Regla borrada');
+  }catch(e){ toast('No se pudo borrar la regla'); }
+}
 const WEEKDAY_SHORT=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 function calendarWeekStart(){ const n=Number(settings.calendar_week_start_dow); return Number.isInteger(n)&&n>=0&&n<=6?n:2; }
 function sameDayKey(d){ return isoLocal(parseLocalDate(d)); }
@@ -2923,6 +3035,7 @@ function renderCalendario(){
       ${cap('manageCalendar')?'<button class="btn primary sm" id="calNew">+ Evento</button>':''}
     </div>
     ${calendarMode==='week'?calendarWeekHtml(cur):calendarMonthHtml(cur)}
+    ${attendanceRulesPanelHtml()}
   </div>`;
   document.getElementById('calMonth').onclick=()=>{ calendarMode='month'; renderCalendario(); };
   document.getElementById('calWeek').onclick=()=>{ calendarMode='week'; renderCalendario(); };
@@ -2934,6 +3047,7 @@ function renderCalendario(){
     b.onclick=(e)=>handleCalendarClick(e,b.dataset.event);
     b.oncontextmenu=(e)=>{ e.preventDefault(); showCalendarContext(e,b.dataset.event); };
   });
+  bindAttendanceRulesPanel(c);
   ensureDueAttendance().catch(()=>{});
 }
 function handleCalendarClick(e,eventId){
