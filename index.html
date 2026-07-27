@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-Q9pItLfpRkekSoweEFjd2YlPapPPU5TM0qeeKBgRTkk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-LEtEmQEHhJdo7cPlR2T9hQJHuBEeVGZQr922BQRWKOA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -533,6 +533,17 @@
   .attendanceRuleStatus{font-family:var(--font-mono); color:var(--gold); font-weight:900}
   .attendanceRuleMeta{font-family:var(--font-mono); color:var(--muted); font-size:10px}
   .attendanceRuleOps{display:flex; justify-content:flex-end; gap:7px}
+  .attendanceRuleDays{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:7px}
+  .attendanceRuleDay{display:flex; flex-direction:column; align-items:center; gap:5px; border:1px solid var(--line); border-radius:9px; padding:7px; background:var(--bg)}
+  .attendanceRuleDay b{font-family:var(--font-mono); color:var(--muted); font-size:10px}
+  .attendanceRuleDay input{width:14px; height:14px}
+  .attendanceRuleConfig{border:1px solid var(--line-soft); border-radius:10px; padding:10px; background:var(--bg-0); margin-top:10px}
+  .attendanceRuleDayRows{display:grid; gap:8px; margin-top:10px}
+  .attendanceRuleDayRow{display:grid; grid-template-columns:78px minmax(150px,1fr) 94px 94px 110px minmax(150px,1fr); gap:8px; align-items:end; border:1px solid var(--line-soft); border-radius:10px; padding:9px; background:var(--bg-0)}
+  .attendanceRuleDayRow > b{font-family:var(--font-display); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--blue)}
+  .attendanceRuleDayRow .field{margin:0}
+  .attendanceRuleDayRow input,.attendanceRuleDayRow select{height:32px; padding:6px 8px; font-size:12px}
+  @media(max-width:900px){.attendanceRuleDayRows .attendanceRuleDayRow{grid-template-columns:1fr 1fr}.attendanceRuleDays{grid-template-columns:repeat(4,minmax(0,1fr))}}
   @media(max-width:900px){.attendanceRuleRow{grid-template-columns:1fr 1fr}.attendanceRuleOps{justify-content:flex-start}}
   @media(max-width:1100px){.attendanceFilters{grid-template-columns:repeat(3,minmax(130px,1fr))}}
   @media(max-width:680px){.attendanceFilters{grid-template-columns:1fr}}
@@ -1128,7 +1139,7 @@ async function fetchAll(){
   if('raid_attendance_rules' in data) raidAttendanceRules=data.raid_attendance_rules||[];
   if(cap('manageRecruits')){ try{ await fetchRecruits(); }catch(e){ recruits=[]; recruitLoadError=e&&e.message?e.message:String(e); } }
 }
-function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.recurrence,e.recurrence_group_id,e.recurrence_parent_id,e.recurrence_until,e.recurrence_days,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order,s.segment_status,s.sale_ids]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), raidAttendanceRules.map(r=>[r.id,r.character_id,r.status,r.date_from,r.date_to,r.arrival_time,r.leave_time,r.away_minutes,r.active,r.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
+function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.recurrence,e.recurrence_group_id,e.recurrence_parent_id,e.recurrence_until,e.recurrence_days,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order,s.segment_status,s.sale_ids]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), raidAttendanceRules.map(r=>[r.id,r.character_id,r.status,r.date_from,r.date_to,r.weekdays,r.rule_mode,r.weekday_overrides,r.arrival_time,r.leave_time,r.away_minutes,r.active,r.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
 async function refresh(toastOnChange){
   if(!session||!session.token) return;
   try{ await fetchAll(); await materializeUpcomingRecurringEvents(); clearError(); setLive('ok','en vivo');
@@ -2600,6 +2611,7 @@ const RAID_EVENT_STATUS={planned:'Planificado',open:'Abierto',closed:'Cerrado',p
 const RAID_EVENT_TYPE={raid:'Raid',carry:'Carry',mplus:'M+',guild:'Guild',daily:'Actividades Diarias',achievement:'Logros',other:'Otro'};
 const SEGMENT_STATUS={pending:'Pendiente',progress:'En progreso',killed:'Kill',reclear:'Reclear',done:'Hecho',postponed:'Postergado'};
 const ATT_STATUS={present:'Presente',bench:'Banca',absent_notice:'Ausente avisó',absent_no_notice:'Ausente sin aviso',late:'Tarde',left_early:'Se fue antes',partial:'Parcial',not_required:'No requerido'};
+const ATT_RULE_WEEKDAYS=[['0','Dom'],['1','Lun'],['2','Mar'],['3','Mié'],['4','Jue'],['5','Vie'],['6','Sáb']];
 function attendanceStatusOptionsHtml(value){
   const current=value==null?'':String(value);
   return `<option value="" ${current===''?'selected':''}>Sin completar</option>`+
@@ -2615,8 +2627,51 @@ function attendanceRuleCharacterOptionsHtml(value){
 }
 function attendanceRuleDateValue(value){ return String(value||'').slice(0,10); }
 function attendanceRuleTimeValue(value){ return String(value||'').slice(0,5); }
+function attendanceRuleJsonArray(value){ if(Array.isArray(value)) return value; try{ const parsed=JSON.parse(value||'[]'); return Array.isArray(parsed)?parsed:[]; }catch(e){ return []; } }
+function attendanceRuleJsonObject(value){ if(value&&typeof value==='object'&&!Array.isArray(value)) return value; try{ const parsed=JSON.parse(value||'{}'); return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:{}; }catch(e){ return {}; } }
+function attendanceRulePatchValues(rule,prefix){
+  const overrides=attendanceRuleJsonObject(rule&&rule.weekday_overrides);
+  if(prefix&&prefix.startsWith('ar_day_')){
+    const day=prefix.replace('ar_day_','');
+    return overrides[day]||{};
+  }
+  return rule||{};
+}
+function attendanceRuleWeekdays(rule){
+  return attendanceRuleJsonArray(rule&&rule.weekdays).map(Number).filter(n=>Number.isInteger(n)&&n>=0&&n<=6);
+}
+function attendanceRuleWeekdaysLabel(rule){
+  const days=attendanceRuleWeekdays(rule);
+  if(!days.length) return 'Todos los días del rango';
+  const names=new Map(ATT_RULE_WEEKDAYS.map(([v,l])=>[Number(v),l]));
+  return days.map(d=>names.get(d)||d).join(', ');
+}
+function attendanceRulePatchFieldsHtml(prefix,values,includeNote){
+  const currentStatus=String(values&&values.status||'absent_notice');
+  return `<div class="field"><label>Estado</label><select id="${prefix}_status">${attendanceRuleStatusOptionsHtml(currentStatus)}</select></div>
+    <div class="field"><label>Llega</label><input id="${prefix}_arrival" type="time" value="${esc(attendanceRuleTimeValue(values&&values.arrival_time))}"></div>
+    <div class="field"><label>Sale</label><input id="${prefix}_leave" type="time" value="${esc(attendanceRuleTimeValue(values&&values.leave_time))}"></div>
+    <div class="field"><label>Minutos ausente</label><input id="${prefix}_away" type="number" min="0" step="1" value="${Number(values&&values.away_minutes||0)}"></div>
+    ${includeNote?`<div class="field"><label>Nota</label><input id="${prefix}_note" type="text" value="${esc(values&&values.note||'')}" placeholder="Opcional"></div>`:''}`;
+}
+function attendanceRuleDaysHtml(rule){
+  const selected=new Set(attendanceRuleWeekdays(rule).map(String));
+  return `<div class="attendanceRuleDays">${ATT_RULE_WEEKDAYS.map(([v,l])=>`<label class="attendanceRuleDay"><b>${l}</b><input class="ar_day" type="checkbox" value="${v}" ${selected.has(v)?'checked':''}></label>`).join('')}</div>
+    <div class="hint">Sin días marcados aplica a todos los días del rango. Si marcás días, solo aplica en esos días.</div>`;
+}
+function attendanceRulePerDayRowsHtml(rule){
+  const selected=new Set(attendanceRuleWeekdays(rule).map(String));
+  return `<div class="attendanceRuleDayRows" id="ar_day_rows">${ATT_RULE_WEEKDAYS.map(([v,l])=>{
+    const values=attendanceRulePatchValues(rule,'ar_day_'+v);
+    return `<div class="attendanceRuleDayRow" data-ar-day-row="${v}" style="${selected.size&&!selected.has(v)?'display:none':''}">
+      <b>${l}</b>${attendanceRulePatchFieldsHtml('ar_day_'+v,values,true)}
+    </div>`;
+  }).join('')}</div>`;
+}
 function attendanceRuleSummary(rule){
   const bits=[];
+  bits.push(attendanceRuleWeekdaysLabel(rule));
+  if(rule.rule_mode==='per_day') bits.push('criterio por día');
   if(rule.status==='late' && rule.arrival_time) bits.push('llega '+attendanceRuleTimeValue(rule.arrival_time));
   if(rule.status==='left_early' && rule.leave_time) bits.push('sale '+attendanceRuleTimeValue(rule.leave_time));
   if(Number(rule.away_minutes||0)>0) bits.push(Number(rule.away_minutes||0)+' min');
@@ -2672,16 +2727,41 @@ function attendanceRulesPanelHtml(){
 }
 function attendanceRuleFormHtml(rule){
   const today=isoLocal(new Date());
-  const status=rule&&rule.status?rule.status:'absent_notice';
+  const mode=String(rule&&rule.rule_mode||'same');
   return `<div class="row2"><div class="field"><label>Personaje</label><select id="ar_char">${attendanceRuleCharacterOptionsHtml(rule&&rule.character_id)}</select></div>
-    <div class="field"><label>Estado</label><select id="ar_status">${attendanceRuleStatusOptionsHtml(status)}</select></div></div>
+    <div class="field"><label>Modo</label><select id="ar_mode"><option value="same" ${mode==='same'?'selected':''}>Mismo criterio</option><option value="per_day" ${mode==='per_day'?'selected':''}>Configurar por día</option></select></div></div>
     <div class="row2"><div class="field"><label>Desde</label><input id="ar_from" type="date" value="${esc(attendanceRuleDateValue(rule&&rule.date_from)||today)}"></div>
     <div class="field"><label>Hasta</label><input id="ar_to" type="date" value="${esc(attendanceRuleDateValue(rule&&rule.date_to)||today)}"></div></div>
-    <div class="row2"><div class="field"><label>Llega</label><input id="ar_arrival" type="time" value="${esc(attendanceRuleTimeValue(rule&&rule.arrival_time))}"><div class="hint">Usalo si el estado es Tarde.</div></div>
-    <div class="field"><label>Sale</label><input id="ar_leave" type="time" value="${esc(attendanceRuleTimeValue(rule&&rule.leave_time))}"><div class="hint">Usalo si se va antes.</div></div></div>
-    <div class="field"><label>Minutos fuera / ausente parcial</label><input id="ar_away" type="number" min="0" step="1" value="${Number(rule&&rule.away_minutes||0)}"></div>
-    <div class="field"><label>Justificación / nota</label><textarea id="ar_note" placeholder="Ej: viaje, trabajo, llega 20 min tarde">${esc(rule&&rule.note||'')}</textarea></div>
+    <div class="field"><label>Días afectados</label>${attendanceRuleDaysHtml(rule)}</div>
+    <div class="attendanceRuleConfig" id="ar_same_config" style="${mode==='per_day'?'display:none':''}">${attendanceRulePatchFieldsHtml('ar_common',rule||{},false)}</div>
+    <div id="ar_per_day_config" style="${mode==='per_day'?'':'display:none'}">${attendanceRulePerDayRowsHtml(rule)}</div>
+    <div class="field"><label>Nota general</label><textarea id="ar_note" placeholder="Ej: vacaciones, trabajo, facultad">${esc(rule&&rule.note||'')}</textarea></div>
     <div class="err" id="ar_err"></div>`;
+}
+function readAttendanceRulePatch(prefix, includeNote){
+  return {
+    status:document.getElementById(prefix+'_status')?.value||'absent_notice',
+    arrival_time:document.getElementById(prefix+'_arrival')?.value||null,
+    leave_time:document.getElementById(prefix+'_leave')?.value||null,
+    away_minutes:Number(document.getElementById(prefix+'_away')?.value||0),
+    ...(includeNote?{note:document.getElementById(prefix+'_note')?.value.trim()||null}:{})
+  };
+}
+function bindAttendanceRuleForm(){
+  const sync=()=>{
+    const mode=document.getElementById('ar_mode')?.value||'same';
+    const same=document.getElementById('ar_same_config');
+    const per=document.getElementById('ar_per_day_config');
+    if(same) same.style.display=mode==='per_day'?'none':'block';
+    if(per) per.style.display=mode==='per_day'?'block':'none';
+    const selected=new Set([...document.querySelectorAll('.ar_day:checked')].map(x=>x.value));
+    document.querySelectorAll('[data-ar-day-row]').forEach(row=>{
+      row.style.display=!selected.size||selected.has(row.dataset.arDayRow)?'':'none';
+    });
+  };
+  document.getElementById('ar_mode')?.addEventListener('change',sync);
+  document.querySelectorAll('.ar_day').forEach(x=>x.addEventListener('change',sync));
+  sync();
 }
 function bindAttendanceRulesPanel(root=document){
   const add=root.querySelector('#attendanceRuleNew');
@@ -2700,29 +2780,41 @@ function openAttendanceRuleForm(id){
   openM2(rule?'Editar regla de attendance':'Nueva regla de attendance',attendanceRuleFormHtml(rule),async()=>{
     const err=document.getElementById('ar_err'); err.textContent='';
     const character_id=document.getElementById('ar_char').value;
-    const status=document.getElementById('ar_status').value;
+    const rule_mode=document.getElementById('ar_mode').value||'same';
     const date_from=document.getElementById('ar_from').value;
     const date_to=document.getElementById('ar_to').value;
-    if(!character_id||!status||!date_from||!date_to){ err.textContent='Completá personaje, estado y fechas.'; return false; }
+    if(!character_id||!date_from||!date_to){ err.textContent='Completá personaje y fechas.'; return false; }
     if(date_to<date_from){ err.textContent='La fecha Hasta no puede ser anterior a Desde.'; return false; }
+    const weekdays=[...document.querySelectorAll('.ar_day:checked')].map(x=>Number(x.value)).filter(n=>Number.isInteger(n)&&n>=0&&n<=6);
+    const common=readAttendanceRulePatch('ar_common',false);
+    const weekday_overrides={};
+    if(rule_mode==='per_day'){
+      const days=weekdays.length?weekdays:ATT_RULE_WEEKDAYS.map(([v])=>Number(v));
+      days.forEach(day=>{ weekday_overrides[String(day)]=readAttendanceRulePatch('ar_day_'+day,true); });
+    }
+    const firstOverride=weekday_overrides[String((weekdays.length?weekdays:ATT_RULE_WEEKDAYS.map(([v])=>Number(v)))[0])]||{};
     const row={
       character_id,
-      status,
       date_from,
       date_to,
-      arrival_time:document.getElementById('ar_arrival').value||null,
-      leave_time:document.getElementById('ar_leave').value||null,
-      away_minutes:Number(document.getElementById('ar_away').value||0),
+      weekdays,
+      rule_mode,
+      weekday_overrides,
+      status:rule_mode==='per_day'?(firstOverride.status||'absent_notice'):common.status,
+      arrival_time:rule_mode==='per_day'?null:common.arrival_time,
+      leave_time:rule_mode==='per_day'?null:common.leave_time,
+      away_minutes:rule_mode==='per_day'?0:common.away_minutes,
       note:document.getElementById('ar_note').value.trim()||null,
       active:rule?rule.active!==false:true
     };
     try{
       if(rule) await sbUpd('raid_attendance_rules',rule.id,row);
       else await sbIns('raid_attendance_rules',row);
-      logAction(rule?'editar_attendance_rule':'crear_attendance_rule','raid_attendance_rule',rule&&rule.id||character_id,{status,date_from,date_to});
+      logAction(rule?'editar_attendance_rule':'crear_attendance_rule','raid_attendance_rule',rule&&rule.id||character_id,{status:row.status,rule_mode,weekdays,date_from,date_to});
       await refresh(true); toast('Regla guardada'); renderCalendario();
     }catch(e){ err.textContent='No se pudo guardar. ¿Corriste la migración nueva?'; return false; }
   },{wide:true});
+  setTimeout(bindAttendanceRuleForm,0);
 }
 async function deleteAttendanceRule(id){
   if(!cap('manageAttendance')) return toast('Sin permiso');
