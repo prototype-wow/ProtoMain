@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-LEtEmQEHhJdo7cPlR2T9hQJHuBEeVGZQr922BQRWKOA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-RvOgDdv08ieBQR9scxvjWCYgm5QTqKGUFNvVabaVHJ8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -59,6 +59,9 @@
   .classrow{display:inline-flex; align-items:center; gap:9px}
   .classname{color:var(--cc,var(--text)); font-weight:600}
   td.classcell{border-left:3px solid var(--cc,transparent)}
+  [data-open-character]{cursor:pointer}
+  [data-open-character]:hover .classname,
+  [data-open-character]:hover b{text-decoration:underline; text-decoration-color:var(--blue); text-underline-offset:3px}
 
   .btn{font-family:var(--font-body); font-weight:600; font-size:13px; cursor:pointer; border-radius:9px; padding:9px 15px; border:1px solid var(--line); background:var(--bg-2); color:var(--text); transition:.15s; white-space:nowrap}
   .btn:hover{border-color:var(--blue); background:var(--bg-3)}
@@ -754,8 +757,24 @@ const SUPABASE_URL = "https://hjatxlvqytgkizcaopce.supabase.co";
 const SUPABASE_KEY = "sb_publishable_s_msjQFbOa5B0SQVF0TE4w_5F4aKk0M";
 const LOCAL_API_URL = "http://localhost:3000";
 const API_OVERRIDE_KEY = 'pt_api_base';
+const API_OVERRIDE_TIME_KEY = 'pt_api_base_set_at';
 const API_CONFIG_PATH = 'api-config.json';
 function cleanApiUrl(value){ return String(value||'').trim().replace(/\/+$/,''); }
+function saveApiOverride(value){
+  const target=cleanApiUrl(value);
+  if(!target){ clearApiOverride(); return ''; }
+  localStorage.setItem(API_OVERRIDE_KEY,target);
+  localStorage.setItem(API_OVERRIDE_TIME_KEY,String(Date.now()));
+  return target;
+}
+function clearApiOverride(){
+  localStorage.removeItem(API_OVERRIDE_KEY);
+  localStorage.removeItem(API_OVERRIDE_TIME_KEY);
+}
+function hasRecentApiOverride(){
+  const t=Number(localStorage.getItem(API_OVERRIDE_TIME_KEY)||0);
+  return Number.isFinite(t) && t>0 && Date.now()-t<10*60*1000;
+}
 function apiBaseFromMode(backend, customUrl=''){
   const mode=String(backend||'auto').toLowerCase();
   if(mode==='local') return LOCAL_API_URL;
@@ -771,7 +790,7 @@ function publicApiConfigTarget(config){
 function resolveApiBaseUrl(){
   const qs=new URLSearchParams(location.search);
   const fromQuery=qs.get('api');
-  if(fromQuery){ localStorage.setItem(API_OVERRIDE_KEY,fromQuery); return cleanApiUrl(fromQuery); }
+  if(fromQuery) return saveApiOverride(fromQuery);
   const stored=localStorage.getItem(API_OVERRIDE_KEY);
   if(stored) return cleanApiUrl(stored);
   if(location.protocol==='file:' || location.hostname==='localhost' || location.hostname==='127.0.0.1') return LOCAL_API_URL;
@@ -780,14 +799,20 @@ function resolveApiBaseUrl(){
 let API_BASE_URL = resolveApiBaseUrl();
 async function initApiBaseUrl(){
   const qs=new URLSearchParams(location.search);
-  if(qs.get('api') || localStorage.getItem(API_OVERRIDE_KEY)) return;
-  if(location.protocol==='file:' || location.hostname==='localhost' || location.hostname==='127.0.0.1') return;
+  const localPage=location.protocol==='file:' || location.hostname==='localhost' || location.hostname==='127.0.0.1';
+  if(qs.get('api') || localPage) return;
   try{
     const res=await fetch(API_CONFIG_PATH,{cache:'no-store'});
     if(!res.ok) return;
     const config=await res.json();
     const target=publicApiConfigTarget(config);
-    if(target) API_BASE_URL=target;
+    if(target){
+      const stored=cleanApiUrl(localStorage.getItem(API_OVERRIDE_KEY)||'');
+      if(stored && stored!==target && hasRecentApiOverride()) return;
+      API_BASE_URL=target;
+      localStorage.setItem(API_OVERRIDE_KEY,target);
+      localStorage.removeItem(API_OVERRIDE_TIME_KEY);
+    }
   }catch(e){}
 }
 /* ============================================================ */
@@ -999,6 +1024,80 @@ async function manualSync(btn){
   }catch(e){ toast('No se pudo sincronizar con Battle.net'); }
   finally{ if(btn){ btn.disabled=false; btn.textContent=orig||'↻ Refrescar API'; } }
 }
+async function manualFullRosterSync(btn){
+  if(!cap('syncExternal')) return toast('No tenés permiso para sincronizar APIs');
+  const activeRoster=characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false);
+  if(!activeRoster.length) return toast('No hay personajes activos para sincronizar');
+  const zones=wclActiveZoneIds(), diffs=wclActiveDiffs(), metrics=wclActiveMetrics(), mplus=wclMplusZoneId();
+  const combos=[];
+  zones.forEach(zoneId=>{
+    const zoneDiffs=Number(zoneId)===Number(mplus)?[0]:diffs;
+    zoneDiffs.forEach(difficulty=>metrics.forEach(metric=>combos.push({zoneId,difficulty,metric})));
+  });
+  const requestedBatch=Number(settings.wcl_batch_size??DEFAULT_SYNC_SETTINGS.wcl_batch_size);
+  const batchSize=requestedBatch>0?Math.max(1,Math.floor(requestedBatch)):25;
+  const effectiveBatch=Math.min(batchSize,25);
+  const wclCalls=combos.length*Math.ceil(activeRoster.length/effectiveBatch);
+  if(!confirm(`Esto va a refrescar Armory, Raider.IO y Warcraft Logs para ${activeRoster.length} personajes activos.\n\nWCL va en tandas (${wclCalls} llamadas aprox.) y puede tardar o pegar rate-limit. ¿Arrancamos?`)) return;
+  const orig=btn?btn.textContent:'';
+  if(btn){ btn.disabled=true; btn.textContent='Sync completo…'; }
+  const summary={armory:null,raiderio:null,wclSynced:0,wclFailed:0,wclStopped:false};
+  try{
+    toast('Sync completo: Armory…');
+    try{ summary.armory=await edgeRequest('sync-characters',{source:'manual',fullSync:true},true); }
+    catch(e){ summary.armory={failed:[{error:e.message||String(e)}]}; console.warn('Armory roster sync failed', e); }
+
+    toast('Sync completo: Raider.IO…');
+    try{ summary.raiderio=await edgeRequest('sync-raiderio',{},true); }
+    catch(e){ summary.raiderio={failed:[{error:e.message||String(e)}]}; console.warn('Raider.IO roster sync failed', e); }
+
+    toast('Sync completo: WCL en tandas…');
+    for(const combo of combos){
+      for(let offset=0; offset<activeRoster.length; offset+=effectiveBatch){
+        try{
+          const wcl=await edgeRequest('sync-warcraftlogs',{
+            scope:'roster',
+            fullSync:true,
+            zoneIds:[combo.zoneId],
+            difficulties:[combo.difficulty],
+            metrics:[combo.metric],
+            characterLimit:effectiveBatch,
+            characterOffset:offset,
+            syncZones:offset===0
+          },true);
+          summary.wclSynced+=Number(wcl.synced||0);
+          summary.wclFailed+=(wcl.failed||[]).length;
+          if((wcl.failed||[]).some(x=>x&&x.rate_limited)){
+            summary.wclStopped=true;
+            console.warn('WCL rate limit, stopping roster full sync', wcl.failed);
+            break;
+          }
+        }catch(e){
+          summary.wclFailed++;
+          console.warn('WCL roster batch failed', combo, offset, e);
+          if(e.status===429 || /rate|too many/i.test(e.message||'')){ summary.wclStopped=true; break; }
+        }
+        await wait(250);
+      }
+      if(summary.wclStopped) break;
+    }
+
+    logAction('sync_external_full_roster','api',null,{
+      armory_synced:summary.armory&&summary.armory.synced,
+      raiderio_synced:summary.raiderio&&summary.raiderio.synced,
+      wcl_synced:summary.wclSynced,
+      wcl_failed:summary.wclFailed,
+      wcl_stopped:summary.wclStopped
+    }).catch(()=>{});
+    await refresh(true);
+    toast(`Sync completo listo · Armory ${summary.armory&&summary.armory.synced!=null?summary.armory.synced:'?'} · R.IO ${summary.raiderio&&summary.raiderio.synced!=null?summary.raiderio.synced:'?'} · WCL ${summary.wclSynced}${summary.wclStopped?' · rate-limit':''}`);
+  }catch(e){
+    console.warn('Full roster sync finished with UI refresh error', e);
+    toast('Sync completo terminó, pero no se pudo refrescar la vista');
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent=orig||'↻ Refrescar todo'; }
+  }
+}
 async function manualWclSync(ch,btn){
   if(!cap('syncExternal')) return toast('No tenés permiso para sincronizar WCL');
   const orig=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Actualizando WCL…'; }
@@ -1085,6 +1184,7 @@ function updateServerClock(){ const el=document.getElementById('serverClock'); i
 function showError(m){ const b=document.getElementById('banner'); b.classList.add('on'); b.innerHTML=m; }
 function clearError(){ document.getElementById('banner').classList.remove('on'); }
 let toastT; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),1900); }
+const wait=(ms)=>new Promise(resolve=>setTimeout(resolve,ms));
 
 /* ---------- fetch ---------- */
 function snapshotCharacterIds(){
@@ -1192,7 +1292,7 @@ function gate(){
 function visibleTabs(){ return TAB_DEFS.filter(([,label,perm])=>cap(perm)).map(([id,label])=>[id,label]); }
 
 /* ---------- calculo: Great Vault, encantamientos, gemas ---------- */
-function vaultMplusSlots(bestRuns){ const n=(bestRuns||[]).length; if(n>=8) return 3; if(n>=4) return 2; if(n>=1) return 1; return 0; }
+function vaultMplusSlots(runs){ const n=(runs||[]).length; if(n>=8) return 3; if(n>=4) return 2; if(n>=1) return 1; return 0; }
 function vaultRaidSlots(killedThisWeek){
   const seen=new Set();
   Object.entries(killedThisWeek||{}).forEach(([inst,diffs])=>{ Object.values(diffs).forEach(bosses=> bosses.forEach(b=> seen.add(inst+'::'+b))); });
@@ -1232,14 +1332,21 @@ function tierInfo(gear){ const bySlot=gearBySlot(gear); let count=0; const slots
 function statDist(gear){ const sums={}; let tot=0; (gear||[]).forEach(it=>(it.stats||[]).forEach(s=>{ const t=s.type&&s.type.type; if(SECONDARY_STATS.find(x=>x[0]===t)){ sums[t]=(sums[t]||0)+(s.value||0); tot+=s.value||0; } })); const pct={}; SECONDARY_STATS.forEach(([k])=>{ pct[k]= tot? Math.round((sums[k]||0)/tot*100):0; }); return pct; }
 /* grilla de encantamientos: por slot encantable, true=tiene, false=falta, null=slot vacío */
 function enchantGrid(gear){ const bySlot=gearBySlot(gear); const g={}; ENCHANTABLE_SLOTS.forEach(s=>{ const it=bySlot[s]; g[s]= it ? !!(it.enchantments&&it.enchantments.length) : null; }); return g; }
-/* opciones de bóveda por slot: M+ = nivel de key (1ª/4ª/8ª más alta); raid = dificultad del 2º/4º/6º jefe */
-function vaultMplusDetail(bestRuns){ const runs=[...(bestRuns||[])].map(r=>r.keystone_level||0).sort((a,b)=>b-a); return [runs[0]??null, runs[3]??null, runs[7]??null]; }
+/* opciones de bóveda por slot: M+ = nivel de la 1ª/4ª/8ª key semanal; raid = dificultad del 2º/4º/6º jefe */
+function vaultMplusRunLevel(run){ const s=run&&run.summary&&typeof run.summary==='object'?run.summary:{}; return Number(s.mythic_level ?? s.keystone_level ?? run?.mythic_level ?? run?.keystone_level ?? 0) || 0; }
+function weeklyMplusRunsForChar(ch,p){
+  const row=ch?rioCharacterProfile(ch):null, rj=rioProfileJson(row);
+  const weekly=Array.isArray(row&&row.weekly_highest_level_runs) ? row.weekly_highest_level_runs : rj.mythic_plus_weekly_highest_level_runs;
+  const runs=Array.isArray(weekly) && weekly.length ? weekly : (p&&Array.isArray(p.mythic_best_runs) ? p.mythic_best_runs : []);
+  return runs.filter(r=>vaultMplusRunLevel(r)>0);
+}
+function vaultMplusDetail(runs){ const levels=[...(runs||[])].map(vaultMplusRunLevel).filter(Boolean).sort((a,b)=>b-a); return [levels[0]??null, levels[3]??null, levels[7]??null]; }
 function vaultRaidDetail(killed){ const diffs=[]; Object.values(killed||{}).forEach(byDiff=> Object.entries(byDiff).forEach(([d,bosses])=> bosses.forEach(()=> diffs.push(d)))); diffs.sort((a,b)=>(DIFF_RANK[b]||0)-(DIFF_RANK[a]||0)); return [diffs[1]||null, diffs[3]||null, diffs[5]||null]; }
 function vaultMplusLetter(key){ if(key==null) return null; return key>=10 ? "M" : "H"; }
 function vaultRaidLetter(diff){ if(!diff) return null; const l=DIFF_LETTER[diff]||diff; return l==="L" ? "V" : l; }
 function vaultTrackCounts(r){
   const counts={ M:0, H:0, N:0, V:0 };
-  vaultMplusDetail(r.p&&r.p.mythic_best_runs).forEach(k=>{ const l=vaultMplusLetter(k); if(l) counts[l]++; });
+  vaultMplusDetail(r.mplusVaultRuns).forEach(k=>{ const l=vaultMplusLetter(k); if(l) counts[l]++; });
   vaultRaidDetail(r.killed).forEach(d=>{ const l=vaultRaidLetter(d); if(l&&counts[l]!=null) counts[l]++; });
   return counts;
 }
@@ -1252,10 +1359,11 @@ function vaultSummaryHtml(r){
 function charStats(ch){
   const p=characterProgress.find(x=>x.character_id===ch.id)||{};
   const killed=(p.raid_progress&&p.raid_progress._killed_this_week)||{};
+  const mplusVaultRuns=weeklyMplusRunsForChar(ch,p);
   const gaps=gearGaps(p.gear);
-  return { ch, p, killed,
-    mplusRuns:(p.mythic_best_runs||[]).length,
-    vaultM:vaultMplusSlots(p.mythic_best_runs),
+  return { ch, p, killed, mplusVaultRuns,
+    mplusRuns:mplusVaultRuns.length,
+    vaultM:vaultMplusSlots(mplusVaultRuns),
     vaultR:vaultRaidSlots(killed),
     vaultW:0,
     tier:tierInfo(p.gear),
@@ -1274,6 +1382,24 @@ function renderTabs(){
   tabs.innerHTML=vis.map(([v,l])=>`<div class="tab ${v===view?'on':''}" data-view="${v}"><span class="dia"></span>${l}</div>`).join('');
   tabs.querySelectorAll('.tab').forEach(t=> t.onclick=()=>{ view=t.dataset.view; render(); refresh(false); });
 }
+function openCharacterPanel(characterId){
+  const ch=characters.find(x=>String(x.id)===String(characterId) && x.active!==false);
+  if(!ch) return toast('No encontré ese personaje activo');
+  if(!cap('viewPersonaje')) return toast('No tenés permiso para ver Personaje');
+  singleCharId=ch.id;
+  view='personaje';
+  render();
+  refresh(false);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-open-character]');
+  if(!el) return;
+  const id=el.dataset.openCharacter;
+  if(!id) return;
+  e.preventDefault();
+  openCharacterPanel(id);
+});
 function render(){
   renderUserArea(); renderTabs();
   document.getElementById('copyVacAll').style.display = view==='semana' ? '' : 'none';
@@ -1307,7 +1433,7 @@ function renderProgreso(){
   if(!isAdmin && progView==='inactive') progView='general';
   const viewOptions=isAdmin ? PROG_VIEWS.concat(PROG_ADMIN_VIEWS) : PROG_VIEWS;
   const usedClasses=[...new Set(rosterChars.filter(ch=>ch.class).map(ch=>ch.class))].sort();
-  c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Progreso del roster</div><div class="actions">${cap('syncExternal')?'<button class="btn ghost sm" id="progSync" title="Traer los datos más recientes desde Battle.net ahora">↻ Refrescar API</button>':''}${isAdmin?'<button class="btn primary" id="newChar">+ Personaje</button>':''}</div></div>
+  c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Progreso del roster</div><div class="actions">${cap('syncExternal')?'<button class="btn ghost sm" id="progSync" title="Traer los datos más recientes desde Battle.net/Armory ahora">↻ Armory</button><button class="btn ghost sm" id="progFullSync" title="Refrescar Armory, Warcraft Logs y Raider.IO para todo el roster activo">↻ Refrescar todo</button>':''}${isAdmin?'<button class="btn primary" id="newChar">+ Personaje</button>':''}</div></div>
     <div class="audbar">
       <select id="prog_view">${viewOptions.map(([v,l])=>`<option value="${v}" ${progView===v?'selected':''}>${l}</option>`).join('')}</select>
       <input type="text" id="prog_search" placeholder="Buscar por nombre, clase o rol…" value="${esc(progSearch)}" autocomplete="off">
@@ -1319,6 +1445,7 @@ function renderProgreso(){
     <div id="prog_table"></div>`;
   if(isAdmin) document.getElementById('newChar').onclick=openNewChar;
   if(cap('syncExternal')) document.getElementById('progSync').onclick=(e)=>manualSync(e.currentTarget);
+  if(cap('syncExternal')) document.getElementById('progFullSync').onclick=(e)=>manualFullRosterSync(e.currentTarget);
   const vsel=document.getElementById('prog_view'); vsel.onchange=()=>{ progView=vsel.value; renderProgTable(); };
   const search=document.getElementById('prog_search'); search.oninput=()=>{ progSearch=search.value; renderProgTable(); };
   const csel=document.getElementById('prog_class'); csel.onchange=()=>{ progClass=csel.value; renderProgTable(); };
@@ -1334,7 +1461,7 @@ function progFilteredRows(){
     .map(ch=>charStats(ch));
 }
 function sortRows(rows, valueFn){ const d=progSort.dir; return [...rows].sort((a,b)=>{ const va=valueFn(a)??-Infinity, vb=valueFn(b)??-Infinity; if(va<vb) return -d; if(va>vb) return d; return 0; }); }
-function nameCell(r){ return `<td class="classcell" style="--cc:${CLASS_COLOR[r.ch.class]||''}"><span class="classrow">${classBadge(r.ch.class)}<b style="color:var(--cc)">${esc(r.ch.name)}</b></span></td>`; }
+function nameCell(r){ return `<td class="classcell" style="--cc:${CLASS_COLOR[r.ch.class]||''}" data-open-character="${esc(r.ch.id)}" title="Abrir panel de personaje"><span class="classrow">${classBadge(r.ch.class)}<b style="color:var(--cc)">${esc(r.ch.name)}</b></span></td>`; }
 function renderProgTable(){
   const wrap=document.getElementById('prog_table'); if(!wrap) return;
   const isAdmin=cap('manageRoster');
@@ -1466,10 +1593,10 @@ function progVaultView(rows){
       <th colspan="3" style="text-align:center; border-bottom:1px solid var(--line)">Raid (dificultad)</th>
       <th colspan="3" style="text-align:center; border-bottom:1px solid var(--line)">Mundo / Delves</th></tr>
     <tr>${['1','2','3','1','2','3','1','2','3'].map(n=>`<th class="mono">${n}</th>`).join('')}</tr></thead><tbody>`;
-  rows.forEach(r=>{ const m=vaultMplusDetail(r.p.mythic_best_runs), rd=vaultRaidDetail(r.killed);
+  rows.forEach(r=>{ const m=vaultMplusDetail(r.mplusVaultRuns), rd=vaultRaidDetail(r.killed);
     html+=`<tr>${nameCell(r)}<td>${keyTag(m[0])}</td><td>${keyTag(m[1])}</td><td>${keyTag(m[2])}</td><td>${diffTag(rd[0])}</td><td>${diffTag(rd[1])}</td><td>${diffTag(rd[2])}</td><td>${na}</td><td>${na}</td><td>${na}</td></tr>`;
   });
-  return html+`</tbody></table></div><p class="hint" style="margin-top:10px">9 slots de bóveda en 3 categorías. <b>Mazmorra</b>: nivel de la 1ª/4ª/8ª key. <b>Raid</b>: dificultad del 2º/4º/6º jefe (M=Mítico, H=Héroico, N=Normal). <b>Mundo</b>: delves/actividades (2/4/8) — <span style="color:var(--muted)">Blizzard no expone este dato en la API pública que uso, así que queda como "—"</span>.</p>`;
+  return html+`</tbody></table></div><p class="hint" style="margin-top:10px">9 slots de bóveda en 3 categorías. <b>Mazmorra</b>: nivel de la 1ª/4ª/8ª key completada durante la semana. <b>Raid</b>: dificultad del 2º/4º/6º jefe semanal (M=Mítico, H=Héroico, N=Normal). <b>Mundo</b>: delves/actividades (2/4/8) — <span style="color:var(--muted)">queda pendiente hasta confirmar un endpoint/estadística fiable de Blizzard.</span></p>`;
 }
 function attendancePeriodRange(){
   const now=new Date(), today=isoLocal(now);
@@ -1601,7 +1728,7 @@ function progAttendanceView(rows){
 /* ---------- RESUMEN (stat boxes + rankings) ---------- */
 function rankTable(title, rows, valueFn, fmtFn, headHtml){
   const sorted=[...rows].sort((a,b)=>(valueFn(b)??-Infinity)-(valueFn(a)??-Infinity));
-  const body=sorted.map((r,i)=>`<div class="rankrow"><span class="rk">${i+1}</span><span class="nm">${classBadge(r.ch.class)}<span class="classname" style="color:${CLASS_COLOR[r.ch.class]||'var(--text)'}">${esc(r.ch.name)}</span></span><span class="vl">${fmtFn(r)}</span></div>`).join('');
+  const body=sorted.map((r,i)=>`<div class="rankrow" data-open-character="${esc(r.ch.id)}" title="Abrir panel de personaje"><span class="rk">${i+1}</span><span class="nm">${classBadge(r.ch.class)}<span class="classname" style="color:${CLASS_COLOR[r.ch.class]||'var(--text)'}">${esc(r.ch.name)}</span></span><span class="vl">${fmtFn(r)}</span></div>`).join('');
   const head=headHtml||'<span></span>';
   return `<div class="panel"><div class="phead"><h2><span class="dia"></span>${esc(title)}</h2></div>
     <div class="pbody"><div class="rankrow rankhead"><span class="rk">#</span><span class="nm">Name</span><span class="vl">${head}</span></div>${body||'<div class="empty">Sin datos</div>'}</div></div>`;
@@ -1921,9 +2048,9 @@ function singleRaiderPanel(ch){
     <div class="rioMeta">${active.mode==='best-dungeons'?'Best per dungeon':'Best runs'} · ${esc(active.label)}${Number.isFinite(active.score)?' · score '+rioFmtScore(active.score):''}${updated?' · actualizado '+esc(fmtDateTime(updated)):''}</div>
   </div></div>`;
 }
-function singleMplusPanel(p){
-  const runs=[...(p.mythic_best_runs||[])].sort((a,b)=>(b.score||0)-(a.score||0)||(b.keystone_level||0)-(a.keystone_level||0));
-  const rows=runs.length ? runs.map(r=>`<tr><td>${esc(localizedName(r.dungeon)||'—')}</td><td class="ilvl">+${r.keystone_level||0}</td><td class="ilvl">${r.score?Math.round(r.score):'—'}</td></tr>`).join('') : '<tr><td colspan="3" class="singleEmpty">Sin M+ esta semana.</td></tr>';
+function singleMplusPanel(ch,p){
+  const runs=[...weeklyMplusRunsForChar(ch,p)].sort((a,b)=>vaultMplusRunLevel(b)-vaultMplusRunLevel(a)||(rioRunScore(b)||0)-(rioRunScore(a)||0));
+  const rows=runs.length ? runs.map(r=>`<tr><td>${esc(rioRunName(r)||localizedName(r.dungeon)||'—')}</td><td class="ilvl">+${vaultMplusRunLevel(r)||0}</td><td class="ilvl">${Number.isFinite(rioRunScore(r))?Math.round(rioRunScore(r)):'—'}</td></tr>`).join('') : '<tr><td colspan="3" class="singleEmpty">Sin M+ esta semana.</td></tr>';
   return `<div class="panel singlePanel"><div class="phead"><h2><span class="dia"></span>M+ Hechas Semana Actual</h2></div><div class="pbody"><table class="singleGear"><thead><tr><th>Mazmorra</th><th>Key</th><th>Rating</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 function singleRaidPanel(p){
@@ -2142,10 +2269,10 @@ function renderPersonaje(){
       <div class="singleLookup"><label>Character lookup</label><select id="singleCharSelect">${rows.map(x=>`<option value="${esc(x.id)}" ${x.id===ch.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
       <div class="singleHero">
         <div class="singleIdentity">${classBadge(ch.class)}<div><h2>${esc(ch.name)}</h2><div class="meta">${esc(ch.class||'—')} · ${esc(CHAR_ROLE_LABEL[ch.role]||ch.role||'—')} · ${esc(realmLabel(ch.region,ch.realm_slug)||'')}</div></div></div>
-        <div class="singleHeroStats"><div class="mini"><b>${fmtIlvl(p)}</b><span>item level</span></div><div class="mini"><b>${p.mythic_rating?Math.round(p.mythic_rating):'—'}</b><span>M+ rating</span></div><div class="mini"><b>${(p.mythic_best_runs||[]).length}</b><span>esta semana</span></div></div>
+        <div class="singleHeroStats"><div class="mini"><b>${fmtIlvl(p)}</b><span>item level</span></div><div class="mini"><b>${p.mythic_rating?Math.round(p.mythic_rating):'—'}</b><span>M+ rating</span></div><div class="mini"><b>${weeklyMplusRunsForChar(ch,p).length}</b><span>esta semana</span></div></div>
       </div>
     </div>
-    <div class="singleGrid"><div class="singleStack">${singleGearPanel(p)}${singleWclPanel(ch)}</div><div class="singleStack">${singleInfoPanel(ch,p)}${singleProfessionsPanel(p)}${singleRenownPanel(p)}${singleProgressionPanel(p)}</div><div class="singleStack">${singleMplusPanel(p)}${singleRaidPanel(p)}${singleLinksPanel(ch)}${singleEnchantPanel(p)}${singleRaiderPanel(ch)}</div></div>
+    <div class="singleGrid"><div class="singleStack">${singleGearPanel(p)}${singleWclPanel(ch)}</div><div class="singleStack">${singleInfoPanel(ch,p)}${singleProfessionsPanel(p)}${singleRenownPanel(p)}${singleProgressionPanel(p)}</div><div class="singleStack">${singleMplusPanel(ch,p)}${singleRaidPanel(p)}${singleLinksPanel(ch)}${singleEnchantPanel(p)}${singleRaiderPanel(ch)}</div></div>
   </div>`;
   const sel=document.getElementById('singleCharSelect'); if(sel) sel.onchange=()=>{ singleCharId=sel.value; renderPersonaje(); refresh(false); };
   const wz=document.getElementById('wclZone'); if(wz) wz.onchange=()=>{ singleWclZone=wz.value; renderPersonaje(); };
@@ -2240,7 +2367,7 @@ function recruitFullCharacter(app,ch){
   const p=characterProgress.find(x=>x.character_id===ch.id)||{};
   return `<div class="recruitFull singleView" style="--cc:${CLASS_COLOR[ch.class]||'var(--blue)'}">
     <div class="sectitle">Panel de personaje ${ch.is_recruit_shadow?'<span class="tag">postulante</span>':(ch.active===false?'<span class="tag">inactivo</span>':'<span class="recruitMatch">ya está en roster</span>')}</div>
-    <div class="singleGrid"><div class="singleStack">${singleGearPanel(p)}${singleWclPanel(ch)}</div><div class="singleStack">${singleInfoPanel(ch,p)}${singleProfessionsPanel(p)}${singleRenownPanel(p)}${singleProgressionPanel(p)}</div><div class="singleStack">${singleMplusPanel(p)}${singleRaidPanel(p)}${singleLinksPanel(ch)}${singleEnchantPanel(p)}${singleRaiderPanel(ch)}</div></div>
+    <div class="singleGrid"><div class="singleStack">${singleGearPanel(p)}${singleWclPanel(ch)}</div><div class="singleStack">${singleInfoPanel(ch,p)}${singleProfessionsPanel(p)}${singleRenownPanel(p)}${singleProgressionPanel(p)}</div><div class="singleStack">${singleMplusPanel(ch,p)}${singleRaidPanel(p)}${singleLinksPanel(ch)}${singleEnchantPanel(p)}${singleRaiderPanel(ch)}</div></div>
   </div>`;
 }
 function recruitFormHref(){
@@ -2372,7 +2499,7 @@ function renderRosterComp(){
   const rolePanel=(key,label)=> {
     const rows=byRole[key]||[];
     return `<div class="panel rosterRoleCard"><div class="phead"><h2>${roleBadge(key)}${esc(label)} (${rows.length})</h2></div>
-      <div class="pbody">${rows.map(ch=>`<div class="rosterPerson" style="--cc:${CLASS_COLOR[ch.class]||'var(--text)'}">${classBadge(ch.class)}<div><b>${esc(ch.name)}</b><span class="meta">${esc(ch.class||'—')}</span></div></div>`).join('')||'<div class="empty">—</div>'}</div></div>`;
+      <div class="pbody">${rows.map(ch=>`<div class="rosterPerson" style="--cc:${CLASS_COLOR[ch.class]||'var(--text)'}" data-open-character="${esc(ch.id)}" title="Abrir panel de personaje">${classBadge(ch.class)}<div><b>${esc(ch.name)}</b><span class="meta">${esc(ch.class||'—')}</span></div></div>`).join('')||'<div class="empty">—</div>'}</div></div>`;
   };
   const classRows=classOrder.map(cl=>`<div class="destrow">${classTag(cl)}<span class="g">${classCounts[cl]}</span></div>`).join('');
   const compositionRows=roleKeys.map(r=>`<div class="destrow"><span class="roleMini">${roleBadge(r)}${esc(CHAR_ROLE_LABEL[r])}</span><span class="g">${(byRole[r]||[]).length}</span></div>`).join('');
@@ -2423,6 +2550,24 @@ function realmLabel(region,slug){
   const r=realms.find(x=>x.region===region && x.slug===slug);
   return region.toUpperCase()+'-'+(r?r.name:slug);
 }
+function realmSearchKey(value){
+  return String(value||'')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/&/g,'and')
+    .replace(/[^a-z0-9]+/g,'');
+}
+function realmSearchKeys(r){
+  const region=String(r.region||'').toLowerCase();
+  return [r.name,r.slug,`${region}-${r.name}`,`${region}-${r.slug}`,`${region}${r.name}`,`${region}${r.slug}`]
+    .map(realmSearchKey)
+    .filter(Boolean);
+}
+function realmMatchesQuery(r,queryKey){
+  if(!queryKey) return false;
+  return realmSearchKeys(r).some(k=>k.includes(queryKey)||queryKey.includes(k));
+}
 function charFormFields(ch){
   const realmDisp = ch ? realmLabel(ch.region,ch.realm_slug) : '';
   return `<div class="field"><label>Nombre del personaje</label><input type="text" id="ch_name" value="${ch?esc(ch.name):''}"></div>
@@ -2448,9 +2593,15 @@ function wireRealmPicker(){
   const hSlug=document.getElementById('ch_realm_slug');
   const hRegion=document.getElementById('ch_realm_region');
   function renderList(){
-    const q=inp.value.trim().toLowerCase();
+    const q=realmSearchKey(inp.value.trim());
     if(q.length<2){ list.classList.remove('on'); list.innerHTML=''; return; }
-    const matches=realms.filter(r=> r.name.toLowerCase().includes(q) || r.slug.includes(q)).slice(0,12);
+    const matches=realms
+      .filter(r=>realmMatchesQuery(r,q))
+      .sort((a,b)=>{
+        const ae=realmSearchKeys(a).includes(q)?0:1, be=realmSearchKeys(b).includes(q)?0:1;
+        return ae-be || String(a.region).localeCompare(String(b.region)) || String(a.name).localeCompare(String(b.name));
+      })
+      .slice(0,12);
     if(!matches.length){ list.innerHTML='<div class="mi head">Sin resultados</div>'; list.classList.add('on'); return; }
     list.innerHTML=matches.map(r=>`<div class="mi" data-region="${r.region}" data-slug="${esc(r.slug)}">${r.region.toUpperCase()}-${esc(r.name)}</div>`).join('');
     list.classList.add('on');
@@ -2461,12 +2612,41 @@ function wireRealmPicker(){
   }
   inp.oninput=()=>{ hSlug.value=''; hRegion.value=''; renderList(); };
   inp.onfocus=()=>{ if(inp.value.trim().length>=2) renderList(); };
+  inp.onblur=()=>setTimeout(()=>{
+    if(hSlug.value&&hRegion.value) return;
+    const q=realmSearchKey(inp.value.trim());
+    const exact=realms.filter(r=>realmSearchKeys(r).includes(q));
+    if(exact.length===1){
+      hSlug.value=exact[0].slug;
+      hRegion.value=exact[0].region;
+      inp.value=exact[0].region.toUpperCase()+'-'+exact[0].name;
+      list.classList.remove('on');
+      list.innerHTML='';
+    }
+  },120);
   document.addEventListener('click', function outside(e){ if(!e.target.closest('#ch_realm_search') && !e.target.closest('#ch_realm_list')) list.classList.remove('on'); });
+}
+function resolveRealmPickerValue(fallbackSlug='',fallbackRegion=''){
+  const inp=document.getElementById('ch_realm_search');
+  const hSlug=document.getElementById('ch_realm_slug');
+  const hRegion=document.getElementById('ch_realm_region');
+  if(hSlug&&hRegion&&hSlug.value&&hRegion.value) return {slug:hSlug.value,region:hRegion.value};
+  const q=realmSearchKey(inp&&inp.value||'');
+  const exact=realms.filter(r=>realmSearchKeys(r).includes(q));
+  const loose=exact.length===1 ? exact : realms.filter(r=>realmMatchesQuery(r,q));
+  if(loose.length===1){
+    if(hSlug) hSlug.value=loose[0].slug;
+    if(hRegion) hRegion.value=loose[0].region;
+    if(inp) inp.value=loose[0].region.toUpperCase()+'-'+loose[0].name;
+    return {slug:loose[0].slug,region:loose[0].region};
+  }
+  if(!q && fallbackSlug && fallbackRegion) return {slug:fallbackSlug,region:fallbackRegion};
+  return {slug:'',region:''};
 }
 function openNewChar(){
   openM2('Nuevo personaje', charFormFields(null), async()=>{
     const name=document.getElementById('ch_name').value.trim();
-    const slug=document.getElementById('ch_realm_slug').value, region=document.getElementById('ch_realm_region').value;
+    const realm=resolveRealmPickerValue(), slug=realm.slug, region=realm.region;
     const rl=document.getElementById('ch_role').value;
     const cat=document.getElementById('ch_category').value;
     const err=document.getElementById('ch_err'); err.textContent='';
@@ -2490,11 +2670,12 @@ function openEditChar(idv){
   const ch=characters.find(x=>x.id===idv); if(!ch) return;
   openM2('Editar · '+ch.name, charFormFields(ch), async()=>{
     const name=document.getElementById('ch_name').value.trim();
-    const slug=document.getElementById('ch_realm_slug').value||ch.realm_slug, region=document.getElementById('ch_realm_region').value||ch.region;
+    const realm=resolveRealmPickerValue(ch.realm_slug,ch.region), slug=realm.slug, region=realm.region;
     const rl=document.getElementById('ch_role').value;
     const cat=document.getElementById('ch_category').value;
     const err=document.getElementById('ch_err'); err.textContent='';
     if(!name){ err.textContent='Poné el nombre del personaje.'; return false; }
+    if(!slug||!region){ err.textContent='Elegí un servidor de la lista (no vale escribirlo libre).'; return false; }
     try{
       const identityChanged=name.toLowerCase()!==String(ch.name||'').toLowerCase() || slug!==ch.realm_slug || region!==ch.region;
       const needsSync=!characterProgress.find(p=>String(p.character_id)===String(ch.id) && p.synced_ok!==false);
@@ -4121,7 +4302,7 @@ function adminZoneRowsHtml(){
   </label>`).join('');
 }
 function backendChoice(){
-  const stored=(localStorage.getItem(API_OVERRIDE_KEY)||'').replace(/\/+$/,'');
+  const stored=(localStorage.getItem(API_OVERRIDE_KEY)||API_BASE_URL||'').replace(/\/+$/,'');
   if(!stored) return 'auto';
   if(stored===LOCAL_API_URL) return 'local';
   if(stored===SUPABASE_URL) return 'supabase';
@@ -4278,8 +4459,9 @@ function backendConfigFromForm(){
 async function applyBackendConfig(){
   const {mode,target,publicConfig}=backendConfigFromForm();
   if(mode==='custom' && !/^https?:\/\//i.test(target)) return toast('Poné una URL válida: http:// o https://');
-  if(mode==='auto') localStorage.removeItem(API_OVERRIDE_KEY);
-  else localStorage.setItem(API_OVERRIDE_KEY,target);
+  if(mode==='auto') clearApiOverride();
+  else saveApiOverride(target);
+  API_BASE_URL=mode==='auto'?resolveApiBaseUrl():target;
   let published=false;
   try{
     const r=await appRequest('publish_api_config',{config:publicConfig});
@@ -4287,7 +4469,7 @@ async function applyBackendConfig(){
   }catch(e){
     console.warn('api-config publish failed',e);
   }
-  toast(published?'Backend aplicado y publicado para todos. Recargando…':'Backend aplicado acá. Falta publicar api-config.json. Recargando…');
+  toast(published?'Backend aplicado y publicado para todos. Recargando…':'Backend aplicado solo en este navegador. Revisá/subí api-config.json para todos.');
   setTimeout(()=>location.reload(),450);
 }
 async function detectWclZones(btn){
