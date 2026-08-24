@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-RvOgDdv08ieBQR9scxvjWCYgm5QTqKGUFNvVabaVHJ8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-hx8ENazfwNlspceTmzzrj524CSgi9a4bSapxxL2uoYY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -1326,8 +1326,36 @@ function displayIlvl(p){
   return p&&p.equipped_ilvl!=null ? Number(p.equipped_ilvl) : null;
 }
 function fmtIlvl(p){ const v=displayIlvl(p); return v==null ? "—" : v.toFixed(2); }
-/* piezas de tier: por cada slot de tier, la pieza equipada trae un set.item_set */
-function tierInfo(gear){ const bySlot=gearBySlot(gear); let count=0; const slots={}; TIER_SLOTS.forEach(s=>{ const it=bySlot[s]; const isTier=!!(it&&it.set&&it.set.item_set); slots[s]= isTier ? { letter:pieceLetter(it), ilvl:itemIlvl(it) } : null; if(isTier) count++; }); return { count, slots }; }
+function itemSetKey(it){
+  const set=it&&it.set&&it.set.item_set;
+  if(!set) return null;
+  const raw=set.id ?? set.key?.id ?? set.name ?? set.name?.en_US ?? set.name?.es_ES;
+  return raw==null ? null : String(raw);
+}
+function bestEquippedTierSet(gear){
+  const groups=new Map();
+  const bySlot=gearBySlot(gear);
+  TIER_SLOTS.forEach(slot=>{
+    const it=bySlot[slot], key=itemSetKey(it);
+    if(!key) return;
+    if(!groups.has(key)) groups.set(key,{ key, items:[], id:Number((it.set&&it.set.item_set&&it.set.item_set.id)??0) || 0 });
+    groups.get(key).items.push({ slot, it, ilvl:itemIlvl(it)||0 });
+  });
+  if(!groups.size) return null;
+  return [...groups.values()].sort((a,b)=>{
+    const avgA=a.items.reduce((s,x)=>s+x.ilvl,0)/Math.max(1,a.items.length);
+    const avgB=b.items.reduce((s,x)=>s+x.ilvl,0)/Math.max(1,b.items.length);
+    return (b.id-a.id) || (avgB-avgA) || (b.items.length-a.items.length);
+  })[0];
+}
+/* piezas de tier: se toma un unico item_set equipado para no mezclar tier viejo con tier actual */
+function tierInfo(gear){
+  const best=bestEquippedTierSet(gear);
+  const slots={}; TIER_SLOTS.forEach(s=>slots[s]=null);
+  if(!best) return { count:0, slots };
+  best.items.forEach(({slot,it})=>{ slots[slot]={ letter:pieceLetter(it), ilvl:itemIlvl(it), set:itemSetKey(it) }; });
+  return { count:best.items.length, slots };
+}
 /* distribución de stats secundarios (% del total), sumando todo el equipo */
 function statDist(gear){ const sums={}; let tot=0; (gear||[]).forEach(it=>(it.stats||[]).forEach(s=>{ const t=s.type&&s.type.type; if(SECONDARY_STATS.find(x=>x[0]===t)){ sums[t]=(sums[t]||0)+(s.value||0); tot+=s.value||0; } })); const pct={}; SECONDARY_STATS.forEach(([k])=>{ pct[k]= tot? Math.round((sums[k]||0)/tot*100):0; }); return pct; }
 /* grilla de encantamientos: por slot encantable, true=tiene, false=falta, null=slot vacío */
