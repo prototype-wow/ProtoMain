@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-Amr9yXCw1Cym+Ns6RG/So8BCzJkW7zkjXRoK+/eXdfY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-5KLM6Ev/9+HfzpRD5pWJrkG0b+S+E+vGExwNAvk1wfY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -310,7 +310,7 @@
   .rankrow .nm .classname{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; font-weight:600}
   .rankrow .vl{flex:none; white-space:nowrap; text-align:right; font-family:var(--font-mono); padding-left:6px}
   .rankrow.rankhead{padding-top:2px; padding-bottom:6px; color:var(--muted-2); font-size:10px; text-transform:uppercase; letter-spacing:.08em}
-  .tierMini{display:grid; grid-template-columns:18px repeat(5,15px); gap:4px; align-items:center; justify-content:end}
+  .tierMini{display:grid; grid-template-columns:18px repeat(5,23px); gap:4px; align-items:center; justify-content:end}
   .tierMini .tierCount{color:var(--ok); font-weight:700}
   .vaultMini{display:grid; grid-template-columns:repeat(4,16px) 28px; gap:4px; align-items:center; justify-content:end}
   .miniHead span{font-family:var(--font-mono); color:var(--muted-2); text-align:center}
@@ -318,6 +318,7 @@
   .vaultTotal{font-family:var(--font-mono); color:var(--muted-2); text-align:right}
   /* letras de tier: misma tipografía que los nombres (font-body), un poco más grandes */
   .tierL{font-family:var(--font-body); font-weight:700; font-size:14.5px; letter-spacing:.5px}
+  .tierL.oldTier{opacity:.78; text-decoration:underline; text-underline-offset:2px; filter:saturate(.65)}
 
   /* roster tipo spreadsheet, adaptado al tema Prototype */
   .rosterTitle{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:18px 0 14px; padding:13px 16px; border:1px solid var(--line-soft); border-radius:12px; background:linear-gradient(90deg,var(--bg-1),var(--bg-2))}
@@ -872,16 +873,22 @@ const TIER_ILVL_BREAKS = [[318,"M"],[305,"H"],[292,"N"],[279,"V"],[0,"V"]];
 function ilvlLetter(ilvl){ if(ilvl==null) return null; for(const [min,l] of TIER_ILVL_BREAKS){ if(ilvl>=min) return l; } return "V"; }
 function cleanTrackText(value){ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(); }
 function pieceLetter(it){ if(!it) return null; const ds=cleanTrackText((it.name_description&&it.name_description.display_string)||""); for(const [re,l] of NAMEDESC_LETTER){ if(re.test(ds)) return l; } return ilvlLetter(itemIlvl(it)); }
-function tierLettersHtml(t){ return TIER_SLOTS.map(s=>{ const c=t.slots[s]; return c&&c.letter?`<b class="tierL" style="color:${TIER_LETTER_COLOR[c.letter]}">${c.letter}</b>`:'<span style="color:var(--muted-2)">·</span>'; }).join(' '); }
+function tierPieceText(c){ return c&&c.letter ? c.letter+(c.previous?'A':'') : ''; }
+function tierPieceTitle(c){ return c ? `ilvl ${c.ilvl||'—'} · ${c.previous?'tier anterior':'tier actual/inferido'}` : ''; }
+function tierPieceHtml(c){
+  if(!c||!c.letter) return '<span style="color:var(--muted-2)">·</span>';
+  return `<b class="tierL ${c.previous?'oldTier':''}" style="color:${TIER_LETTER_COLOR[c.letter]}" title="${esc(tierPieceTitle(c))}">${esc(tierPieceText(c))}</b>`;
+}
+function tierLettersHtml(t){ return TIER_SLOTS.map(s=>tierPieceHtml(t.slots[s])).join(' '); }
 function trackLetterHtml(l, value){ const txt=value==null?l:value; return `<b class="tierL" style="color:${TIER_LETTER_COLOR[l]}">${txt}</b>`; }
 function tierSlotsHeaderHtml(){ return `<span></span>${TIER_SLOTS.map(s=>`<span>${TIER_SLOT_ABBR[s]}</span>`).join('')}`; }
 function tierSummaryHtml(t){
   return `<span class="tierMini"><span class="tierCount">${t.count}</span>${TIER_SLOTS.map(s=>{
     const c=t.slots[s];
-    return c&&c.letter ? trackLetterHtml(c.letter) : '<span style="color:var(--muted-2)">·</span>';
+    return tierPieceHtml(c);
   }).join('')}</span>`;
 }
-function tierScore(t){ let sc=0; TIER_SLOTS.forEach(s=>{ const c=t.slots[s]; if(c) sc+=TIER_LETTER_WEIGHT[c.letter]||0; }); return sc; }
+function tierScore(t){ let sc=0; TIER_SLOTS.forEach(s=>{ const c=t.slots[s]; if(c) sc+=(TIER_LETTER_WEIGHT[c.letter]||0)*(c.previous?0.25:1); }); return sc; }
 
 /* capacidades por rol: defaults locales, editables desde Admin cuando SQL 020 este aplicado */
 const DEFAULT_CAP = {
@@ -1333,29 +1340,74 @@ function itemSetKey(it){
   const raw=set.id ?? set.key?.id ?? set.name ?? set.name?.en_US ?? set.name?.es_ES;
   return raw==null ? null : String(raw);
 }
-function bestEquippedTierSet(gear){
+function tierSetGroups(gear){
   const groups=new Map();
   const bySlot=gearBySlot(gear);
   TIER_SLOTS.forEach(slot=>{
     const it=bySlot[slot], key=itemSetKey(it);
     if(!key) return;
-    if(!groups.has(key)) groups.set(key,{ key, items:[], id:Number((it.set&&it.set.item_set&&it.set.item_set.id)??0) || 0 });
+    if(!groups.has(key)) groups.set(key,{ key, items:[], id:Number((it.set&&it.set.item_set&&it.set.item_set.id)??0) || 0, avg:0, max:0 });
     groups.get(key).items.push({ slot, it, ilvl:itemIlvl(it)||0 });
   });
-  if(!groups.size) return null;
-  return [...groups.values()].sort((a,b)=>{
-    const avgA=a.items.reduce((s,x)=>s+x.ilvl,0)/Math.max(1,a.items.length);
-    const avgB=b.items.reduce((s,x)=>s+x.ilvl,0)/Math.max(1,b.items.length);
-    return (avgB-avgA) || (b.items.length-a.items.length) || (b.id-a.id);
-  })[0];
+  return [...groups.values()].map(g=>{
+    const sum=g.items.reduce((s,x)=>s+x.ilvl,0);
+    g.avg=sum/Math.max(1,g.items.length);
+    g.max=Math.max(...g.items.map(x=>x.ilvl),0);
+    return g;
+  });
 }
-/* piezas de tier: se toma un unico item_set equipado para no mezclar tier viejo con tier actual */
-function tierInfo(gear){
-  const best=bestEquippedTierSet(gear);
+function bestEquippedTierSet(gear){
+  const groups=tierSetGroups(gear);
+  if(!groups.length) return null;
+  return groups.sort((a,b)=>(b.avg-a.avg) || (b.items.length-a.items.length) || (b.id-a.id))[0];
+}
+function inferCurrentTierSetByClass(rows){
+  const byClass=new Map();
+  rows.forEach(r=>{
+    const cls=r&&r.ch&&r.ch.class;
+    if(!cls) return;
+    tierSetGroups(r.p&&r.p.gear).forEach(g=>{
+      if(!byClass.has(cls)) byClass.set(cls,new Map());
+      const map=byClass.get(cls);
+      const rec=map.get(g.key)||{ key:g.key, id:g.id, pieces:0, players:0, avgSum:0, max:0 };
+      rec.pieces+=g.items.length;
+      rec.players+=1;
+      rec.avgSum+=g.avg;
+      rec.max=Math.max(rec.max,g.max);
+      map.set(g.key,rec);
+    });
+  });
+  const out={};
+  byClass.forEach((map,cls)=>{
+    const best=[...map.values()].sort((a,b)=>{
+      const avgA=a.avgSum/Math.max(1,a.players);
+      const avgB=b.avgSum/Math.max(1,b.players);
+      return (avgB-avgA) || (b.max-a.max) || (b.players-a.players) || (b.pieces-a.pieces) || (b.id-a.id);
+    })[0];
+    if(best) out[cls]=best.key;
+  });
+  return out;
+}
+function applyTierContext(rows){
+  const currentByClass=inferCurrentTierSetByClass(rows);
+  rows.forEach(r=>{ r.tier=tierInfo(r.p&&r.p.gear,currentByClass[r.ch&&r.ch.class]); });
+  return rows;
+}
+/* piezas de tier: marca como anterior si el item_set no coincide con el set actual inferido para la clase */
+function tierInfo(gear,currentSetKey=null){
   const slots={}; TIER_SLOTS.forEach(s=>slots[s]=null);
-  if(!best) return { count:0, slots };
-  best.items.forEach(({slot,it})=>{ slots[slot]={ letter:pieceLetter(it), ilvl:itemIlvl(it), set:itemSetKey(it) }; });
-  return { count:best.items.length, slots };
+  const bySlot=gearBySlot(gear);
+  let count=0, previous=0;
+  const fallback=currentSetKey || (bestEquippedTierSet(gear)||{}).key || null;
+  TIER_SLOTS.forEach(slot=>{
+    const it=bySlot[slot], key=itemSetKey(it);
+    if(!key) return;
+    const isPrevious=!!(fallback && key!==fallback);
+    slots[slot]={ letter:pieceLetter(it), ilvl:itemIlvl(it), set:key, previous:isPrevious };
+    count++;
+    if(isPrevious) previous++;
+  });
+  return { count, previous, currentSetKey:fallback, slots };
 }
 /* distribución de stats secundarios (% del total), sumando todo el equipo */
 function statDist(gear){ const sums={}; let tot=0; (gear||[]).forEach(it=>(it.stats||[]).forEach(s=>{ const t=s.type&&s.type.type; if(SECONDARY_STATS.find(x=>x[0]===t)){ sums[t]=(sums[t]||0)+(s.value||0); tot+=s.value||0; } })); const pct={}; SECONDARY_STATS.forEach(([k])=>{ pct[k]= tot? Math.round((sums[k]||0)/tot*100):0; }); return pct; }
@@ -1483,11 +1535,11 @@ function renderProgreso(){
 }
 function progFilteredRows(){
   const q=progSearch.trim().toLowerCase();
-  return characters.filter(ch=>(!ch.is_recruit_shadow) && ch.active!==false)
+  return applyTierContext(characters.filter(ch=>(!ch.is_recruit_shadow) && ch.active!==false)
     .filter(ch=> progClass==='all' || ch.class===progClass)
     .filter(ch=> progRole==='all' || ch.role===progRole)
     .filter(ch=>{ if(!q) return true; const hay=[ch.name, ch.class||'', CHAR_ROLE_LABEL[ch.role]||ch.role].join(' ').toLowerCase(); return hay.includes(q); })
-    .map(ch=>charStats(ch));
+    .map(ch=>charStats(ch)));
 }
 function sortRows(rows, valueFn){ const d=progSort.dir; return [...rows].sort((a,b)=>{ const va=valueFn(a)??-Infinity, vb=valueFn(b)??-Infinity; if(va<vb) return -d; if(va>vb) return d; return 0; }); }
 function nameCell(r){ return `<td class="classcell" style="--cc:${CLASS_COLOR[r.ch.class]||''}" data-open-character="${esc(r.ch.id)}" title="Abrir panel de personaje"><span class="classrow">${classBadge(r.ch.class)}<b style="color:var(--cc)">${esc(r.ch.name)}</b></span></td>`; }
@@ -1581,10 +1633,10 @@ function progTierView(rows){
   let html=`<div class="tablewrap"><table class="utable"><thead><tr><th>Personaje</th><th class="mono">#</th>${TIER_SLOTS.map(s=>`<th title="${({HEAD:'Helmet',SHOULDER:'Shoulder',CHEST:'Chest',HANDS:'Gloves',LEGS:'Legs'})[s]}">${TIER_SLOT_ABBR[s]}</th>`).join('')}</tr></thead><tbody>`;
   rows.forEach(r=>{ const t=r.tier;
     html+=`<tr>${nameCell(r)}<td class="mono" style="color:${t.count>=4?'var(--ok)':t.count>=2?'var(--warn)':'var(--muted)'}">${t.count}/5</td>`;
-    TIER_SLOTS.forEach(s=>{ const c=t.slots[s]; html+=`<td>${c&&c.letter?`<b class="tierL" style="color:${TIER_LETTER_COLOR[c.letter]}" title="ilvl ${c.ilvl}">${c.letter}</b>`:'<span style="color:var(--muted-2)">·</span>'}</td>`; });
+    TIER_SLOTS.forEach(s=>{ const c=t.slots[s]; html+=`<td>${tierPieceHtml(c)}</td>`; });
     html+='</tr>';
   });
-  return html+'</tbody></table></div><p class="hint" style="margin-top:10px">Letra = track de la pieza según ilvl: <b style="color:'+TIER_LETTER_COLOR.M+'">M</b> Mítico · <b style="color:'+TIER_LETTER_COLOR.H+'">H</b> Héroico · <b style="color:'+TIER_LETTER_COLOR.N+'">N</b> Normal · <b style="color:'+TIER_LETTER_COLOR.V+'">V</b> Veterano.</p>';
+  return html+'</tbody></table></div><p class="hint" style="margin-top:10px">Letra = track de la pieza: <b style="color:'+TIER_LETTER_COLOR.M+'">M</b> Mítico · <b style="color:'+TIER_LETTER_COLOR.H+'">H</b> Héroico · <b style="color:'+TIER_LETTER_COLOR.N+'">N</b> Normal · <b style="color:'+TIER_LETTER_COLOR.V+'">V</b> Veterano. Sufijo <b>A</b> = tier anterior/parche viejo.</p>';
 }
 function progEnchantView(rows){
   rows=sortRows(rows, r=>-r.missingEnchant);
@@ -1766,7 +1818,7 @@ function renderResumen(){
   const c=document.getElementById('content');
   const active=characters.filter(ch=>ch.active!==false);
   if(!active.length){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin datos todavía</b>Sincronizá el roster primero (pestaña Progreso).</div>'; return; }
-  const rows=active.map(ch=>charStats(ch));
+  const rows=applyTierContext(active.map(ch=>charStats(ch)));
   const totalMembers=active.length;
   const totalWeeklyDungeons=rows.reduce((a,r)=>a+r.mplusRuns,0);
   const totalMissingGear=rows.reduce((a,r)=>a+r.missingEnchant+r.missingGem,0);
