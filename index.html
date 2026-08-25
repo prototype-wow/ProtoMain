@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-A7efGe2TV7geRyCveWEIqH4/mHTOj9lOo9DsK8InVPU=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://wow.zamimg.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-4yJtvRYSZgshROHtBwJD4w//6NbMcia5XNASmr/aE6k=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://wow.zamimg.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -2172,7 +2172,7 @@ function itemHref(it){
   const params=wowheadParams(it,false);
   return `https://www.wowhead.com/item=${id}${params?'&'+params:''}`;
 }
-function wowheadData(it){ return wowheadParams(it,true); }
+function wowheadData(it){ return wowheadParams(it,false); }
 function itemLinkHtml(it){
   const nm=itemName(it);
   if(!nm) return '<span style="color:var(--muted-2)">—</span>';
