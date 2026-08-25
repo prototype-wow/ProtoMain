@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-onDVa62q+ndC+BpefAu1+M7NGx0pY+QcXbUWRFGtNJo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-exnE0j4xZI3dvq2JQHGKIgEsPAQF+pUiV2rpXVaXxCU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -1324,7 +1324,7 @@ function gearGaps(gear){
   });
   return { missingEnchant, missingGem, socketedGem };
 }
-function gearBySlot(gear){ const m={}; (gear||[]).forEach(it=>{ if(it.slot&&it.slot.type) m[it.slot.type]=it; }); return m; }
+function gearBySlot(gear){ const m={}; (Array.isArray(gear)?gear:[]).forEach(it=>{ if(it.slot&&it.slot.type) m[it.slot.type]=it; }); return m; }
 function itemIlvl(it){ return it && it.ilvl ? it.ilvl.value : (it&&it.level?it.level.value:null); }
 function gearEquippedIlvl(gear){
   const bySlot=gearBySlot(gear);
@@ -1346,7 +1346,7 @@ function fmtIlvl(p){ const v=displayIlvl(p); return v==null ? "—" : v.toFixed(
 function itemSetKey(it){
   const set=it&&it.set&&it.set.item_set;
   if(!set) return null;
-  const raw=set.id ?? set.key?.id ?? set.name ?? set.name?.en_US ?? set.name?.es_ES;
+  const raw=set.id ?? set.key?.id ?? set.name?.en_US ?? set.name?.es_ES ?? set.name;
   return raw==null ? null : String(raw);
 }
 function itemSetName(it){
@@ -1418,14 +1418,27 @@ function configuredTierSetForClass(cls){
   if(configured && !isKnownPreviousTierSetForClass(cls,configured)) return configured;
   return fallback;
 }
+function tierSetPieces(gear){
+  const bySlot=gearBySlot(gear);
+  return TIER_SLOTS.map(slot=>{
+    const it=bySlot[slot];
+    const key=itemSetKey(it);
+    if(!it||!key) return null;
+    return {
+      slot,
+      it,
+      key,
+      name:itemSetName(it),
+      id:Number((it.set&&it.set.item_set&&it.set.item_set.id)??0) || 0,
+      ilvl:itemIlvl(it)||0
+    };
+  }).filter(Boolean);
+}
 function tierSetGroups(gear){
   const groups=new Map();
-  const bySlot=gearBySlot(gear);
-  TIER_SLOTS.forEach(slot=>{
-    const it=bySlot[slot], key=itemSetKey(it);
-    if(!key) return;
-    if(!groups.has(key)) groups.set(key,{ key, name:itemSetName(it), items:[], id:Number((it.set&&it.set.item_set&&it.set.item_set.id)??0) || 0, avg:0, max:0 });
-    groups.get(key).items.push({ slot, it, ilvl:itemIlvl(it)||0 });
+  tierSetPieces(gear).forEach(piece=>{
+    if(!groups.has(piece.key)) groups.set(piece.key,{ key:piece.key, name:piece.name, items:[], id:piece.id, avg:0, max:0 });
+    groups.get(piece.key).items.push({ slot:piece.slot, it:piece.it, ilvl:piece.ilvl });
   });
   return [...groups.values()].map(g=>{
     const sum=g.items.reduce((s,x)=>s+x.ilvl,0);
@@ -4524,15 +4537,16 @@ function observedTierSetsByClass(){
   const out={};
   characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false).forEach(ch=>{
     const p=characterProgress.find(x=>x.character_id===ch.id)||{};
-    tierSetGroups(p.gear).forEach(g=>{
+    tierSetPieces(p.gear).forEach(piece=>{
       if(!out[ch.class]) out[ch.class]=new Map();
-      const rec=out[ch.class].get(g.key)||{ key:g.key, name:g.name||'', players:new Set(), pieces:0, avgSum:0, max:0 };
-      if(g.name&&!rec.name) rec.name=g.name;
+      const rec=out[ch.class].get(piece.key)||{ key:piece.key, name:piece.name||'', players:new Set(), pieces:0, ilvlSum:0, max:0, slots:new Set() };
+      if(piece.name&&!rec.name) rec.name=piece.name;
       rec.players.add(ch.name);
-      rec.pieces+=g.items.length;
-      rec.avgSum+=g.avg;
-      rec.max=Math.max(rec.max,g.max);
-      out[ch.class].set(g.key,rec);
+      rec.pieces+=1;
+      rec.ilvlSum+=piece.ilvl;
+      rec.max=Math.max(rec.max,piece.ilvl);
+      rec.slots.add(piece.slot);
+      out[ch.class].set(piece.key,rec);
     });
   });
   Object.keys(out).forEach(cls=>{
@@ -4541,9 +4555,10 @@ function observedTierSetsByClass(){
       name:r.name,
       players:r.players.size,
       pieces:r.pieces,
-      avg:r.avgSum/Math.max(1,r.players.size),
-      max:r.max
-    })).sort((a,b)=>(b.avg-a.avg)||(b.max-a.max)||(b.players-a.players)||(b.pieces-a.pieces)||String(a.name).localeCompare(String(b.name)));
+      avg:r.ilvlSum/Math.max(1,r.pieces),
+      max:r.max,
+      slots:r.slots.size
+    })).sort((a,b)=>(b.avg-a.avg)||(b.max-a.max)||(b.players-a.players)||(b.pieces-a.pieces)||(b.slots-a.slots)||String(a.name).localeCompare(String(b.name)));
   });
   return out;
 }
@@ -4566,7 +4581,7 @@ function adminTierSetsHtml(){
       <select class="adminTierSet" data-class="${esc(cls)}">
         <option value="" ${!configured?'selected':''}>${esc(autoLabel)}</option>
         ${extra.concat(opts).map(o=>{
-          const label=`${o.name||'ItemSet'} · ID ${o.key}${o.players?` · ${o.players} pj · ilvl ${o.avg.toFixed(1)}`:''}`;
+          const label=`${o.name||'ItemSet'} · ID ${o.key}${o.players?` · ${o.players} pj · ${o.pieces} pz · ilvl ${o.avg.toFixed(1)}`:''}`;
           return `<option value="${esc(o.key)}" data-name="${esc(o.name||'')}" ${String(configured)===String(o.key)?'selected':''}>${esc(label)}</option>`;
         }).join('')}
       </select>
