@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-exnE0j4xZI3dvq2JQHGKIgEsPAQF+pUiV2rpXVaXxCU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-BcQQfm1xPVOctTHUQ+6Yz4jWCk/gQ3eIHbmCWMRY8KY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -837,9 +837,22 @@ const STATUS_LABEL = { reservado:"Reservado", senado:"Señado", pagado:"Pagado" 
 const CHAR_ROLE_LABEL = { tank:"Tank", healer:"Healer", ranged:"Ranged", melee:"Melee" };
 const CLASS_ARMOR = { Mage:"Cloth", Priest:"Cloth", Warlock:"Cloth", Rogue:"Leather", Druid:"Leather", Monk:"Leather", "Demon Hunter":"Leather", Hunter:"Mail", Shaman:"Mail", Evoker:"Mail", Warrior:"Plate", Paladin:"Plate", "Death Knight":"Plate" };
 const DEFAULT_CURRENT_TIER_SET_NAMES = {};
-const KNOWN_PREVIOUS_TIER_SETS = {
-  Monk:["1984","Way of Ra-den's Chosen"],
+const KNOWN_TIER_SET_OPTIONS = {
+  Druid:[
+    { item_set_id:"1980", name:"Sprouts of the Luminous Bloom", previous:true },
+  ],
+  Monk:[
+    { item_set_id:"1984", name:"Way of Ra-den's Chosen", previous:true },
+  ],
+  Paladin:[
+    { item_set_id:"1985", name:"Luminant Verdict's Vestments", previous:true },
+    { item_set_id:"2062", name:"Radiance of the Consecrated Flame" },
+  ],
+  Warrior:[
+    { item_set_id:"1990", name:"Rage of the Night Ender", previous:true },
+  ],
 };
+const KNOWN_PREVIOUS_TIER_SETS = Object.fromEntries(Object.entries(KNOWN_TIER_SET_OPTIONS).map(([cls,opts])=>[cls,opts.filter(o=>o.previous).flatMap(o=>[o.item_set_id,o.name]).filter(Boolean)]));
 const ARMOR_LABEL = { Cloth:"Tela", Leather:"Cuero", Mail:"Malla", Plate:"Placas" };
 /* colores canonicos de clase de WoW (convencion estandar en toda herramienta de guild) */
 const CLASS_COLOR = { Warrior:"#C79C6E", Paladin:"#F58CBA", Hunter:"#AAD372", Rogue:"#FFF468", Priest:"#F0F0F0", "Death Knight":"#C41E3A", Shaman:"#0070DD", Mage:"#3FC7EB", Warlock:"#8788EE", Monk:"#00FF98", Druid:"#FF7C0A", "Demon Hunter":"#A330C9", Evoker:"#33937F" };
@@ -869,18 +882,51 @@ const DIFF_RANK = { MYTHIC:4, HEROIC:3, NORMAL:2, LFR:1, RAID_FINDER:1 };
 const DIFF_LETTER = { MYTHIC:"M", HEROIC:"H", NORMAL:"N", LFR:"L", RAID_FINDER:"L" };
 const DIFF_COLOR = { MYTHIC:"var(--purple)", HEROIC:"var(--blue)", NORMAL:"var(--ok)", LFR:"var(--muted)", RAID_FINDER:"var(--muted)" };
 const GREAT_VAULT_MAX_SLOTS = 9;
-/* dificultad de la pieza de tier por ilvl. Respaldo para Midnight S2:
-   Normal aprox. 292+, Hero 305+, Myth 318+. La fuente principal es name_description. */
+/* track de mejora de la pieza de tier. Fuente principal: el texto de mejora
+   ("Champion/Campeón 6/6", "Hero/Héroe 6/6", "Myth/Mito 6/6"). */
 const TIER_LETTER_COLOR = { M:"#f0821e", H:"#7c4dbf", N:"#2f8fe0", V:"#2fbf71" };
 const TIER_LETTER_WEIGHT = { M:4, H:3, N:2, V:1 };
-/* La letra sale del ORIGEN de la pieza (name_description: "Mythic"/"Heroic"/"Normal"…),
-   no del ilvl actual — dos piezas del mismo ilvl pueden ser M y H según de dónde salieron. */
-const NAMEDESC_LETTER = [[/^(myth|mythic|mitic)/,"M"],[/^(hero|heroic|heroic)/,"H"],[/^(normal|champion|campeon)/,"N"],[/^(veteran|veterano|explorer|adventurer|lfr|raid.?finder|buscador)/,"V"]];
-/* respaldo por ilvl solo si la pieza no trae name_description */
+const TIER_TRACK_LETTER = [
+  [/\b(myth|mythic|mito|mitic|mitico)\b/,"M"],
+  [/\b(hero|heroic|heroe|heroico)\b/,"H"],
+  [/\b(champion|campeon|normal)\b/,"N"],
+  [/\b(veteran|veterano|explorer|adventurer|lfr|raid finder|raidfinder|buscador)\b/,"V"]
+];
+/* respaldo por ilvl solo si Blizzard no trae ningún texto de mejora parseable */
 const TIER_ILVL_BREAKS = [[318,"M"],[305,"H"],[292,"N"],[279,"V"],[0,"V"]];
 function ilvlLetter(ilvl){ if(ilvl==null) return null; for(const [min,l] of TIER_ILVL_BREAKS){ if(ilvl>=min) return l; } return "V"; }
 function cleanTrackText(value){ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(); }
-function pieceLetter(it){ if(!it) return null; const ds=cleanTrackText((it.name_description&&it.name_description.display_string)||""); for(const [re,l] of NAMEDESC_LETTER){ if(re.test(ds)) return l; } return ilvlLetter(itemIlvl(it)); }
+function collectItemStrings(value,out=[],seen=new Set()){
+  if(value==null) return out;
+  if(typeof value==='string'){ out.push(value); return out; }
+  if(typeof value!=='object') return out;
+  if(seen.has(value)) return out;
+  seen.add(value);
+  if(Array.isArray(value)){ value.forEach(v=>collectItemStrings(v,out,seen)); return out; }
+  Object.values(value).forEach(v=>collectItemStrings(v,out,seen));
+  return out;
+}
+function trackLetterFromText(text,requireUpgradeCue=false){
+  const ds=cleanTrackText(text).replace(/[^a-z0-9/ ]+/g,' ').replace(/\s+/g,' ').trim();
+  if(!ds) return null;
+  const hasRank=/\b\d+\s*\/\s*\d+\b/.test(ds);
+  const hasCue=/\b(upgrade|mejora|nivel de mejora)\b/.test(ds);
+  if(requireUpgradeCue && !hasRank && !hasCue) return null;
+  for(const [re,l] of TIER_TRACK_LETTER){ if(re.test(ds)) return l; }
+  return null;
+}
+function pieceLetter(it){
+  if(!it) return null;
+  const strings=collectItemStrings({
+    upgrade:it.upgrade,
+    name_description:it.name_description,
+    description:it.description,
+    preview_item:it.preview_item
+  });
+  for(const s of strings){ const l=trackLetterFromText(s,true); if(l) return l; }
+  const ds=(it.name_description&&it.name_description.display_string)||"";
+  return trackLetterFromText(ds,false) || ilvlLetter(itemIlvl(it));
+}
 function tierPieceText(c){ return c&&c.letter ? c.letter+(c.previous?'A':'') : ''; }
 function tierPieceTitle(c){ return c ? `ilvl ${c.ilvl||'—'} · ${c.previous?'tier anterior':'tier actual/inferido'}` : ''; }
 function tierPieceHtml(c){
@@ -1397,6 +1443,19 @@ function defaultTierSetForClass(cls){
   const name=DEFAULT_CURRENT_TIER_SET_NAMES[cls];
   return name ? { item_set_id:name, name } : null;
 }
+function knownTierSetOptionsForClass(cls){
+  return (KNOWN_TIER_SET_OPTIONS[cls]||[]).map(o=>({
+    key:String(o.item_set_id||o.name||''),
+    name:o.name||String(o.item_set_id||''),
+    players:0,
+    pieces:0,
+    avg:0,
+    max:0,
+    slots:0,
+    previous:!!o.previous,
+    catalog:true
+  })).filter(o=>o.key);
+}
 function isKnownPreviousTierSetForClass(cls,ref){
   const cfg=normalizeTierSetRef(ref);
   if(!cfg) return false;
@@ -1408,6 +1467,37 @@ function isKnownPreviousTierSetForClass(cls,ref){
       (cfg.key && old.nameKey && normalizeTierSetName(cfg.key)===old.nameKey)
     );
   });
+}
+function mergeTierSetAdminOptions(options){
+  const map=new Map();
+  options.filter(Boolean).forEach(opt=>{
+    const key=String(opt.key||'').trim();
+    const name=opt.name||'';
+    const nameKey=normalizeTierSetName(name);
+    const mapKey=key || nameKey;
+    if(!mapKey) return;
+    const existing=map.get(mapKey);
+    if(!existing){
+      map.set(mapKey,{...opt,key:key||name});
+      return;
+    }
+    existing.name=existing.name||name;
+    existing.players=Math.max(existing.players||0,opt.players||0);
+    existing.pieces=Math.max(existing.pieces||0,opt.pieces||0);
+    existing.avg=Math.max(existing.avg||0,opt.avg||0);
+    existing.max=Math.max(existing.max||0,opt.max||0);
+    existing.slots=Math.max(existing.slots||0,opt.slots||0);
+    existing.previous=!!(existing.previous||opt.previous);
+    existing.catalog=!!(existing.catalog||opt.catalog);
+  });
+  return [...map.values()].sort((a,b)=>
+    ((b.players||0)-(a.players||0)) ||
+    ((b.avg||0)-(a.avg||0)) ||
+    ((b.max||0)-(a.max||0)) ||
+    ((b.pieces||0)-(a.pieces||0)) ||
+    ((b.slots||0)-(a.slots||0)) ||
+    String(a.name||a.key).localeCompare(String(b.name||b.key))
+  );
 }
 function configuredTierSetKeyForClass(cls){
   return normalizeTierSetKey(configuredTierSetForClass(cls));
@@ -4572,16 +4662,19 @@ function adminTierSetsHtml(){
     const configured=normalizeTierSetKey(configuredRef);
     const defaultRef=normalizeTierSetRef(defaultTierSetForClass(cls));
     const autoLabel=defaultRef ? `Auto · ${defaultRef.name || defaultRef.key}` : 'Auto · inferir desde roster';
-    const opts=observed[cls]||[];
-    const hasConfigured=configured && opts.some(o=>String(o.key)===String(configured));
-    const extra=hasConfigured||!configured ? [] : [{key:configured,name:(cfg[cls]&&cfg[cls].name)||'Configurado manualmente',players:0,pieces:0,avg:0,max:0}];
+    const observedOpts=observed[cls]||[];
+    const knownOpts=knownTierSetOptionsForClass(cls);
+    const hasConfigured=configured && observedOpts.concat(knownOpts).some(o=>String(o.key)===String(configured));
+    const extra=hasConfigured||!configured ? [] : [{key:configured,name:(cfg[cls]&&cfg[cls].name)||'Configurado manualmente',players:0,pieces:0,avg:0,max:0,manual:true}];
+    const opts=mergeTierSetAdminOptions(extra.concat(observedOpts,knownOpts));
     const manualValue=(configuredRef && !hasConfigured) ? (configuredRef.name || configuredRef.key || '') : '';
     return `<div class="tierAdminRow" data-class="${esc(cls)}">
       <div>${classTag(cls)}</div>
       <select class="adminTierSet" data-class="${esc(cls)}">
         <option value="" ${!configured?'selected':''}>${esc(autoLabel)}</option>
-        ${extra.concat(opts).map(o=>{
-          const label=`${o.name||'ItemSet'} · ID ${o.key}${o.players?` · ${o.players} pj · ${o.pieces} pz · ilvl ${o.avg.toFixed(1)}`:''}`;
+        ${opts.map(o=>{
+          const source=o.players ? `${o.players} pj · ${o.pieces} pz · ilvl ${o.avg.toFixed(1)}` : (o.previous?'tier anterior conocido':(o.manual?'configurado manual':'catálogo'));
+          const label=`${o.name||'ItemSet'} · ID ${o.key} · ${source}`;
           return `<option value="${esc(o.key)}" data-name="${esc(o.name||'')}" ${String(configured)===String(o.key)?'selected':''}>${esc(label)}</option>`;
         }).join('')}
       </select>
