@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-eJIB0EUM7nf1uKtsXfRCdTHdN3QAbeE0fTzSYKBWKIM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-khwMm4PFa8UO1wFykGLIvUuzi3oeaWLmkDLycTY0JIc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -887,10 +887,17 @@ const DIFF_RANK = { MYTHIC:4, HEROIC:3, NORMAL:2, LFR:1, RAID_FINDER:1 };
 const DIFF_LETTER = { MYTHIC:"M", HEROIC:"H", NORMAL:"N", LFR:"L", RAID_FINDER:"L" };
 const DIFF_COLOR = { MYTHIC:"var(--purple)", HEROIC:"var(--blue)", NORMAL:"var(--ok)", LFR:"var(--muted)", RAID_FINDER:"var(--muted)" };
 const GREAT_VAULT_MAX_SLOTS = 9;
-/* track de mejora de la pieza de tier. Fuente unica: palabras exactas del track:
-   "Mito/Myth", "Heroe/Hero", "Campeon/Champion", "Veterano/Veteran". */
+/* track de mejora de la pieza de tier. Fuente primaria: bonus_list + ItemBonus.db2
+   publicado por SimulationCraft. Fallback: texto exacto del track si viene en Armory. */
 const TIER_LETTER_COLOR = { M:"#f0821e", H:"#7c4dbf", N:"#2f8fe0", V:"#2fbf71" };
 const TIER_LETTER_WEIGHT = { M:4, H:3, N:2, V:1 };
+const SIMC_ITEM_BONUS_URL = "https://raw.githubusercontent.com/simulationcraft/simc/midnight/engine/dbc/generated/item_bonus.inc";
+const UPGRADE_TRACK_BY_V2 = { 970:"Explorer", 971:"Adventurer", 972:"Veteran", 973:"Champion", 974:"Hero", 978:"Myth" };
+const UPGRADE_TRACK_LETTER = { Myth:"M", Hero:"H", Champion:"N", Veteran:"V" };
+const UPGRADE_TRACK_CACHE_KEY = "pt_upgrade_track_bonus_map_v1";
+const UPGRADE_TRACK_CACHE_TTL_MS = 24*60*60*1000;
+let upgradeTrackByBonusId = new Map();
+let upgradeTrackBonusLoadStarted = false;
 const TIER_TRACK_LETTER = [
   [/\b(mito|myth)\b/,"M"],
   [/\b(heroe|hero)\b/,"H"],
@@ -900,6 +907,75 @@ const TIER_TRACK_LETTER = [
 /* no se infiere por ilvl: si Blizzard no trae el track de mejora, queda vacio. */
 function ilvlLetter(){ return null; }
 function cleanTrackText(value){ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(); }
+function parseItemBonusTrackMap(text){
+  const row=/\{\s*(-?\d+),\s*(-?\d+),\s*(-?\d+),\s*(-?\d+),\s*(-?\d+),\s*(-?\d+),\s*(-?\d+),\s*(-?\d+)\s*\}/g;
+  const byGroup=new Map(), trackValueByGroup=new Map();
+  let m;
+  while((m=row.exec(String(text||"")))){
+    const bonusId=Number(m[2]), type=Number(m[3]), value1=Number(m[4]), value2=Number(m[5]);
+    if(type!==34 || !UPGRADE_TRACK_BY_V2[value2]) continue;
+    if(!byGroup.has(value1)) byGroup.set(value1,new Set());
+    byGroup.get(value1).add(bonusId);
+    trackValueByGroup.set(value1,value2);
+  }
+  const out=new Map();
+  byGroup.forEach((ids,group)=>{
+    const track=UPGRADE_TRACK_BY_V2[trackValueByGroup.get(group)];
+    const letter=UPGRADE_TRACK_LETTER[track]||null;
+    [...ids].sort((a,b)=>a-b).forEach((bonusId,idx)=>{
+      out.set(bonusId,{ track, letter, rank:idx+1, max_rank:6, group });
+    });
+  });
+  return out;
+}
+function bonusIdNumber(value){
+  if(value==null) return null;
+  if(typeof value==='number') return Number.isFinite(value)?value:null;
+  if(typeof value==='string' && value.trim()!==''){ const n=Number(value); return Number.isFinite(n)?n:null; }
+  if(typeof value==='object'){
+    const raw=value.id ?? value.bonus_id ?? value.bonusId ?? value.value;
+    return bonusIdNumber(raw);
+  }
+  return null;
+}
+function itemBonusIds(it){
+  const raw=it&&(it.bonus_list || it.bonusList || it.bonuses || (it.item&&it.item.bonus_list));
+  if(!Array.isArray(raw)) return [];
+  return raw.map(bonusIdNumber).filter(n=>Number.isFinite(n));
+}
+function trackInfoFromBonusList(it){
+  for(const bid of itemBonusIds(it)){
+    const info=upgradeTrackByBonusId.get(bid);
+    if(info) return info;
+  }
+  return null;
+}
+function applyUpgradeTrackMap(map){
+  upgradeTrackByBonusId = map instanceof Map ? map : new Map(map||[]);
+}
+async function loadUpgradeTrackBonusMap(){
+  if(upgradeTrackBonusLoadStarted || upgradeTrackByBonusId.size) return;
+  upgradeTrackBonusLoadStarted = true;
+  try{
+    const cached=JSON.parse(localStorage.getItem(UPGRADE_TRACK_CACHE_KEY)||"null");
+    if(cached && Date.now()-(cached.ts||0)<UPGRADE_TRACK_CACHE_TTL_MS && Array.isArray(cached.rows)){
+      applyUpgradeTrackMap(cached.rows);
+      if(session) render();
+    }
+  }catch(e){}
+  try{
+    const res=await fetch(SIMC_ITEM_BONUS_URL,{cache:"force-cache"});
+    if(!res.ok) throw new Error("ItemBonus "+res.status);
+    const map=parseItemBonusTrackMap(await res.text());
+    if(map.size){
+      applyUpgradeTrackMap(map);
+      try{ localStorage.setItem(UPGRADE_TRACK_CACHE_KEY,JSON.stringify({ts:Date.now(),rows:[...map.entries()]})); }catch(e){}
+      if(session) render();
+    }
+  }catch(e){
+    console.warn("No se pudo cargar el decoder de upgrade tracks",e);
+  }
+}
 function collectItemStrings(value,out=[],seen=new Set()){
   if(value==null) return out;
   if(typeof value==='string'){ out.push(value); return out; }
@@ -921,6 +997,8 @@ function trackLetterFromText(text,requireUpgradeCue=false){
 }
 function pieceLetter(it){
   if(!it) return null;
+  const byBonus=trackInfoFromBonusList(it);
+  if(byBonus && byBonus.letter) return byBonus.letter;
   const strings=collectItemStrings({
     upgrade:it.upgrade,
     name_description:it.name_description,
@@ -4972,6 +5050,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSale(); clos
 function showSetup(){ document.getElementById('app').style.display=''; document.getElementById('content').innerHTML=`<div class="setup"><h2>Falta conectar la base</h2><p>Pegá tu <code>SUPABASE_URL</code> y <code>SUPABASE_KEY</code> arriba del archivo, y corré el SQL nuevo (tablas users, app_settings, audit_log).</p></div>`; setLive('err','sin configurar'); }
 async function boot(){
   if(!configured()){ showSetup(); return; }
+  loadUpgradeTrackBonusMap();
   localStorage.removeItem('pt_session');
   if(session&&session.token){
     try{ const valid=await authRequest('session'); session={...valid.user,token:session.token,expires_at:session.expires_at}; sessionStorage.setItem('pt_secure_session',JSON.stringify(session)); }
