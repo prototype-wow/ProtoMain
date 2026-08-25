@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-gmh4kEEroLw6wzqqgI9wW8fZ7WQCFGR3HuvgdQKM+XM=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://wow.zamimg.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-4hQmOHk487QJ+0HcybRpciPfdzzM7Mc5a3NZH39WlIU=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://ptr.wowhead.com https://wow.zamimg.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -758,6 +758,7 @@ globalThis.whTooltips = {
   iconizeLinks: false,
   renameLinks: false
 };
+const WOWHEAD_DOMAIN = 'ptr';
 /* ============================================================
    CONFIGURACIÓN
    ============================================================ */
@@ -1744,6 +1745,15 @@ function openCharacterPanel(characterId){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 document.addEventListener('click',e=>{
+  const wowheadLink=e.target.closest('a[data-wowhead-exact-href]');
+  if(wowheadLink){
+    const href=wowheadLink.dataset.wowheadExactHref;
+    if(href){
+      e.preventDefault();
+      window.open(href,'_blank','noopener');
+    }
+    return;
+  }
   const el=e.target.closest('[data-open-character]');
   if(!el) return;
   const id=el.dataset.openCharacter;
@@ -2169,17 +2179,26 @@ function wowheadParams(it,includeItem=false){
 function itemHref(it){
   const id=wowheadItemId(it);
   if(!id) return '';
-  const params=wowheadParams(it,false);
-  return `https://www.wowhead.com/item=${id}${params?'?'+params:''}`;
+  return `https://www.wowhead.com/${WOWHEAD_DOMAIN}/item=${id}`;
 }
-function wowheadData(it){ return wowheadParams(it,false); }
+function itemExactHref(it){
+  const id=wowheadItemId(it);
+  if(!id) return '';
+  const params=wowheadParams(it,false);
+  return `https://www.wowhead.com/${WOWHEAD_DOMAIN}/item=${id}${params?'?'+params:''}`;
+}
+function wowheadData(it){
+  const params=wowheadParams(it,false);
+  return [`domain=${WOWHEAD_DOMAIN}`,params].filter(Boolean).join('&');
+}
 function itemLinkHtml(it){
   const nm=itemName(it);
   if(!nm) return '<span style="color:var(--muted-2)">—</span>';
   const href=itemHref(it);
   if(!href) return esc(nm);
   const data=wowheadData(it);
-  return `<a href="${esc(href)}" target="_blank" rel="noopener" ${data?`data-wowhead="${esc(data)}"`:''}>${esc(nm)}</a>`;
+  const exact=itemExactHref(it);
+  return `<a href="${esc(href)}" target="_blank" rel="noopener" ${data?`data-wowhead="${esc(data)}"`:''} ${exact?`data-wowhead-exact-href="${esc(exact)}"`:''}>${esc(nm)}</a>`;
 }
 function enchantName(it){ const e=it && it.enchantments && it.enchantments[0]; return cleanDisplay(e && (e.display_string || localizedName(e.enchantment) || e.name)); }
 function singleRows(){ return characters.filter(ch=>ch.active!==false).sort((a,b)=>String(a.name).localeCompare(String(b.name))); }
