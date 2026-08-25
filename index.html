@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-khwMm4PFa8UO1wFykGLIvUuzi3oeaWLmkDLycTY0JIc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-A7efGe2TV7geRyCveWEIqH4/mHTOj9lOo9DsK8InVPU=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://wow.zamimg.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -753,6 +753,11 @@
 <div class="toast" id="toast"></div>
 
 <script>
+globalThis.whTooltips = {
+  colorLinks: false,
+  iconizeLinks: false,
+  renameLinks: false
+};
 /* ============================================================
    CONFIGURACIÓN
    ============================================================ */
@@ -1746,6 +1751,16 @@ document.addEventListener('click',e=>{
   e.preventDefault();
   openCharacterPanel(id);
 });
+function refreshWowheadTooltips(){
+  setTimeout(()=>{
+    const w=globalThis;
+    try{
+      if(w.$WowheadPower && typeof w.$WowheadPower.refreshLinks==='function') w.$WowheadPower.refreshLinks();
+      else if(w.WH && w.WH.Tooltips && typeof w.WH.Tooltips.refreshLinks==='function') w.WH.Tooltips.refreshLinks();
+      else if(w.WH && w.WH.Tooltip && typeof w.WH.Tooltip.refreshLinks==='function') w.WH.Tooltip.refreshLinks();
+    }catch(e){}
+  },0);
+}
 function render(){
   renderUserArea(); renderTabs();
   document.getElementById('copyVacAll').style.display = view==='semana' ? '' : 'none';
@@ -1760,6 +1775,7 @@ function render(){
   else if(view==='reclutas') renderReclutas();
   else if(view==='usuarios') renderUsuarios();
   else if(view==='admin') renderAdmin();
+  refreshWowheadTooltips();
 }
 
 /* ---------- PROGRESO (equipo / M+ / raid, vía Battle.net) ---------- */
@@ -2110,7 +2126,61 @@ function renderResumen(){
 function localizedName(v){ if(!v) return ''; if(typeof v==='string') return v; if(typeof v.name==='string') return v.name; if(v.name&&v.name.en_US) return v.name.en_US; if(v.en_US) return v.en_US; return ''; }
 function cleanDisplay(s){ return String(s||'').replace(/^Enchanted:\s*/,'').split('|A:')[0].trim(); }
 function itemName(it){ return it ? (it.name || localizedName(it.item) || '') : ''; }
-function itemHref(it){ const id=it && it.item && it.item.id; return id ? `https://www.wowhead.com/item=${id}` : ''; }
+function idFromHref(href,segment='item'){
+  const m=String(href||'').match(new RegExp(`/${segment}/(\\d+)`));
+  return m ? Number(m[1]) : null;
+}
+function objectNumericId(value,segment='item'){
+  if(value==null) return null;
+  if(typeof value==='number') return Number.isFinite(value)?value:null;
+  if(typeof value==='string' && value.trim()!==''){ const n=Number(value); return Number.isFinite(n)?n:idFromHref(value,segment); }
+  if(typeof value==='object'){
+    const raw=value.id ?? value.item_id ?? value.itemId ?? value.enchantment_id ?? value.enchantmentId ?? value.value;
+    const direct=objectNumericId(raw,segment);
+    if(direct) return direct;
+    return idFromHref(value.href || (value.key&&value.key.href), segment);
+  }
+  return null;
+}
+function wowheadItemId(it){ return objectNumericId(it&&it.item,'item') || objectNumericId(it,'item'); }
+function wowheadGemIds(it){
+  const sockets=Array.isArray(it&&it.sockets) ? it.sockets : [];
+  return sockets.map(s=>objectNumericId(s&&s.item,'item') || objectNumericId(s&&s.socket&&s.socket.item,'item')).filter(Boolean);
+}
+function wowheadEnchantId(it){
+  const enchants=Array.isArray(it&&it.enchantments) ? it.enchantments : [];
+  const e=enchants[0];
+  return objectNumericId(e&&e.enchantment,'item') || objectNumericId(e,'item');
+}
+function wowheadParams(it,includeItem=false){
+  const params=[];
+  const id=wowheadItemId(it);
+  if(includeItem && id) params.push(`item=${id}`);
+  const bonus=itemBonusIds(it);
+  if(bonus.length) params.push(`bonus=${bonus.join(':')}`);
+  const ilvl=itemIlvl(it);
+  if(ilvl) params.push(`ilvl=${ilvl}`);
+  const gems=wowheadGemIds(it);
+  if(gems.length) params.push(`gems=${gems.join(':')}`);
+  const ench=wowheadEnchantId(it);
+  if(ench) params.push(`ench=${ench}`);
+  return params.join('&');
+}
+function itemHref(it){
+  const id=wowheadItemId(it);
+  if(!id) return '';
+  const params=wowheadParams(it,false);
+  return `https://www.wowhead.com/item=${id}${params?'&'+params:''}`;
+}
+function wowheadData(it){ return wowheadParams(it,true); }
+function itemLinkHtml(it){
+  const nm=itemName(it);
+  if(!nm) return '<span style="color:var(--muted-2)">—</span>';
+  const href=itemHref(it);
+  if(!href) return esc(nm);
+  const data=wowheadData(it);
+  return `<a href="${esc(href)}" target="_blank" rel="noopener" ${data?`data-wowhead="${esc(data)}"`:''}>${esc(nm)}</a>`;
+}
 function enchantName(it){ const e=it && it.enchantments && it.enchantments[0]; return cleanDisplay(e && (e.display_string || localizedName(e.enchantment) || e.name)); }
 function singleRows(){ return characters.filter(ch=>ch.active!==false).sort((a,b)=>String(a.name).localeCompare(String(b.name))); }
 function singleSelectedChar(rows){ let ch=rows.find(x=>x.id===singleCharId); if(!ch){ ch=rows[0]; singleCharId=ch ? ch.id : ''; } return ch; }
@@ -2140,7 +2210,7 @@ function singleProfessionsPanel(p){
 }
 function singleGearPanel(p){
   const bySlot=gearBySlot(p.gear);
-  const rows=GEAR_SLOT_ORDER.map(([slot,label])=>{ const it=bySlot[slot], nm=itemName(it), href=itemHref(it), ilvl=itemIlvl(it); const item=nm ? (href?`<a href="${href}" target="_blank" rel="noopener">${esc(nm)}</a>`:esc(nm)) : '<span style="color:var(--muted-2)">—</span>'; return `<tr><td class="slot">${esc(label)}</td><td class="ilvl">${ilvl||'—'}</td><td class="item">${item}</td></tr>`; }).join('');
+  const rows=GEAR_SLOT_ORDER.map(([slot,label])=>{ const it=bySlot[slot], ilvl=itemIlvl(it); return `<tr><td class="slot">${esc(label)}</td><td class="ilvl">${ilvl||'—'}</td><td class="item">${itemLinkHtml(it)}</td></tr>`; }).join('');
   return `<div class="panel singlePanel"><div class="phead"><h2><span class="dia"></span>Equipo</h2></div><div class="pbody"><table class="singleGear"><thead><tr><th>Slot</th><th>iLvl</th><th>Nombre</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 function singleEnchantPanel(p){
@@ -5066,3 +5136,4 @@ updateServerClock();
 setInterval(updateServerClock,1000);
 initApiBaseUrl().finally(()=>boot());
 </script>
+<script src="https://wow.zamimg.com/js/tooltips.js" defer></script>
