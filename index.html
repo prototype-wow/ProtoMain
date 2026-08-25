@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-5KLM6Ev/9+HfzpRD5pWJrkG0b+S+E+vGExwNAvk1wfY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-CJyzWwgm2fshcM6TmOIk+CxJ0VPAPOXRUY1m78qRLAg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -319,6 +319,9 @@
   /* letras de tier: misma tipografía que los nombres (font-body), un poco más grandes */
   .tierL{font-family:var(--font-body); font-weight:700; font-size:14.5px; letter-spacing:.5px}
   .tierL.oldTier{opacity:.78; text-decoration:underline; text-underline-offset:2px; filter:saturate(.65)}
+  .tierAdminList{display:grid; gap:8px}
+  .tierAdminRow{display:grid; grid-template-columns:170px minmax(0,1fr); gap:10px; align-items:center}
+  .tierAdminRow select{width:100%}
 
   /* roster tipo spreadsheet, adaptado al tema Prototype */
   .rosterTitle{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:18px 0 14px; padding:13px 16px; border:1px solid var(--line-soft); border-radius:12px; background:linear-gradient(90deg,var(--bg-1),var(--bg-2))}
@@ -962,7 +965,7 @@ function normalizePerms(value){
 function rolePerms(){ return normalizePerms(settings.role_permissions); }
 
 let state={ weeks:[], current:null };
-let users=[], settings={ require_login:false, role_permissions:null, wcl_active_zone_ids:DEFAULT_WCL_ZONE_IDS, wcl_mplus_zone_id:DEFAULT_WCL_MPLUS_ZONE_ID, wcl_active_difficulties:DEFAULT_WCL_DIFFS, wcl_active_metrics:DEFAULT_WCL_METRICS, raiderio_season:'current', ...DEFAULT_SYNC_SETTINGS, ...DEFAULT_CALENDAR_SETTINGS }, auditLog=[];
+let users=[], settings={ require_login:false, role_permissions:null, current_tier_sets:null, wcl_active_zone_ids:DEFAULT_WCL_ZONE_IDS, wcl_mplus_zone_id:DEFAULT_WCL_MPLUS_ZONE_ID, wcl_active_difficulties:DEFAULT_WCL_DIFFS, wcl_active_metrics:DEFAULT_WCL_METRICS, raiderio_season:'current', ...DEFAULT_SYNC_SETTINGS, ...DEFAULT_CALENDAR_SETTINGS }, auditLog=[];
 let characters=[], characterProgress=[], realms=[], trackedAbilities=[], wclRankings=[], wclZones=[], raiderProfiles=[];
 let raidEvents=[], raidEventSegments=[], raidAttendance=[], raidAttendanceRules=[];
 let recruits=[], recruitFilter={q:"",status:"open"}, recruitLoadError='', recruitPanelOpenId=''; let selectedRecruitId="";
@@ -1224,6 +1227,7 @@ async function fetchAll(){
     show_admin_activity:false,
     auto_sync:true,
     role_permissions:null,
+    current_tier_sets:null,
     wcl_active_zone_ids:DEFAULT_WCL_ZONE_IDS,
     wcl_mplus_zone_id:DEFAULT_WCL_MPLUS_ZONE_ID,
     wcl_active_difficulties:DEFAULT_WCL_DIFFS,
@@ -1247,7 +1251,7 @@ async function fetchAll(){
   if('raid_attendance_rules' in data) raidAttendanceRules=data.raid_attendance_rules||[];
   if(cap('manageRecruits')){ try{ await fetchRecruits(); }catch(e){ recruits=[]; recruitLoadError=e&&e.message?e.message:String(e); } }
 }
-function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.recurrence,e.recurrence_group_id,e.recurrence_parent_id,e.recurrence_until,e.recurrence_days,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order,s.segment_status,s.sale_ids]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), raidAttendanceRules.map(r=>[r.id,r.character_id,r.status,r.date_from,r.date_to,r.weekdays,r.rule_mode,r.weekday_overrides,r.arrival_time,r.leave_time,r.away_minutes,r.active,r.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
+function dataSig(){ return JSON.stringify([state.weeks.map(w=>[w.id,w.label,w.date,w.slots,w.sales]), users.map(u=>[u.username,u.role]), settings.require_login, settings.show_admin_activity, settings.auto_sync, settings.role_permissions, settings.current_tier_sets, settings.wcl_active_zone_ids, settings.wcl_active_difficulties, settings.wcl_active_metrics, settings.raiderio_season, Object.keys(DEFAULT_SYNC_SETTINGS).map(k=>settings[k]), Object.keys(DEFAULT_CALENDAR_SETTINGS).map(k=>settings[k]), auditLog.length, characterProgress.map(c=>[c.character_id,c.updated_at,c.synced_ok]), trackedAbilities.map(a=>[a.id,a.spell_id,a.name,a.class,a.group_name,a.role_filter,a.enabled]), wclRankings.map(r=>[r.character_id,r.zone_id,r.metric,r.difficulty,r.updated_at]), raiderProfiles.map(r=>[r.character_id,r.updated_at,r.synced_ok]), raidEvents.map(e=>[e.id,e.event_date,e.start_time,e.end_time,e.title,e.status,e.recurrence,e.recurrence_group_id,e.recurrence_parent_id,e.recurrence_until,e.recurrence_days,e.updated_at]), raidEventSegments.map(s=>[s.id,s.event_id,s.instance_name,s.difficulty,s.sort_order,s.segment_status,s.sale_ids]), raidAttendance.map(a=>[a.id,a.event_id,a.character_id,a.status,a.arrival_time,a.leave_time,a.away_minutes,a.updated_at]), raidAttendanceRules.map(r=>[r.id,r.character_id,r.status,r.date_from,r.date_to,r.weekdays,r.rule_mode,r.weekday_overrides,r.arrival_time,r.leave_time,r.away_minutes,r.active,r.updated_at]), recruits.map(r=>[r.id,r.status,r.updated_at])]); }
 async function refresh(toastOnChange){
   if(!session||!session.token) return;
   try{ await fetchAll(); await materializeUpcomingRecurringEvents(); clearError(); setLive('ok','en vivo');
@@ -1340,13 +1344,30 @@ function itemSetKey(it){
   const raw=set.id ?? set.key?.id ?? set.name ?? set.name?.en_US ?? set.name?.es_ES;
   return raw==null ? null : String(raw);
 }
+function itemSetName(it){
+  const set=it&&it.set&&it.set.item_set;
+  if(!set) return '';
+  const raw=set.name?.en_US ?? set.name?.es_ES ?? set.name ?? '';
+  return String(raw||'');
+}
+function normalizeTierSetKey(value){
+  const raw=(value&&typeof value==='object'&&!Array.isArray(value))
+    ? (value.item_set_id ?? value.id ?? value.key ?? value.set)
+    : value;
+  const key=raw==null ? '' : String(raw).trim();
+  return key || null;
+}
+function currentTierSetConfig(){
+  return (settings.current_tier_sets&&typeof settings.current_tier_sets==='object'&&!Array.isArray(settings.current_tier_sets)) ? settings.current_tier_sets : {};
+}
+function configuredTierSetKeyForClass(cls){ return normalizeTierSetKey(currentTierSetConfig()[cls]); }
 function tierSetGroups(gear){
   const groups=new Map();
   const bySlot=gearBySlot(gear);
   TIER_SLOTS.forEach(slot=>{
     const it=bySlot[slot], key=itemSetKey(it);
     if(!key) return;
-    if(!groups.has(key)) groups.set(key,{ key, items:[], id:Number((it.set&&it.set.item_set&&it.set.item_set.id)??0) || 0, avg:0, max:0 });
+    if(!groups.has(key)) groups.set(key,{ key, name:itemSetName(it), items:[], id:Number((it.set&&it.set.item_set&&it.set.item_set.id)??0) || 0, avg:0, max:0 });
     groups.get(key).items.push({ slot, it, ilvl:itemIlvl(it)||0 });
   });
   return [...groups.values()].map(g=>{
@@ -1379,6 +1400,8 @@ function inferCurrentTierSetByClass(rows){
   });
   const out={};
   byClass.forEach((map,cls)=>{
+    const configured=configuredTierSetKeyForClass(cls);
+    if(configured){ out[cls]=configured; return; }
     const best=[...map.values()].sort((a,b)=>{
       const avgA=a.avgSum/Math.max(1,a.players);
       const avgB=b.avgSum/Math.max(1,b.players);
@@ -4440,6 +4463,58 @@ function calendarConfigHtml(){
     <div class="field" style="margin-top:10px"><label>Etiqueta horaria</label><select id="adminCalTzLabel">${calendarTimezoneLabelOptionsHtml(tzMode,tzLabel)}</select></div>
   </div>`;
 }
+function observedTierSetsByClass(){
+  const out={};
+  characters.filter(ch=>!ch.is_recruit_shadow && ch.active!==false).forEach(ch=>{
+    const p=characterProgress.find(x=>x.character_id===ch.id)||{};
+    tierSetGroups(p.gear).forEach(g=>{
+      if(!out[ch.class]) out[ch.class]=new Map();
+      const rec=out[ch.class].get(g.key)||{ key:g.key, name:g.name||'', players:new Set(), pieces:0, avgSum:0, max:0 };
+      if(g.name&&!rec.name) rec.name=g.name;
+      rec.players.add(ch.name);
+      rec.pieces+=g.items.length;
+      rec.avgSum+=g.avg;
+      rec.max=Math.max(rec.max,g.max);
+      out[ch.class].set(g.key,rec);
+    });
+  });
+  Object.keys(out).forEach(cls=>{
+    out[cls]=[...out[cls].values()].map(r=>({
+      key:r.key,
+      name:r.name,
+      players:r.players.size,
+      pieces:r.pieces,
+      avg:r.avgSum/Math.max(1,r.players.size),
+      max:r.max
+    })).sort((a,b)=>(b.avg-a.avg)||(b.max-a.max)||(b.players-a.players)||(b.pieces-a.pieces)||String(a.name).localeCompare(String(b.name)));
+  });
+  return out;
+}
+function adminTierSetsHtml(){
+  const observed=observedTierSetsByClass();
+  const cfg=currentTierSetConfig();
+  const classes=Object.keys(CLASS_ARMOR);
+  const rows=classes.map(cls=>{
+    const configured=normalizeTierSetKey(cfg[cls]);
+    const opts=observed[cls]||[];
+    const hasConfigured=configured && opts.some(o=>String(o.key)===String(configured));
+    const extra=hasConfigured||!configured ? [] : [{key:configured,name:(cfg[cls]&&cfg[cls].name)||'Configurado manualmente',players:0,pieces:0,avg:0,max:0}];
+    return `<div class="tierAdminRow">
+      <div>${classTag(cls)}</div>
+      <select class="adminTierSet" data-class="${esc(cls)}">
+        <option value="" ${!configured?'selected':''}>Auto · inferir desde roster</option>
+        ${extra.concat(opts).map(o=>{
+          const label=`${o.name||'ItemSet'} · ID ${o.key}${o.players?` · ${o.players} pj · ilvl ${o.avg.toFixed(1)}`:''}`;
+          return `<option value="${esc(o.key)}" data-name="${esc(o.name||'')}" ${String(configured)===String(o.key)?'selected':''}>${esc(label)}</option>`;
+        }).join('')}
+      </select>
+    </div>`;
+  }).join('');
+  return `<div><label class="miniLabel">Tier actual por clase</label>
+    <div class="tierAdminList">${rows}</div>
+    <p class="adminNote">Fuente: <code>set.item_set.id</code> de Armory/equipment. Si dejás Auto, la app infiere por clase; si elegís un ID, ese manda y cualquier otro set equipado se marca como anterior (<code>MA</code>, <code>HA</code>, etc.).</p>
+  </div>`;
+}
 function renderAdmin(){
   const c=document.getElementById('content');
   if(!cap('viewAdmin')){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin permiso</b>Tu usuario no puede abrir el panel Admin.</div>'; return; }
@@ -4457,6 +4532,7 @@ function renderAdmin(){
         <div class="field"><label>Raider.IO season</label><input id="adminRioSeason" value="${esc(settings.raiderio_season||'current')}" placeholder="current o season-mn-1"></div>
         ${syncConfigHtml()}
         ${calendarConfigHtml()}
+        ${adminTierSetsHtml()}
         <div><label class="miniLabel">Dificultades WCL</label><div class="chipGrid">${diffChips}</div></div>
         <div><label class="miniLabel">Métricas WCL</label><div class="chipGrid">${metricChips}</div></div>
         <div><label class="miniLabel">Zonas WCL activas</label><div class="zoneList">${adminZoneRowsHtml()}</div></div>
@@ -4499,6 +4575,12 @@ async function saveAdminApiConfig(){
   const metrics=[...document.querySelectorAll('.adminMetric:checked')].map(x=>x.value).filter(x=>WCL_METRIC_LABEL[x]);
   if(!metrics.length) return toast('Elegí al menos una métrica');
   const season=(document.getElementById('adminRioSeason').value||'current').trim()||'current';
+  const currentTierSets={};
+  document.querySelectorAll('.adminTierSet').forEach(sel=>{
+    const key=String(sel.value||'').trim();
+    if(!key) return;
+    currentTierSets[sel.dataset.class]={ item_set_id:key, name:sel.selectedOptions&&sel.selectedOptions[0]?sel.selectedOptions[0].dataset.name||'':'' };
+  });
   const intVal=(id,fallback,min=0,max=10080)=>{
     const n=Number(document.getElementById(id).value);
     if(!Number.isFinite(n)) return fallback;
@@ -4511,6 +4593,7 @@ async function saveAdminApiConfig(){
     wcl_mplus_zone_id:mplus,
     wcl_active_difficulties:difficulties,
     wcl_active_metrics:metrics,
+    current_tier_sets:currentTierSets,
     raiderio_season:season,
     armory_refresh_minutes:intVal('adminArmoryRefresh',DEFAULT_SYNC_SETTINGS.armory_refresh_minutes,1),
     armory_batch_size:intVal('adminArmoryBatch',DEFAULT_SYNC_SETTINGS.armory_batch_size,0),
@@ -4527,7 +4610,7 @@ async function saveAdminApiConfig(){
     calendar_timezone_label:calLabel
   };
   try{ await sbUpd('app_settings',1,patch); Object.assign(settings,patch); logAction('cambiar_api_config','settings','1',patch); await refresh(true); toast('Configuración guardada'); }
-  catch(e){ toast('No se pudo guardar. ¿Corriste SQL 020?'); }
+  catch(e){ toast('No se pudo guardar. ¿Corriste migración 012 / SQL 032?'); }
 }
 function backendConfigFromForm(){
   const mode=document.getElementById('adminBackendMode').value;
