@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-ki98DPXk/RXxfqM6GAtm2inKw1ajnJ8WuI5/SDuKQr0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-onDVa62q+ndC+BpefAu1+M7NGx0pY+QcXbUWRFGtNJo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -836,6 +836,10 @@ const ROLE_LABEL = { basico:"Básico", cargador:"Cargador", officer:"Officer", a
 const STATUS_LABEL = { reservado:"Reservado", senado:"Señado", pagado:"Pagado" };
 const CHAR_ROLE_LABEL = { tank:"Tank", healer:"Healer", ranged:"Ranged", melee:"Melee" };
 const CLASS_ARMOR = { Mage:"Cloth", Priest:"Cloth", Warlock:"Cloth", Rogue:"Leather", Druid:"Leather", Monk:"Leather", "Demon Hunter":"Leather", Hunter:"Mail", Shaman:"Mail", Evoker:"Mail", Warrior:"Plate", Paladin:"Plate", "Death Knight":"Plate" };
+const DEFAULT_CURRENT_TIER_SET_NAMES = {};
+const KNOWN_PREVIOUS_TIER_SETS = {
+  Monk:["1984","Way of Ra-den's Chosen"],
+};
 const ARMOR_LABEL = { Cloth:"Tela", Leather:"Cuero", Mail:"Malla", Plate:"Placas" };
 /* colores canonicos de clase de WoW (convencion estandar en toda herramienta de guild) */
 const CLASS_COLOR = { Warrior:"#C79C6E", Paladin:"#F58CBA", Hunter:"#AAD372", Rogue:"#FFF468", Priest:"#F0F0F0", "Death Knight":"#C41E3A", Shaman:"#0070DD", Mage:"#3FC7EB", Warlock:"#8788EE", Monk:"#00FF98", Druid:"#FF7C0A", "Demon Hunter":"#A330C9", Evoker:"#33937F" };
@@ -1358,7 +1362,14 @@ function normalizeTierSetKey(value){
   const key=raw==null ? '' : String(raw).trim();
   return key || null;
 }
-function normalizeTierSetName(value){ return cleanTrackText(value).replace(/\s+/g,' '); }
+function normalizeTierSetName(value){
+  return cleanTrackText(value)
+    .replace(/[’'`]/g,'')
+    .replace(/&/g,' and ')
+    .replace(/[^a-z0-9]+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
 function normalizeTierSetRef(value){
   if(value==null || value==='') return null;
   if(value&&typeof value==='object'&&!Array.isArray(value)){
@@ -1382,8 +1393,31 @@ function tierSetMatchesItem(it,ref){
 function currentTierSetConfig(){
   return (settings.current_tier_sets&&typeof settings.current_tier_sets==='object'&&!Array.isArray(settings.current_tier_sets)) ? settings.current_tier_sets : {};
 }
-function configuredTierSetKeyForClass(cls){ return normalizeTierSetKey(currentTierSetConfig()[cls]); }
-function configuredTierSetForClass(cls){ return normalizeTierSetRef(currentTierSetConfig()[cls]); }
+function defaultTierSetForClass(cls){
+  const name=DEFAULT_CURRENT_TIER_SET_NAMES[cls];
+  return name ? { item_set_id:name, name } : null;
+}
+function isKnownPreviousTierSetForClass(cls,ref){
+  const cfg=normalizeTierSetRef(ref);
+  if(!cfg) return false;
+  return (KNOWN_PREVIOUS_TIER_SETS[cls]||[]).some(oldRef=>{
+    const old=normalizeTierSetRef(oldRef);
+    return !!old && (
+      (cfg.key && old.key && String(cfg.key)===String(old.key)) ||
+      (cfg.nameKey && old.nameKey && cfg.nameKey===old.nameKey) ||
+      (cfg.key && old.nameKey && normalizeTierSetName(cfg.key)===old.nameKey)
+    );
+  });
+}
+function configuredTierSetKeyForClass(cls){
+  return normalizeTierSetKey(configuredTierSetForClass(cls));
+}
+function configuredTierSetForClass(cls){
+  const fallback=normalizeTierSetRef(defaultTierSetForClass(cls));
+  const configured=normalizeTierSetRef(currentTierSetConfig()[cls]);
+  if(configured && !isKnownPreviousTierSetForClass(cls,configured)) return configured;
+  return fallback;
+}
 function tierSetGroups(gear){
   const groups=new Map();
   const bySlot=gearBySlot(gear);
@@ -4518,8 +4552,11 @@ function adminTierSetsHtml(){
   const cfg=currentTierSetConfig();
   const classes=Object.keys(CLASS_ARMOR);
   const rows=classes.map(cls=>{
-    const configuredRef=normalizeTierSetRef(cfg[cls]);
+    let configuredRef=normalizeTierSetRef(cfg[cls]);
+    if(isKnownPreviousTierSetForClass(cls,configuredRef) && defaultTierSetForClass(cls)) configuredRef=null;
     const configured=normalizeTierSetKey(configuredRef);
+    const defaultRef=normalizeTierSetRef(defaultTierSetForClass(cls));
+    const autoLabel=defaultRef ? `Auto · ${defaultRef.name || defaultRef.key}` : 'Auto · inferir desde roster';
     const opts=observed[cls]||[];
     const hasConfigured=configured && opts.some(o=>String(o.key)===String(configured));
     const extra=hasConfigured||!configured ? [] : [{key:configured,name:(cfg[cls]&&cfg[cls].name)||'Configurado manualmente',players:0,pieces:0,avg:0,max:0}];
@@ -4527,7 +4564,7 @@ function adminTierSetsHtml(){
     return `<div class="tierAdminRow" data-class="${esc(cls)}">
       <div>${classTag(cls)}</div>
       <select class="adminTierSet" data-class="${esc(cls)}">
-        <option value="" ${!configured?'selected':''}>Auto · inferir desde roster</option>
+        <option value="" ${!configured?'selected':''}>${esc(autoLabel)}</option>
         ${extra.concat(opts).map(o=>{
           const label=`${o.name||'ItemSet'} · ID ${o.key}${o.players?` · ${o.players} pj · ilvl ${o.avg.toFixed(1)}`:''}`;
           return `<option value="${esc(o.key)}" data-name="${esc(o.name||'')}" ${String(configured)===String(o.key)?'selected':''}>${esc(label)}</option>`;
@@ -4538,7 +4575,7 @@ function adminTierSetsHtml(){
   }).join('');
   return `<div><label class="miniLabel">Tier actual por clase</label>
     <div class="tierAdminList">${rows}</div>
-    <p class="adminNote">Fuente: <code>set.item_set</code> de Armory/equipment. Si dejás Auto, la app infiere por clase. Si escribís manualmente un ID o nombre exacto, eso manda; cualquier otro set equipado se marca como anterior (<code>MA</code>, <code>HA</code>, etc.).</p>
+    <p class="adminNote">Fuente: <code>set.item_set</code> de Armory/equipment. Usá <b>Detectar tiers</b> para cruzar el roster contra el raid actual de Blizzard. Si escribís manualmente un ID o nombre exacto, eso manda; cualquier otro set equipado se marca como anterior (<code>MA</code>, <code>HA</code>, etc.).</p>
   </div>`;
 }
 function renderAdmin(){
@@ -4546,7 +4583,7 @@ function renderAdmin(){
   if(!cap('viewAdmin')){ c.innerHTML='<div class="empty" style="padding:60px"><b>Sin permiso</b>Tu usuario no puede abrir el panel Admin.</div>'; return; }
   const diffChips=Object.entries(WCL_DIFF_LABEL).filter(([k])=>DEFAULT_WCL_DIFFS.includes(Number(k))).map(([k,label])=>`<label class="pickChip"><input class="adminDiff" type="checkbox" value="${k}" ${wclActiveDiffs().map(String).includes(String(k))?'checked':''}>${esc(label)}</label>`).join('');
   const metricChips=Object.entries(WCL_METRIC_LABEL).map(([k,label])=>`<label class="pickChip"><input class="adminMetric" type="checkbox" value="${k}" ${wclActiveMetrics().includes(k)?'checked':''}>${esc(label)}</label>`).join('');
-  c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Panel Admin</div><div class="actions"><button class="btn ghost sm" id="adminDetectWcl">Detectar zonas WCL</button></div></div>
+  c.innerHTML=`<div class="wbar"><div class="sectitle" style="margin:0">Panel Admin</div><div class="actions"><button class="btn ghost sm" id="adminDetectTierSets">Detectar tiers</button><button class="btn ghost sm" id="adminDetectWcl">Detectar zonas WCL</button></div></div>
     <div class="adminGrid apiFocus">
       <div class="panel adminPanel"><div class="phead"><h2><span class="dia"></span>Permisos por rango</h2></div><div class="pbody">
         <p class="adminNote">Estos permisos controlan solapas visibles y acciones principales. El servidor usa la misma matriz para aceptar o rechazar escrituras.</p>
@@ -4568,6 +4605,7 @@ function renderAdmin(){
     </div>`;
   document.getElementById('adminSavePerms').onclick=saveAdminPermissions;
   document.getElementById('adminSaveApis').onclick=saveAdminApiConfig;
+  document.getElementById('adminDetectTierSets').onclick=detectTierSets;
   document.getElementById('adminDetectWcl').onclick=detectWclZones;
   document.getElementById('adminApplyBackend').onclick=applyBackendConfig;
   const adminTzMode=document.getElementById('adminCalTzMode');
@@ -4675,6 +4713,21 @@ async function detectWclZones(btn){
   try{ await edgeRequest('sync-warcraftlogs',{action:'sync_zones'},true); await refresh(true); if(view==='admin') renderAdmin(); toast('Zonas WCL detectadas'); }
   catch(e){ toast('No se pudo consultar WCL'); }
   finally{ btn.disabled=false; btn.textContent=orig; }
+}
+async function detectTierSets(btn){
+  btn=btn||document.getElementById('adminDetectTierSets');
+  const orig=btn.textContent; btn.disabled=true; btn.textContent='Detectando…';
+  try{
+    const result=await appRequest('detect_current_tier_sets',{});
+    const classes=Object.keys(result.detected||{});
+    await refresh(true);
+    if(view==='admin') renderAdmin();
+    toast(classes.length?`Tiers detectados: ${classes.length} clases`:'No hubo tiers actuales nuevos para guardar');
+  }catch(e){
+    toast(e.message||'No se pudieron detectar tiers');
+  }finally{
+    btn.disabled=false; btn.textContent=orig;
+  }
 }
 function renderUsuarios(){
   const c=document.getElementById('content');
