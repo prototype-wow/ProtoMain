@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-i4nOpNhBctbodEG0OFY4Q32DCvy/EMF6TDuuOV0fywE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-eJIB0EUM7nf1uKtsXfRCdTHdN3QAbeE0fTzSYKBWKIM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -887,19 +887,18 @@ const DIFF_RANK = { MYTHIC:4, HEROIC:3, NORMAL:2, LFR:1, RAID_FINDER:1 };
 const DIFF_LETTER = { MYTHIC:"M", HEROIC:"H", NORMAL:"N", LFR:"L", RAID_FINDER:"L" };
 const DIFF_COLOR = { MYTHIC:"var(--purple)", HEROIC:"var(--blue)", NORMAL:"var(--ok)", LFR:"var(--muted)", RAID_FINDER:"var(--muted)" };
 const GREAT_VAULT_MAX_SLOTS = 9;
-/* track de mejora de la pieza de tier. Fuente principal: el texto de mejora
-   ("Champion/Campeón 6/6", "Hero/Héroe 6/6", "Myth/Mito 6/6"). */
+/* track de mejora de la pieza de tier. Fuente unica: palabras exactas del track:
+   "Mito/Myth", "Heroe/Hero", "Campeon/Champion", "Veterano/Veteran". */
 const TIER_LETTER_COLOR = { M:"#f0821e", H:"#7c4dbf", N:"#2f8fe0", V:"#2fbf71" };
 const TIER_LETTER_WEIGHT = { M:4, H:3, N:2, V:1 };
 const TIER_TRACK_LETTER = [
-  [/\b(myth|mythic|mito|mitic|mitico)\b/,"M"],
-  [/\b(hero|heroic|heroe|heroico)\b/,"H"],
-  [/\b(champion|campeon|normal)\b/,"N"],
-  [/\b(veteran|veterano|explorer|adventurer|lfr|raid finder|raidfinder|buscador)\b/,"V"]
+  [/\b(mito|myth)\b/,"M"],
+  [/\b(heroe|hero)\b/,"H"],
+  [/\b(campeon|champion)\b/,"N"],
+  [/\b(veterano|veteran)\b/,"V"]
 ];
-/* respaldo por ilvl solo si Blizzard no trae ningún texto de mejora parseable */
-const TIER_ILVL_BREAKS = [[318,"M"],[305,"H"],[292,"N"],[279,"V"],[0,"V"]];
-function ilvlLetter(ilvl){ if(ilvl==null) return null; for(const [min,l] of TIER_ILVL_BREAKS){ if(ilvl>=min) return l; } return "V"; }
+/* no se infiere por ilvl: si Blizzard no trae el track de mejora, queda vacio. */
+function ilvlLetter(){ return null; }
 function cleanTrackText(value){ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(); }
 function collectItemStrings(value,out=[],seen=new Set()){
   if(value==null) return out;
@@ -1824,7 +1823,7 @@ function progTierView(rows){
     TIER_SLOTS.forEach(s=>{ const c=t.slots[s]; html+=`<td>${tierPieceHtml(c)}</td>`; });
     html+='</tr>';
   });
-  return html+'</tbody></table></div><p class="hint" style="margin-top:10px">Letra = track de la pieza: <b style="color:'+TIER_LETTER_COLOR.M+'">M</b> Mítico · <b style="color:'+TIER_LETTER_COLOR.H+'">H</b> Héroico · <b style="color:'+TIER_LETTER_COLOR.N+'">N</b> Normal · <b style="color:'+TIER_LETTER_COLOR.V+'">V</b> Veterano. Sufijo <b>A</b> = tier anterior/parche viejo.</p>';
+  return html+'</tbody></table></div><p class="hint" style="margin-top:10px">Letra = track de la pieza: <b style="color:'+TIER_LETTER_COLOR.M+'">M</b> Mito/Myth · <b style="color:'+TIER_LETTER_COLOR.H+'">H</b> Héroe/Hero · <b style="color:'+TIER_LETTER_COLOR.N+'">N</b> Campeón/Champion · <b style="color:'+TIER_LETTER_COLOR.V+'">V</b> Veterano/Veteran. Sufijo <b>A</b> = tier anterior/parche viejo.</p>';
 }
 function progEnchantView(rows){
   rows=sortRows(rows, r=>-r.missingEnchant);
