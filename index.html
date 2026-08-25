@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-CJyzWwgm2fshcM6TmOIk+CxJ0VPAPOXRUY1m78qRLAg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-zjRZ5lcWrCmy4fzAsP8ah8X3tY0+xaL1ui3V70kHvOA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -320,8 +320,9 @@
   .tierL{font-family:var(--font-body); font-weight:700; font-size:14.5px; letter-spacing:.5px}
   .tierL.oldTier{opacity:.78; text-decoration:underline; text-underline-offset:2px; filter:saturate(.65)}
   .tierAdminList{display:grid; gap:8px}
-  .tierAdminRow{display:grid; grid-template-columns:170px minmax(0,1fr); gap:10px; align-items:center}
-  .tierAdminRow select{width:100%}
+  .tierAdminRow{display:grid; grid-template-columns:170px minmax(0,1fr) minmax(180px,260px); gap:10px; align-items:center}
+  .tierAdminRow select,.tierAdminRow input{width:100%; border-radius:8px; border:1px solid var(--line); background:var(--bg)!important; color:var(--text)!important; -webkit-text-fill-color:var(--text); font-family:var(--font-body); font-weight:800}
+  .tierAdminRow input{padding:8px 10px; font-size:12px}
 
   /* roster tipo spreadsheet, adaptado al tema Prototype */
   .rosterTitle{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:18px 0 14px; padding:13px 16px; border:1px solid var(--line-soft); border-radius:12px; background:linear-gradient(90deg,var(--bg-1),var(--bg-2))}
@@ -1357,10 +1358,32 @@ function normalizeTierSetKey(value){
   const key=raw==null ? '' : String(raw).trim();
   return key || null;
 }
+function normalizeTierSetName(value){ return cleanTrackText(value).replace(/\s+/g,' '); }
+function normalizeTierSetRef(value){
+  if(value==null || value==='') return null;
+  if(value&&typeof value==='object'&&!Array.isArray(value)){
+    const key=normalizeTierSetKey(value);
+    const name=value.name ?? value.item_set_name ?? value.label ?? '';
+    const nameKey=normalizeTierSetName(name || (!/^\d+$/.test(String(key||'')) ? key : ''));
+    return (key||nameKey) ? { key, name:String(name||''), nameKey } : null;
+  }
+  const raw=String(value||'').trim();
+  if(!raw) return null;
+  return { key:raw, name:/^\d+$/.test(raw)?'':raw, nameKey:/^\d+$/.test(raw)?'':normalizeTierSetName(raw) };
+}
+function tierSetMatchesItem(it,ref){
+  const cfg=normalizeTierSetRef(ref);
+  if(!cfg) return false;
+  const key=itemSetKey(it);
+  if(cfg.key && key && String(cfg.key)===String(key)) return true;
+  const nameKey=normalizeTierSetName(itemSetName(it));
+  return !!(cfg.nameKey && nameKey && cfg.nameKey===nameKey);
+}
 function currentTierSetConfig(){
   return (settings.current_tier_sets&&typeof settings.current_tier_sets==='object'&&!Array.isArray(settings.current_tier_sets)) ? settings.current_tier_sets : {};
 }
 function configuredTierSetKeyForClass(cls){ return normalizeTierSetKey(currentTierSetConfig()[cls]); }
+function configuredTierSetForClass(cls){ return normalizeTierSetRef(currentTierSetConfig()[cls]); }
 function tierSetGroups(gear){
   const groups=new Map();
   const bySlot=gearBySlot(gear);
@@ -1400,7 +1423,7 @@ function inferCurrentTierSetByClass(rows){
   });
   const out={};
   byClass.forEach((map,cls)=>{
-    const configured=configuredTierSetKeyForClass(cls);
+    const configured=configuredTierSetForClass(cls);
     if(configured){ out[cls]=configured; return; }
     const best=[...map.values()].sort((a,b)=>{
       const avgA=a.avgSum/Math.max(1,a.players);
@@ -1416,21 +1439,21 @@ function applyTierContext(rows){
   rows.forEach(r=>{ r.tier=tierInfo(r.p&&r.p.gear,currentByClass[r.ch&&r.ch.class]); });
   return rows;
 }
-/* piezas de tier: marca como anterior si el item_set no coincide con el set actual inferido para la clase */
-function tierInfo(gear,currentSetKey=null){
+/* piezas de tier: marca como anterior si el item_set no coincide con el set actual inferido/configurado para la clase */
+function tierInfo(gear,currentSetRef=null){
   const slots={}; TIER_SLOTS.forEach(s=>slots[s]=null);
   const bySlot=gearBySlot(gear);
   let count=0, previous=0;
-  const fallback=currentSetKey || (bestEquippedTierSet(gear)||{}).key || null;
+  const fallback=currentSetRef || (bestEquippedTierSet(gear)||{}).key || null;
   TIER_SLOTS.forEach(slot=>{
     const it=bySlot[slot], key=itemSetKey(it);
     if(!key) return;
-    const isPrevious=!!(fallback && key!==fallback);
+    const isPrevious=!!(fallback && !tierSetMatchesItem(it,fallback));
     slots[slot]={ letter:pieceLetter(it), ilvl:itemIlvl(it), set:key, previous:isPrevious };
     count++;
     if(isPrevious) previous++;
   });
-  return { count, previous, currentSetKey:fallback, slots };
+  return { count, previous, currentSetKey:normalizeTierSetKey(fallback), slots };
 }
 /* distribución de stats secundarios (% del total), sumando todo el equipo */
 function statDist(gear){ const sums={}; let tot=0; (gear||[]).forEach(it=>(it.stats||[]).forEach(s=>{ const t=s.type&&s.type.type; if(SECONDARY_STATS.find(x=>x[0]===t)){ sums[t]=(sums[t]||0)+(s.value||0); tot+=s.value||0; } })); const pct={}; SECONDARY_STATS.forEach(([k])=>{ pct[k]= tot? Math.round((sums[k]||0)/tot*100):0; }); return pct; }
@@ -4495,11 +4518,13 @@ function adminTierSetsHtml(){
   const cfg=currentTierSetConfig();
   const classes=Object.keys(CLASS_ARMOR);
   const rows=classes.map(cls=>{
-    const configured=normalizeTierSetKey(cfg[cls]);
+    const configuredRef=normalizeTierSetRef(cfg[cls]);
+    const configured=normalizeTierSetKey(configuredRef);
     const opts=observed[cls]||[];
     const hasConfigured=configured && opts.some(o=>String(o.key)===String(configured));
     const extra=hasConfigured||!configured ? [] : [{key:configured,name:(cfg[cls]&&cfg[cls].name)||'Configurado manualmente',players:0,pieces:0,avg:0,max:0}];
-    return `<div class="tierAdminRow">
+    const manualValue=(configuredRef && !hasConfigured) ? (configuredRef.name || configuredRef.key || '') : '';
+    return `<div class="tierAdminRow" data-class="${esc(cls)}">
       <div>${classTag(cls)}</div>
       <select class="adminTierSet" data-class="${esc(cls)}">
         <option value="" ${!configured?'selected':''}>Auto · inferir desde roster</option>
@@ -4508,11 +4533,12 @@ function adminTierSetsHtml(){
           return `<option value="${esc(o.key)}" data-name="${esc(o.name||'')}" ${String(configured)===String(o.key)?'selected':''}>${esc(label)}</option>`;
         }).join('')}
       </select>
+      <input class="adminTierManual" data-class="${esc(cls)}" value="${esc(manualValue)}" placeholder="Manual: ID o nombre exacto">
     </div>`;
   }).join('');
   return `<div><label class="miniLabel">Tier actual por clase</label>
     <div class="tierAdminList">${rows}</div>
-    <p class="adminNote">Fuente: <code>set.item_set.id</code> de Armory/equipment. Si dejás Auto, la app infiere por clase; si elegís un ID, ese manda y cualquier otro set equipado se marca como anterior (<code>MA</code>, <code>HA</code>, etc.).</p>
+    <p class="adminNote">Fuente: <code>set.item_set</code> de Armory/equipment. Si dejás Auto, la app infiere por clase. Si escribís manualmente un ID o nombre exacto, eso manda; cualquier otro set equipado se marca como anterior (<code>MA</code>, <code>HA</code>, etc.).</p>
   </div>`;
 }
 function renderAdmin(){
@@ -4576,7 +4602,14 @@ async function saveAdminApiConfig(){
   if(!metrics.length) return toast('Elegí al menos una métrica');
   const season=(document.getElementById('adminRioSeason').value||'current').trim()||'current';
   const currentTierSets={};
-  document.querySelectorAll('.adminTierSet').forEach(sel=>{
+  document.querySelectorAll('.tierAdminRow[data-class]').forEach(row=>{
+    const cls=row.dataset.class;
+    const manual=String((row.querySelector('.adminTierManual')||{}).value||'').trim();
+    if(manual){
+      currentTierSets[cls]=/^\d+$/.test(manual) ? { item_set_id:manual, name:'' } : { item_set_id:manual, name:manual };
+      return;
+    }
+    const sel=row.querySelector('.adminTierSet');
     const key=String(sel.value||'').trim();
     if(!key) return;
     currentTierSets[sel.dataset.class]={ item_set_id:key, name:sel.selectedOptions&&sel.selectedOptions[0]?sel.selectedOptions[0].dataset.name||'':'' };
