@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-hx8ENazfwNlspceTmzzrj524CSgi9a4bSapxxL2uoYY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-Amr9yXCw1Cym+Ns6RG/So8BCzJkW7zkjXRoK+/eXdfY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -860,17 +860,18 @@ const DIFF_RANK = { MYTHIC:4, HEROIC:3, NORMAL:2, LFR:1, RAID_FINDER:1 };
 const DIFF_LETTER = { MYTHIC:"M", HEROIC:"H", NORMAL:"N", LFR:"L", RAID_FINDER:"L" };
 const DIFF_COLOR = { MYTHIC:"var(--purple)", HEROIC:"var(--blue)", NORMAL:"var(--ok)", LFR:"var(--muted)", RAID_FINDER:"var(--muted)" };
 const GREAT_VAULT_MAX_SLOTS = 9;
-/* dificultad de la pieza de tier por ilvl. Calibrado con wowaudit: 289 y 298 = M.
-   Si aparecen piezas más bajas y las letras no coinciden, ajustá estos cortes. */
+/* dificultad de la pieza de tier por ilvl. Respaldo para Midnight S2:
+   Normal aprox. 292+, Hero 305+, Myth 318+. La fuente principal es name_description. */
 const TIER_LETTER_COLOR = { M:"#f0821e", H:"#7c4dbf", N:"#2f8fe0", V:"#2fbf71" };
 const TIER_LETTER_WEIGHT = { M:4, H:3, N:2, V:1 };
 /* La letra sale del ORIGEN de la pieza (name_description: "Mythic"/"Heroic"/"Normal"…),
    no del ilvl actual — dos piezas del mismo ilvl pueden ser M y H según de dónde salieron. */
-const NAMEDESC_LETTER = [[/^mythic/i,"M"],[/^heroic/i,"H"],[/^normal/i,"N"],[/^(veteran|champion|explorer|adventurer|lfr|raid.?finder)/i,"V"]];
+const NAMEDESC_LETTER = [[/^(myth|mythic|mitic)/,"M"],[/^(hero|heroic|heroic)/,"H"],[/^(normal|champion|campeon)/,"N"],[/^(veteran|veterano|explorer|adventurer|lfr|raid.?finder|buscador)/,"V"]];
 /* respaldo por ilvl solo si la pieza no trae name_description */
-const TIER_ILVL_BREAKS = [[285,"M"],[272,"H"],[259,"N"],[0,"V"]];
+const TIER_ILVL_BREAKS = [[318,"M"],[305,"H"],[292,"N"],[279,"V"],[0,"V"]];
 function ilvlLetter(ilvl){ if(ilvl==null) return null; for(const [min,l] of TIER_ILVL_BREAKS){ if(ilvl>=min) return l; } return "V"; }
-function pieceLetter(it){ if(!it) return null; const ds=((it.name_description&&it.name_description.display_string)||"").trim(); for(const [re,l] of NAMEDESC_LETTER){ if(re.test(ds)) return l; } return ilvlLetter(itemIlvl(it)); }
+function cleanTrackText(value){ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(); }
+function pieceLetter(it){ if(!it) return null; const ds=cleanTrackText((it.name_description&&it.name_description.display_string)||""); for(const [re,l] of NAMEDESC_LETTER){ if(re.test(ds)) return l; } return ilvlLetter(itemIlvl(it)); }
 function tierLettersHtml(t){ return TIER_SLOTS.map(s=>{ const c=t.slots[s]; return c&&c.letter?`<b class="tierL" style="color:${TIER_LETTER_COLOR[c.letter]}">${c.letter}</b>`:'<span style="color:var(--muted-2)">·</span>'; }).join(' '); }
 function trackLetterHtml(l, value){ const txt=value==null?l:value; return `<b class="tierL" style="color:${TIER_LETTER_COLOR[l]}">${txt}</b>`; }
 function tierSlotsHeaderHtml(){ return `<span></span>${TIER_SLOTS.map(s=>`<span>${TIER_SLOT_ABBR[s]}</span>`).join('')}`; }
@@ -1345,7 +1346,7 @@ function bestEquippedTierSet(gear){
   return [...groups.values()].sort((a,b)=>{
     const avgA=a.items.reduce((s,x)=>s+x.ilvl,0)/Math.max(1,a.items.length);
     const avgB=b.items.reduce((s,x)=>s+x.ilvl,0)/Math.max(1,b.items.length);
-    return (b.id-a.id) || (avgB-avgA) || (b.items.length-a.items.length);
+    return (avgB-avgA) || (b.items.length-a.items.length) || (b.id-a.id);
   })[0];
 }
 /* piezas de tier: se toma un unico item_set equipado para no mezclar tier viejo con tier actual */
