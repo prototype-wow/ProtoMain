@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-4hQmOHk487QJ+0HcybRpciPfdzzM7Mc5a3NZH39WlIU=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://ptr.wowhead.com https://wow.zamimg.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-+u6wVJbXaEpBVj0Z7NAMSkMu7lsxK3vNBeCL2s0bUBs=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://nether.wowhead.com https://wow.zamimg.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -758,7 +758,6 @@ globalThis.whTooltips = {
   iconizeLinks: false,
   renameLinks: false
 };
-const WOWHEAD_DOMAIN = 'ptr';
 /* ============================================================
    CONFIGURACIÓN
    ============================================================ */
@@ -2179,17 +2178,16 @@ function wowheadParams(it,includeItem=false){
 function itemHref(it){
   const id=wowheadItemId(it);
   if(!id) return '';
-  return `https://www.wowhead.com/${WOWHEAD_DOMAIN}/item=${id}`;
+  return `https://www.wowhead.com/item=${id}`;
 }
 function itemExactHref(it){
   const id=wowheadItemId(it);
   if(!id) return '';
   const params=wowheadParams(it,false);
-  return `https://www.wowhead.com/${WOWHEAD_DOMAIN}/item=${id}${params?'?'+params:''}`;
+  return `https://www.wowhead.com/item=${id}${params?'?'+params:''}`;
 }
 function wowheadData(it){
-  const params=wowheadParams(it,false);
-  return [`domain=${WOWHEAD_DOMAIN}`,params].filter(Boolean).join('&');
+  return wowheadParams(it,false);
 }
 function itemLinkHtml(it){
   const nm=itemName(it);
