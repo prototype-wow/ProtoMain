@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-fGaNW4LUJvHVJIbm3E1Ay6jl4FuTzLO5qxkP7AKLBlc=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://nether.wowhead.com https://wow.zamimg.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-JqLUoLZ1RsGbif6ed52Nxuvllcx8ADmxvBMnyOc3TWY=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://wow.zamimg.com https://www.wowhead.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://nether.wowhead.com https://wow.zamimg.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -432,13 +432,21 @@
   .singleGear tr:last-child td{border-bottom:0}
 .singleGear .slot{color:var(--muted); white-space:nowrap}
 .singleGear .ilvl{font-family:var(--font-mono); color:var(--purple); white-space:nowrap}
-.singleGear .item a{color:var(--blue-2); text-decoration:none}
-.singleGear .item a:hover{text-decoration:underline}
-.singleGear .gemCell,.singleGear .enchantCell{font-size:11.5px; color:var(--muted); line-height:1.35}
-.singleGear .gemPill{display:inline-flex; align-items:center; max-width:150px; margin:0 4px 3px 0; color:var(--green); text-decoration:none; vertical-align:top}
-.singleGear .gemPill:hover{text-decoration:underline}
-.singleGear .enchantText{display:block; max-width:180px; color:var(--gold)}
-.singleGear .wowhead-icon{vertical-align:middle}
+.singleGear .item{min-width:150px; max-width:230px}
+.singleGear .gearItemLink{display:inline-flex; align-items:center; gap:6px; max-width:100%; color:var(--blue-2); text-decoration:none; line-height:1.2}
+.singleGear .gearItemLink:hover{text-decoration:underline}
+.singleGear .gearItemText{display:inline; overflow-wrap:anywhere}
+.singleGear .gemCell{width:76px; max-width:76px; font-size:11px; color:var(--muted); line-height:1.25}
+.singleGear .enchantCell{width:155px; max-width:155px; font-size:11px; color:var(--muted); line-height:1.25}
+.singleGear .gemIcons{display:flex; align-items:center; gap:4px; flex-wrap:nowrap; min-height:20px; max-width:76px; overflow:hidden}
+.singleGear .gemIconLink{display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; flex:0 0 18px; border:1px solid rgba(47,191,113,.28); border-radius:4px; background:linear-gradient(135deg, rgba(47,191,113,.18), rgba(124,77,255,.16)); text-decoration:none; overflow:hidden}
+.singleGear .gemIconLink:hover{border-color:rgba(47,191,113,.65); box-shadow:0 0 0 1px rgba(47,191,113,.18)}
+.singleGear .gemIconLabel{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+.singleGear .gemIconLink .wowhead-icon{width:16px!important; height:16px!important; margin:0!important}
+.singleGear .enchantText{display:block; max-width:155px; color:var(--gold); overflow-wrap:anywhere}
+.singleGear .wowhead-icon{flex:0 0 auto; vertical-align:middle}
+#wowhead-tooltip{z-index:200000!important; background:rgba(9,13,18,.98)!important; border:1px solid rgba(236,182,67,.72)!important; border-radius:5px!important; box-shadow:0 18px 42px rgba(0,0,0,.78)!important; padding:8px 10px!important; max-width:min(430px, calc(100vw - 22px))!important; color:#fff!important}
+#wowhead-tooltip table{background:transparent!important}
 .singleCheck{font-size:17px; color:var(--ok); line-height:1}
   .singleLinks{display:grid; grid-template-columns:1fr 1fr; gap:8px}
   .singleLinks a{display:block; padding:8px 10px; border:1px solid var(--line); border-radius:8px; color:var(--blue-2); text-decoration:none; font-size:12.5px; text-align:center; background:var(--bg)}
@@ -760,7 +768,8 @@
 <script>
 globalThis.whTooltips = {
   colorLinks: false,
-  iconizeLinks: true,
+  iconSize: true,
+  iconizeLinks: false,
   renameLinks: false
 };
 /* ============================================================
@@ -2201,7 +2210,7 @@ function itemLinkHtml(it){
   if(!href) return esc(nm);
   const data=wowheadData(it);
   const exact=itemExactHref(it);
-  return `<a href="${esc(href)}" target="_blank" rel="noopener" ${data?`data-wowhead="${esc(data)}"`:''} ${exact?`data-wowhead-exact-href="${esc(exact)}"`:''}>${esc(nm)}</a>`;
+  return `<a class="gearItemLink" href="${esc(href)}" target="_blank" rel="noopener" ${data?`data-wowhead="${esc(data)}"`:''} data-wh-icon-size="small" ${exact?`data-wowhead-exact-href="${esc(exact)}"`:''}><span class="gearItemText">${esc(nm)}</span></a>`;
 }
 function enchantName(it){ const e=it && it.enchantments && it.enchantments[0]; return cleanDisplay(e && (e.display_string || localizedName(e.enchantment) || e.name)); }
 function socketGemEntries(it){
@@ -2216,11 +2225,12 @@ function socketGemEntries(it){
 function itemGemHtml(it){
   const gems=socketGemEntries(it);
   if(!gems.length) return '<span style="color:var(--muted-2)">—</span>';
-  return gems.map(g=>{
+  const icons=gems.map(g=>{
     const label=esc(g.name || `Gema ${g.id}`);
-    if(!g.id) return `<span class="gemPill">${label}</span>`;
-    return `<a class="gemPill" href="https://www.wowhead.com/item=${g.id}" target="_blank" rel="noopener" data-wowhead>${label}</a>`;
+    if(!g.id) return `<span class="gemIconLink" title="${label}"><span class="gemIconLabel">${label}</span></span>`;
+    return `<a class="gemIconLink" href="https://www.wowhead.com/item=${g.id}" target="_blank" rel="noopener" data-wowhead="" data-wh-icon-size="tiny" title="${label}"><span class="gemIconLabel">${label}</span></a>`;
   }).join('');
+  return `<span class="gemIcons">${icons}</span>`;
 }
 function itemEnchantHtml(it){
   const ench=enchantName(it);
