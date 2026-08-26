@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-JqLUoLZ1RsGbif6ed52Nxuvllcx8ADmxvBMnyOc3TWY=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://wow.zamimg.com https://www.wowhead.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://nether.wowhead.com https://wow.zamimg.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-clSLp/ldX2syYt+xneZ4fCQtAtQfovWT+BPczPnHUbU=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://wow.zamimg.com https://www.wowhead.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://nether.wowhead.com https://wow.zamimg.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -441,6 +441,9 @@
 .singleGear .gemIcons{display:flex; align-items:center; gap:4px; flex-wrap:nowrap; min-height:20px; max-width:76px; overflow:hidden}
 .singleGear .gemIconLink{display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; flex:0 0 18px; border:1px solid rgba(47,191,113,.28); border-radius:4px; background:linear-gradient(135deg, rgba(47,191,113,.18), rgba(124,77,255,.16)); text-decoration:none; overflow:hidden}
 .singleGear .gemIconLink:hover{border-color:rgba(47,191,113,.65); box-shadow:0 0 0 1px rgba(47,191,113,.18)}
+.singleGear .gemIconImg{width:16px; height:16px; display:block; object-fit:cover; border-radius:3px}
+.singleGear .gemIconFallback{display:grid; place-items:center; width:16px; height:16px; border-radius:3px; color:#dfffea; font-size:9px; font-weight:900; line-height:1; background:radial-gradient(circle at 30% 25%, rgba(255,255,255,.5), rgba(47,191,113,.38) 42%, rgba(41,25,76,.6) 100%)}
+.singleGear .gemIconLink.hasGemIcon .gemIconFallback{display:none}
 .singleGear .gemIconLabel{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
 .singleGear .gemIconLink .wowhead-icon{width:16px!important; height:16px!important; margin:0!important}
 .singleGear .enchantText{display:block; max-width:155px; color:var(--gold); overflow-wrap:anywhere}
@@ -1784,6 +1787,46 @@ function refreshWowheadTooltips(){
     }catch(e){}
   },0);
 }
+const GEM_ICON_CACHE_KEY='protocarries_gem_icons_v1';
+let gemIconCache={};
+try{ gemIconCache=JSON.parse(localStorage.getItem(GEM_ICON_CACHE_KEY)||'{}')||{}; }catch(e){ gemIconCache={}; }
+function saveGemIconCache(){ try{ localStorage.setItem(GEM_ICON_CACHE_KEY,JSON.stringify(gemIconCache)); }catch(e){} }
+function wowheadIconUrl(icon){ const slug=String(icon||'').trim().toLowerCase(); return slug ? `https://wow.zamimg.com/images/wow/icons/small/${encodeURIComponent(slug)}.jpg` : ''; }
+function applyGemIcon(el,icon){
+  if(!el || !icon) return;
+  const src=wowheadIconUrl(icon);
+  if(!src) return;
+  let img=el.querySelector('img.gemIconImg');
+  if(!img){
+    img=document.createElement('img');
+    img.className='gemIconImg';
+    img.alt='';
+    img.loading='lazy';
+    const label=el.querySelector('.gemIconLabel');
+    el.insertBefore(img,label||el.firstChild);
+  }
+  img.src=src;
+  el.classList.add('hasGemIcon');
+}
+function hydrateGemIcons(){
+  const links=[...document.querySelectorAll('a.gemIconLink[data-gem-id]')];
+  links.forEach(el=>{
+    const id=el.dataset.gemId;
+    const cached=gemIconCache[id];
+    if(cached) applyGemIcon(el,cached);
+    if(!id || el.dataset.gemIconLoading || cached) return;
+    el.dataset.gemIconLoading='1';
+    fetch(`https://nether.wowhead.com/tooltip/item/${encodeURIComponent(id)}?dataEnv=1&locale=0`)
+      .then(r=>r.ok?r.json():null)
+      .then(j=>{
+        if(!j||!j.icon) return;
+        gemIconCache[id]=j.icon;
+        saveGemIconCache();
+        document.querySelectorAll(`a.gemIconLink[data-gem-id="${CSS.escape(String(id))}"]`).forEach(link=>applyGemIcon(link,j.icon));
+      })
+      .catch(()=>{});
+  });
+}
 function render(){
   renderUserArea(); renderTabs();
   document.getElementById('copyVacAll').style.display = view==='semana' ? '' : 'none';
@@ -1798,6 +1841,7 @@ function render(){
   else if(view==='reclutas') renderReclutas();
   else if(view==='usuarios') renderUsuarios();
   else if(view==='admin') renderAdmin();
+  hydrateGemIcons();
   refreshWowheadTooltips();
 }
 
@@ -2219,7 +2263,9 @@ function socketGemEntries(it){
     const raw=(s&&s.item) || (s&&s.socket&&s.socket.item) || (s&&s.media&&s.media.item) || null;
     const id=objectNumericId(raw,'item') || objectNumericId(s&&s.item,'item') || objectNumericId(s&&s.socket&&s.socket.item,'item');
     const name=cleanDisplay(localizedName(raw) || localizedName(s&&s.item) || localizedName(s&&s.socket&&s.socket.item) || (s&&s.display_string) || (s&&s.name));
-    return {id,name};
+    const assets=[...(Array.isArray(s&&s.assets)?s.assets:[]),...(Array.isArray(s&&s.media&&s.media.assets)?s.media.assets:[])];
+    const iconUrl=(assets.find(a=>a&&a.key==='icon')||assets[0]||{}).value || '';
+    return {id,name,iconUrl};
   }).filter(g=>g.id || g.name);
 }
 function itemGemHtml(it){
@@ -2227,8 +2273,11 @@ function itemGemHtml(it){
   if(!gems.length) return '<span style="color:var(--muted-2)">—</span>';
   const icons=gems.map(g=>{
     const label=esc(g.name || `Gema ${g.id}`);
-    if(!g.id) return `<span class="gemIconLink" title="${label}"><span class="gemIconLabel">${label}</span></span>`;
-    return `<a class="gemIconLink" href="https://www.wowhead.com/item=${g.id}" target="_blank" rel="noopener" data-wowhead="" data-wh-icon-size="tiny" title="${label}"><span class="gemIconLabel">${label}</span></a>`;
+    const fallback=esc((g.name||'?').trim().charAt(0)||'?');
+    const image=g.iconUrl ? `<img class="gemIconImg" src="${esc(g.iconUrl)}" alt="" loading="lazy">` : `<span class="gemIconFallback" aria-hidden="true">${fallback}</span>`;
+    const ready=g.iconUrl ? ' hasGemIcon' : '';
+    if(!g.id) return `<span class="gemIconLink${ready}" title="${label}">${image}<span class="gemIconLabel">${label}</span></span>`;
+    return `<a class="gemIconLink${ready}" href="https://www.wowhead.com/item=${g.id}" target="_blank" rel="noopener" data-gem-id="${esc(g.id)}" data-wowhead="" data-wh-iconize-link="true" data-wh-icon-size="tiny" title="${label}">${image}<span class="gemIconLabel">${label}</span></a>`;
   }).join('');
   return `<span class="gemIcons">${icons}</span>`;
 }
