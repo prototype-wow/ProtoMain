@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-clSLp/ldX2syYt+xneZ4fCQtAtQfovWT+BPczPnHUbU=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://wow.zamimg.com https://www.wowhead.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://nether.wowhead.com https://wow.zamimg.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-QVHcv+m0gjom4NCuQhPx7YSpP8lUihHNcmbU/YNLhIA=' https://wow.zamimg.com https://www.wowhead.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://wow.zamimg.com https://www.wowhead.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://hjatxlvqytgkizcaopce.supabase.co http://localhost:3000 http://127.0.0.1:3000 https://*.trycloudflare.com https://raw.githubusercontent.com https://www.wowhead.com https://nether.wowhead.com https://wow.zamimg.com">
 <title>PROTOTYPE · Registro de Carries</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -1700,14 +1700,96 @@ function tierInfo(gear,currentSetRef=null){
 function statDist(gear){ const sums={}; let tot=0; (gear||[]).forEach(it=>(it.stats||[]).forEach(s=>{ const t=s.type&&s.type.type; if(SECONDARY_STATS.find(x=>x[0]===t)){ sums[t]=(sums[t]||0)+(s.value||0); tot+=s.value||0; } })); const pct={}; SECONDARY_STATS.forEach(([k])=>{ pct[k]= tot? Math.round((sums[k]||0)/tot*100):0; }); return pct; }
 /* grilla de encantamientos: por slot encantable, true=tiene, false=falta, null=slot vacío */
 function enchantGrid(gear){ const bySlot=gearBySlot(gear); const g={}; ENCHANTABLE_SLOTS.forEach(s=>{ const it=bySlot[s]; g[s]= it ? !!(it.enchantments&&it.enchantments.length) : null; }); return g; }
-/* opciones de bóveda por slot: M+ = nivel de la 1ª/4ª/8ª key semanal; raid = dificultad del 2º/4º/6º jefe */
-function vaultMplusRunLevel(run){ const s=run&&run.summary&&typeof run.summary==='object'?run.summary:{}; return Number(s.mythic_level ?? s.keystone_level ?? run?.mythic_level ?? run?.keystone_level ?? 0) || 0; }
-function weeklyMplusRunsForChar(ch,p){
-  const row=ch?rioCharacterProfile(ch):null, rj=rioProfileJson(row);
-  const weekly=Array.isArray(row&&row.weekly_highest_level_runs) ? row.weekly_highest_level_runs : rj.mythic_plus_weekly_highest_level_runs;
-  const runs=Array.isArray(weekly) && weekly.length ? weekly : (p&&Array.isArray(p.mythic_best_runs) ? p.mythic_best_runs : []);
-  return runs.filter(r=>vaultMplusRunLevel(r)>0);
-}
+    /* opciones de bóveda por slot: M+ = nivel de la 1ª/4ª/8ª key semanal; raid = dificultad del 2º/4º/6º jefe */
+    function vaultMplusRunLevel(run){ const s=run&&run.summary&&typeof run.summary==='object'?run.summary:{}; return Number(s.mythic_level ?? s.keystone_level ?? run?.mythic_level ?? run?.keystone_level ?? 0) || 0; }
+    function usWeeklyResetMs(now=new Date()){
+      const reset=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),15,0,0,0));
+      const diff=(reset.getUTCDay()-2+7)%7;
+      reset.setUTCDate(reset.getUTCDate()-diff);
+      if(now.getTime()<reset.getTime()) reset.setUTCDate(reset.getUTCDate()-7);
+      return reset.getTime();
+    }
+    function rioRunCompletedMs(run){
+      const s=rioRunSummary(run);
+      const candidates=[
+        run&&run.completed_at, s.completed_at,
+        run&&run.completedAt, s.completedAt,
+        run&&run.completed_time, s.completed_time,
+        run&&run.completedTimestamp, s.completedTimestamp,
+        run&&run.completed_timestamp, s.completed_timestamp,
+        run&&run.keystone_completed_at, s.keystone_completed_at,
+        run&&run.date, s.date
+      ];
+      for(const raw of candidates){
+        if(raw===undefined || raw===null || raw==='') continue;
+        const ms=typeof raw==='number' ? (raw>1000000000000 ? raw : raw*1000) : Date.parse(String(raw));
+        if(Number.isFinite(ms)) return ms;
+      }
+      return 0;
+    }
+    function rioRunStableKey(run){
+      const time=rioRunCompletedMs(run);
+      const dungeon=(rioRunDungeonKey(run)||rioRunName(run)||'').toLowerCase();
+      const level=rioRunLevel(run)||vaultMplusRunLevel(run)||0;
+      const score=rioRunScore(run);
+      const id=rioRunId(run);
+      return id ? `id:${id}` : [time||'',dungeon,level,Number.isFinite(score)?score.toFixed(1):''].join('|');
+    }
+    function dedupeMplusRuns(runs){
+      const seen=new Set();
+      return (runs||[]).filter(run=>{
+        const key=rioRunStableKey(run);
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+    function collectMplusRuns(value,out=[],seen=new Set(),depth=0){
+      if(!value || depth>6) return out;
+      if(Array.isArray(value)){
+        value.forEach(v=>collectMplusRuns(v,out,seen,depth+1));
+        return out;
+      }
+      if(typeof value!=='object') return out;
+      const level=rioRunLevel(value)||vaultMplusRunLevel(value);
+      const name=rioRunName(value)||localizedName(value.dungeon)||localizedName(value.summary&&value.summary.dungeon);
+      if(level>0 && name && name!=='—'){
+        const key=rioRunStableKey(value);
+        if(!seen.has(key)){
+          seen.add(key);
+          out.push(value);
+        }
+        return out;
+      }
+      ['runs','dungeons','best_runs','recent_runs','highest_level_runs','weekly_highest_level_runs','mythic_plus_recent_runs','mythic_plus_best_runs','mythic_plus_highest_level_runs','mythic_plus_weekly_highest_level_runs'].forEach(k=>collectMplusRuns(value[k],out,seen,depth+1));
+      if(depth<3 && value.roles && typeof value.roles==='object') Object.values(value.roles).forEach(v=>collectMplusRuns(v,out,seen,depth+1));
+      return out;
+    }
+    function weeklyMplusExactRuns(row){
+      const reset=usWeeklyResetMs();
+      const candidates=[];
+      collectMplusRuns(row&&row.all_runs,candidates);
+      collectMplusRuns(row&&row.recent_runs,candidates);
+      const p=rioProfileJson(row);
+      collectMplusRuns(p&&p.mythic_plus_recent_runs,candidates);
+      const runs=dedupeMplusRuns(candidates.filter(r=>rioRunCompletedMs(r)>=reset && (rioRunLevel(r)||vaultMplusRunLevel(r))>0));
+      runs.forEach(r=>{ r._weeklySource='exact'; });
+      return runs;
+    }
+    function weeklyMplusFallbackRuns(row,p){
+      const rj=rioProfileJson(row);
+      const weekly=Array.isArray(row&&row.weekly_highest_level_runs) ? row.weekly_highest_level_runs : rj.mythic_plus_weekly_highest_level_runs;
+      const runs=Array.isArray(weekly) && weekly.length ? weekly : (p&&Array.isArray(p.mythic_best_runs) ? p.mythic_best_runs : []);
+      return dedupeMplusRuns((runs||[]).filter(r=>vaultMplusRunLevel(r)>0)).map(r=>({...r,_weeklySource:'fallback'}));
+    }
+    function weeklyMplusRunsForChar(ch,p){
+      const row=ch?rioCharacterProfile(ch):null;
+      const exact=weeklyMplusExactRuns(row);
+      return exact.length ? exact : weeklyMplusFallbackRuns(row,p);
+    }
+    function weeklyMplusSourceLabel(runs){
+      return (runs||[]).some(r=>r&&r._weeklySource==='exact') ? 'Exacto desde runs fechadas Raider.IO' : 'Fallback Raider.IO weekly/best';
+    }
 function vaultMplusDetail(runs){ const levels=[...(runs||[])].map(vaultMplusRunLevel).filter(Boolean).sort((a,b)=>b-a); return [levels[0]??null, levels[3]??null, levels[7]??null]; }
 function vaultRaidDetail(killed){ const diffs=[]; Object.values(killed||{}).forEach(byDiff=> Object.entries(byDiff).forEach(([d,bosses])=> bosses.forEach(()=> diffs.push(d)))); diffs.sort((a,b)=>(DIFF_RANK[b]||0)-(DIFF_RANK[a]||0)); return [diffs[1]||null, diffs[3]||null, diffs[5]||null]; }
 function vaultMplusLetter(key){ if(key==null) return null; return key>=10 ? "M" : "H"; }
@@ -2571,7 +2653,7 @@ function singleRaiderPanel(ch){
 function singleMplusPanel(ch,p){
   const runs=[...weeklyMplusRunsForChar(ch,p)].sort((a,b)=>vaultMplusRunLevel(b)-vaultMplusRunLevel(a)||(rioRunScore(b)||0)-(rioRunScore(a)||0));
   const rows=runs.length ? runs.map(r=>`<tr><td>${esc(rioRunName(r)||localizedName(r.dungeon)||'—')}</td><td class="ilvl">+${vaultMplusRunLevel(r)||0}</td><td class="ilvl">${Number.isFinite(rioRunScore(r))?Math.round(rioRunScore(r)):'—'}</td></tr>`).join('') : '<tr><td colspan="3" class="singleEmpty">Sin M+ esta semana.</td></tr>';
-  return `<div class="panel singlePanel"><div class="phead"><h2><span class="dia"></span>M+ Hechas Semana Actual</h2></div><div class="pbody"><table class="singleGear"><thead><tr><th>Mazmorra</th><th>Key</th><th>Rating</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  return `<div class="panel singlePanel"><div class="phead"><h2><span class="dia"></span>M+ Hechas Semana Actual</h2></div><div class="pbody"><table class="singleGear"><thead><tr><th>Mazmorra</th><th>Key</th><th>Rating</th></tr></thead><tbody>${rows}</tbody></table><div class="rioMeta">${esc(weeklyMplusSourceLabel(runs))}</div></div></div>`;
 }
 function singleRaidPanel(p){
   const killed=(p.raid_progress&&p.raid_progress._killed_this_week)||{}, rows=[];
